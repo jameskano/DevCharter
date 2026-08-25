@@ -198,3 +198,71 @@ Compatibility work in this specification is limited to detecting encountered `.a
 14. Human and JSON results are stable and testable.
 15. Tests cover schemas/records, filesystem safety, statuses, compatibility migration, and no-write behavior.
 16. Documentation matches the reconciled model and every criterion maps to evidence.
+
+## Implementation evidence
+
+Status: implementation and local verification complete; independent completion review pending.
+
+### Implementation revisions
+
+- 2b56df4 — clean-slate specification baseline.
+- 1ce21cb — core and CLI workspace foundation with regenerated lockfile.
+- f1b389c — canonical records, compact configuration, safe YAML, and stable serialization.
+- 22a25c1 — repository containment, deterministic inventory, atomic writer, and legacy detection.
+- 591725f — exact read-only CLI surface and integration tests.
+- 7ce6d80 — platform-stable ordering and strengthened failure/configuration coverage.
+
+Only packages/core and packages/cli exist. Runtime dependencies are limited to Zod for runtime schemas and YAML for the safe parsing boundary. The CLI uses Node's argument parser and has no writer, Commander, minimatch, network, or telemetry dependency.
+
+### Verification results
+
+| Command or check | Actual result |
+|---|---|
+| pnpm format:check | Passed. |
+| pnpm lint | Passed. |
+| pnpm typecheck | Passed. |
+| pnpm build | Passed. |
+| pnpm test | Passed: 7 files, 49 tests. |
+| pnpm devcharter --help | Passed; lists only inspect and validate. |
+| pnpm devcharter --version | Passed; reports 0.1.0. |
+| pnpm devcharter validate | Passed with no configuration and no legacy profiles. |
+| pnpm devcharter inspect --format json | Passed with stable JSON and repository-relative artifacts. |
+| Negative CLI tests | Passed for later modes, check, sessions, generation, migration, positional roots, and invalid formats. |
+| Read-only integration checks | Passed using before/after path, content-hash, size, and modification-time snapshots. |
+| Dependency/import audit | Passed; no runtime network or telemetry imports and only Zod/YAML production dependencies. |
+
+Dependency installation completed from the available package cache while the environment reported certificate-chain warnings for registry metadata. Runtime and verification require no network.
+
+### Acceptance evidence
+
+| Criterion | Evidence |
+|---|---|
+| 1 | Repository/Git audit, isolated devcharter-v0-clean branch, import receipt verification, and documentation-only baseline commit preceded package creation. |
+| 2 | Existing TypeScript, pnpm, lint, formatting, and Vitest infrastructure is retained and passes; no legacy API is exported. |
+| 3 | Canonical-schema tests assert the exact modes, scopes, statuses, and change actions. |
+| 4 | CLI dispatch and negative tests reject check, sessions, and all later commands. |
+| 5 | Runtime-schema tests cover facts, evidence/confidence, artifacts/origin/ownership, findings, proposals, file changes, and validation. |
+| 6 | Configuration is optional and no obsolete eight-profile schemas or requirements exist. |
+| 7 | Compact-config tests cover versioning, ordered verification commands, strict keys, duplicate names, invalid types, and prohibited secret/session/ranking/matrix fields. |
+| 8 | Valid, malformed, and absent legacy fixtures preserve paths/errors, require explicit migration, and perform zero writes. |
+| 9 | Safe-YAML tests reject malformed input, duplicate keys, multiple documents, custom tags, aliases, and collection keys. |
+| 10 | Containment tests reject traversal, absolute/UNC/drive paths, and symlink escapes; contained reads/writes pass. |
+| 11 | Atomic-writer tests cover create/update, flush/rename, traversal, cleanup, injected failure, and reported partial parent creation. |
+| 12 | CLI imports only the read-only core entry point; static and filesystem-snapshot tests prove zero writes. |
+| 13 | Production dependency and source-import audits show no network/telemetry capability; CLI integration runs locally without network. |
+| 14 | Human/JSON, line-ending, object-key, array-order, path-set, and hash tests pass. |
+| 15 | The 49-test suite covers records, config/YAML, serialization, filesystem safety, writer failures, representative legacy input, exact CLI surface, and zero-write behavior. |
+| 16 | README and architecture status are synchronized here; affected documentation was reviewed as listed below. |
+
+### Documentation review and deferrals
+
+Updated: README.md, the system overview, the parent/active clean-slate wording, the manifest, and the reconciliation prompt.
+
+Reviewed unchanged: AGENTS.md, purpose and scope, quality and decision model, spec-driven workflow, Codex capability reference, specs index, implementation/review prompts, and SPEC-0001B–E. They remain consistent with this foundation.
+
+Deferred exactly as specified:
+
+- SPEC-0001B — new, retrofit, audit, semantic assessment, proposals, and approvals.
+- SPEC-0001C — Specification Architect workflow and skill.
+- SPEC-0001D — generation, application, adapters, receipts, and drift/merge behavior.
+- SPEC-0001E — release matrix, cross-spec E2E journeys, and Habit Compass pilot.

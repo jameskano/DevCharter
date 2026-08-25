@@ -8,13 +8,24 @@ Its value is not the number of generated files. Its value is deciding what the r
 
 > Give a repository the smallest, safest, and most useful AI development system it actually needs.
 
-The normal flow is:
+The target v0 flow is:
 
 ```text
 discover → understand → propose → approve → apply → verify
 ```
 
-DevCharter supports:
+## Current implementation
+
+SPEC-0001A provides the deterministic core foundation and exposes only:
+
+```bash
+devcharter inspect
+devcharter validate
+```
+
+Both commands operate on the current working directory, support `--format human|json`, and are read-only. From this workspace, run them with `pnpm devcharter inspect` or `pnpm devcharter validate`.
+
+The complete v0 product will support these modes after SPEC-0001B:
 
 ```bash
 devcharter new
@@ -81,8 +92,8 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
 
 1. Read `AGENTS.md` and `MANIFEST.md`.
 2. Read the parent specification and active `SPEC-0001A`.
-3. Audit the existing implementation before changing it.
-4. Reconcile and complete 0001A.
+3. Confirm the clean-slate decision and current active specification.
+4. Implement and complete 0001A without inheriting an old public API.
 5. Review 0001A independently and move it to `done` only with evidence.
 6. Move 0001B from `ready` to `active`; implement and review it.
 7. Repeat for 0001C, 0001D, and 0001E.

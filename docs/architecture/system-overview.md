@@ -22,6 +22,12 @@ DevCharter deterministic core and CLI
 Target repository
 ```
 
+## Current implementation status
+
+SPEC-0001A implements only the deterministic core foundation and the read-only `inspect` and `validate` CLI commands. Project Architect modes, Specification Architect workflows, generation, the Codex adapter, and release qualification remain assigned to SPEC-0001B–E.
+
+The CLI depends only on the core read-only entry point. The atomic writer is a separately exported and tested primitive that neither current command can access.
+
 ## Responsibilities
 
 ### Project Architect
@@ -90,7 +96,7 @@ When DevCharter applies managed output, a small generated-file receipt may recor
 
 Existing earlier configuration files may be read and migrated only through an approved retrofit plan.
 
-## Implementation structure
+## Target implementation structure
 
 A small workspace is preferred:
 
@@ -111,7 +117,7 @@ tests/
 └── e2e/
 ```
 
-Adapt this to compatible existing 0001A code. Do not restructure for cosmetic reasons.
+The current SPEC-0001A workspace contains only `packages/core` and `packages/cli`. Later packages, skills, templates, and broader test layers are created only by their active specifications. Do not restructure for cosmetic reasons.
 
 ## Write behavior
 
