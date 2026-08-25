@@ -28,6 +28,8 @@ SPEC-0001A implements only the deterministic core foundation and the read-only `
 
 The CLI depends only on the core read-only entry point. The atomic writer is a separately exported and tested primitive that neither current command can access.
 
+The optional `.devcharter.yaml` currently persists only schema version `1` and an ordered `verificationCommands` sequence. These commands cannot be selected reliably when scripts, CI, and documentation disagree, so DevCharter validates and preserves an accepted sequence but does not execute it in SPEC-0001A. Unknown fields are rejected. The file stores no secrets, conversations, sessions, rankings, capability matrices, receipts, or generated-file state.
+
 ## Responsibilities
 
 ### Project Architect

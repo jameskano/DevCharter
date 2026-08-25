@@ -155,7 +155,10 @@ describe("built CLI integration", () => {
   });
 
   it("has no writer, network, telemetry, Commander, or minimatch dependency", async () => {
-    const source = await readFile(new URL("./index.ts", import.meta.url), "utf8");
+    const sources = await Promise.all(
+      ["./index.ts", "./cli.ts"].map((source) => readFile(new URL(source, import.meta.url), "utf8"))
+    );
+    const source = sources.join("\n");
     const manifest = await readFile(new URL("../package.json", import.meta.url), "utf8");
     const parsedManifest = JSON.parse(manifest) as { version: string };
 

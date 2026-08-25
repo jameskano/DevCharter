@@ -6,7 +6,10 @@ import { parseSafeYaml } from "./safe-yaml.js";
 const verificationCommandSchema = z
   .object({
     name: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9:_-]*$/),
-    command: z.string().regex(/^[^\0\r\n]+$/)
+    command: z
+      .string()
+      .regex(/^[^\0\r\n]+$/)
+      .refine((command) => command.trim().length > 0, "Command must not be blank")
   })
   .strict();
 

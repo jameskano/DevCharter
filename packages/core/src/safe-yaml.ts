@@ -11,7 +11,7 @@ export function parseSafeYaml(source: string, path: string): Result<unknown> {
     const documents = parseAllDocuments(source, {
       customTags: [],
       merge: false,
-      prettyErrors: true,
+      prettyErrors: false,
       resolveKnownTags: false,
       schema: "core",
       strict: true,

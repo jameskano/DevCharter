@@ -33,6 +33,7 @@ verificationCommands:
     ["session fields", "version: 1\nsession: {}"],
     ["ranking fields", "version: 1\nqualityRanking: high"],
     ["capability matrices", "version: 1\ncapabilityMatrix: {}"],
+    ["blank commands", "version: 1\nverificationCommands:\n  - name: test\n    command: '   '"],
     [
       "duplicate command names",
       "version: 1\nverificationCommands:\n  - name: test\n    command: pnpm test\n  - name: test\n    command: pnpm test:unit"
@@ -57,6 +58,11 @@ describe("safe YAML boundary", () => {
   ])("rejects %s", (_name, source) => {
     const result = parseSafeYaml(source, "fixture.yaml");
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.path).toBe("fixture.yaml");
+    if (!result.ok) {
+      expect(result.error.path).toBe("fixture.yaml");
+      if (_name === "malformed input") {
+        expect(JSON.stringify(result.error)).not.toContain("version: [1");
+      }
+    }
   });
 });

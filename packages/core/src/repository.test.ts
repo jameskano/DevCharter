@@ -39,7 +39,9 @@ describe("RepositoryReader", () => {
 
     for (const unsafePath of [
       "../outside.txt",
+      "../devcharter-test-sibling/outside.txt",
       "/absolute.txt",
+      "C:drive-relative.txt",
       "C:\\outside.txt",
       "\\\\server\\share\\file.txt"
     ]) {

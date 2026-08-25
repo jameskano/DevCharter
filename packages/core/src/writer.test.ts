@@ -1,4 +1,4 @@
-import { readFile, readdir } from "node:fs/promises";
+import { readFile, readdir, symlink } from "node:fs/promises";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
@@ -48,6 +48,23 @@ describe("AtomicRepositoryWriter", () => {
     const write = await writerResult.value.writeText("../outside.txt", "unsafe");
     expect(write.ok).toBe(false);
     if (!write.ok) expect(write.error.code).toBe("PATH_OUTSIDE_ROOT");
+  });
+
+  it("rejects writes through symbolic links", async () => {
+    const repository = await temporaryRepository();
+    const outside = await temporaryRepository();
+    await symlink(
+      outside.root,
+      path.join(repository.root, "escape"),
+      process.platform === "win32" ? "junction" : "dir"
+    );
+    const writerResult = await AtomicRepositoryWriter.create(repository.root);
+    if (!writerResult.ok) throw new Error(writerResult.error.message);
+
+    const write = await writerResult.value.writeText("escape/outside.txt", "unsafe");
+    expect(write.ok).toBe(false);
+    if (!write.ok) expect(write.error.code).toBe("SYMLINK_ESCAPE");
+    await expect(outside.snapshot()).resolves.toEqual([]);
   });
 
   it("cleans temporary files and preserves the target after a pre-rename failure", async () => {
