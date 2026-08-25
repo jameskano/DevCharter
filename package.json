@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "test": "pnpm build && vitest run",
-    "devcharter": "node packages/cli/dist/index.js"
+    "devcharter": "node packages/cli/dist/cli.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
