@@ -1,7 +1,10 @@
 import { createHash } from "node:crypto";
-import path from "node:path";
 
 import type { JsonValue } from "./model.js";
+
+export function compareCanonicalText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
 
 function canonicalize(value: JsonValue): JsonValue {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -9,7 +12,7 @@ function canonicalize(value: JsonValue): JsonValue {
 
   return Object.fromEntries(
     Object.entries(value)
-      .sort(([left], [right]) => left.localeCompare(right))
+      .sort(([left], [right]) => compareCanonicalText(left, right))
       .map(([key, child]) => [key, canonicalize(child)])
   );
 }
@@ -27,7 +30,5 @@ export function stableHash(value: JsonValue): string {
 }
 
 export function canonicalizePathSet(paths: readonly string[]): string[] {
-  return [...new Set(paths.map((value) => value.split(path.sep).join("/")))].sort((left, right) =>
-    left.localeCompare(right)
-  );
+  return [...new Set(paths.map((value) => value.replace(/\\/g, "/")))].sort(compareCanonicalText);
 }

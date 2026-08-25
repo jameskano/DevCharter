@@ -72,4 +72,27 @@ describe("AtomicRepositoryWriter", () => {
     expect(await repository.snapshot()).toEqual(before);
     expect((await readdir(repository.root)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
   });
+
+  it("reports parent-directory creation when a new nested write fails", async () => {
+    const repository = await temporaryRepository();
+    const writerResult = await AtomicRepositoryWriter.create(repository.root, {
+      beforeRename: async () => {
+        throw new Error("injected rename failure");
+      }
+    });
+    if (!writerResult.ok) throw new Error(writerResult.error.message);
+
+    const write = await writerResult.value.writeText("new/nested.txt", "replacement");
+    expect(write.ok).toBe(false);
+    if (!write.ok) {
+      expect(write.error.details).toMatchObject({
+        stage: "before-rename",
+        cleanupSucceeded: true,
+        parentCreated: true
+      });
+    }
+    expect(
+      (await readdir(path.join(repository.root, "new"))).filter((name) => name.endsWith(".tmp"))
+    ).toEqual([]);
+  });
 });

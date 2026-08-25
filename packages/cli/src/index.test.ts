@@ -157,9 +157,11 @@ describe("built CLI integration", () => {
   it("has no writer, network, telemetry, Commander, or minimatch dependency", async () => {
     const source = await readFile(new URL("./index.ts", import.meta.url), "utf8");
     const manifest = await readFile(new URL("../package.json", import.meta.url), "utf8");
+    const parsedManifest = JSON.parse(manifest) as { version: string };
 
     expect(source).not.toContain("@devcharter/core/writer");
     expect(source).not.toMatch(/node:(http|https|net)|\bfetch\s*\(|telemetry/i);
     expect(manifest).not.toMatch(/commander|minimatch/i);
+    expect(DEVCHARTER_VERSION).toBe(parsedManifest.version);
   });
 });

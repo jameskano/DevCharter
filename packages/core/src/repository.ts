@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type { ArtifactRecord } from "./model.js";
 import { DevCharterError, failure, success, type Result } from "./results.js";
+import { compareCanonicalText } from "./serialization.js";
 
 const DEFAULT_IGNORED_NAMES = new Set([
   ".cache",
@@ -196,7 +197,7 @@ export class RepositoryReader {
     try {
       const visit = async (directory: string, relativeDirectory: string): Promise<void> => {
         const entries = await readdir(directory, { withFileTypes: true });
-        entries.sort((left, right) => left.name.localeCompare(right.name));
+        entries.sort((left, right) => compareCanonicalText(left.name, right.name));
 
         for (const entry of entries) {
           const repositoryPath = relativeDirectory
@@ -239,7 +240,7 @@ export class RepositoryReader {
       };
 
       await visit(this.root, "");
-      artifacts.sort((left, right) => left.path.localeCompare(right.path));
+      artifacts.sort((left, right) => compareCanonicalText(left.path, right.path));
       return success(artifacts);
     } catch (cause) {
       return failure(

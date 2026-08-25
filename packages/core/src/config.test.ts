@@ -29,6 +29,10 @@ verificationCommands:
   it.each([
     ["unsupported version", "version: 2"],
     ["unknown fields", "version: 1\naiTools: [codex]"],
+    ["secret fields", "version: 1\napiKey: secret"],
+    ["session fields", "version: 1\nsession: {}"],
+    ["ranking fields", "version: 1\nqualityRanking: high"],
+    ["capability matrices", "version: 1\ncapabilityMatrix: {}"],
     [
       "duplicate command names",
       "version: 1\nverificationCommands:\n  - name: test\n    command: pnpm test\n  - name: test\n    command: pnpm test:unit"

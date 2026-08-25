@@ -24,6 +24,6 @@ describe("stable serialization", () => {
   });
 
   it("canonicalizes only explicitly set-like path collections", () => {
-    expect(canonicalizePathSet(["b/file", "a/file", "b/file"])).toEqual(["a/file", "b/file"]);
+    expect(canonicalizePathSet(["b\\file", "a/file", "b/file"])).toEqual(["a/file", "b/file"]);
   });
 });

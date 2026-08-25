@@ -3,6 +3,8 @@ import { lstat, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { compareCanonicalText } from "./serialization.js";
+
 export interface RepositorySnapshotEntry {
   path: string;
   type: "directory" | "file" | "symbolic-link" | "other";
@@ -32,7 +34,7 @@ export async function snapshotRepository(root: string): Promise<RepositorySnapsh
 
   const visit = async (directory: string, relativeDirectory: string): Promise<void> => {
     const entries = await readdir(directory, { withFileTypes: true });
-    entries.sort((left, right) => left.name.localeCompare(right.name));
+    entries.sort((left, right) => compareCanonicalText(left.name, right.name));
 
     for (const entry of entries) {
       const repositoryPath = relativeDirectory ? relativeDirectory + "/" + entry.name : entry.name;
