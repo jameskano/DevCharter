@@ -6,8 +6,8 @@
 |---|---|
 | ID | SPEC-0001A |
 | Parent | SPEC-0001 |
-| Status | active |
-| Reason | Repository audit confirmed no donor implementation; build the approved clean-slate foundation |
+| Status | done |
+| Reason | Clean-slate foundation implemented, verified against all acceptance criteria, and completion-reviewed |
 
 ## Purpose
 
@@ -201,7 +201,7 @@ Compatibility work in this specification is limited to detecting encountered `.a
 
 ## Implementation evidence
 
-Status: implementation and local verification complete; independent completion review pending.
+Status: complete; the repeated read-only completion review passed.
 
 ### Implementation revisions
 
@@ -211,6 +211,7 @@ Status: implementation and local verification complete; independent completion r
 - 22a25c1 — repository containment, deterministic inventory, atomic writer, and legacy detection.
 - 591725f — exact read-only CLI surface and integration tests.
 - 7ce6d80 — platform-stable ordering and strengthened failure/configuration coverage.
+- 877ff30 — completion-review fixes for safe error details, strict commands, path safety, and evidence coverage.
 
 Only packages/core and packages/cli exist. Runtime dependencies are limited to Zod for runtime schemas and YAML for the safe parsing boundary. The CLI uses Node's argument parser and has no writer, Commander, minimatch, network, or telemetry dependency.
 
@@ -222,7 +223,7 @@ Only packages/core and packages/cli exist. Runtime dependencies are limited to Z
 | pnpm lint | Passed. |
 | pnpm typecheck | Passed. |
 | pnpm build | Passed. |
-| pnpm test | Passed: 7 files, 49 tests. |
+| pnpm test | Passed: 7 files, 51 tests. |
 | pnpm devcharter --help | Passed; lists only inspect and validate. |
 | pnpm devcharter --version | Passed; reports 0.1.0. |
 | pnpm devcharter validate | Passed with no configuration and no legacy profiles. |
@@ -251,12 +252,18 @@ Dependency installation completed from the available package cache while the env
 | 12 | CLI imports only the read-only core entry point; static and filesystem-snapshot tests prove zero writes. |
 | 13 | Production dependency and source-import audits show no network/telemetry capability; CLI integration runs locally without network. |
 | 14 | Human/JSON, line-ending, object-key, array-order, path-set, and hash tests pass. |
-| 15 | The 49-test suite covers records, config/YAML, serialization, filesystem safety, writer failures, representative legacy input, exact CLI surface, and zero-write behavior. |
+| 15 | The 51-test suite covers records, config/YAML, serialization, filesystem safety, writer failures, representative legacy input, exact CLI surface, and zero-write behavior. |
 | 16 | README and architecture status are synchronized here; affected documentation was reviewed as listed below. |
+
+### Independent completion review
+
+The initial fresh read-only review found no later-spec scope drift but required four focused corrections: reject blank verification commands, avoid source-line excerpts in YAML errors, directly test the exact runtime schemas and representative neutral records, and strengthen writer-path and whole-CLI dependency evidence. Revision 877ff30 addressed those findings.
+
+The repeated read-only review inspected the acceptance criteria, full implementation diff, public exports, source and tests, dependency graph, CLI behavior, current documentation, Git state, and verification output. It found no remaining blocking or important findings and returned PASS. SPEC-0001A is eligible for `done`.
 
 ### Documentation review and deferrals
 
-Updated: README.md, the system overview, the parent/active clean-slate wording, the manifest, and the reconciliation prompt.
+Updated: README.md, the system overview, the parent and SPEC-0001A clean-slate wording, the manifest, and the reconciliation prompt.
 
 Reviewed unchanged: AGENTS.md, purpose and scope, quality and decision model, spec-driven workflow, Codex capability reference, specs index, implementation/review prompts, and SPEC-0001B–E. They remain consistent with this foundation.
 

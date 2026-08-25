@@ -91,13 +91,12 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
 ## Codex implementation order
 
 1. Read `AGENTS.md` and `MANIFEST.md`.
-2. Read the parent specification and active `SPEC-0001A`.
-3. Confirm the clean-slate decision and current active specification.
-4. Implement and complete 0001A without inheriting an old public API.
-5. Review 0001A independently and move it to `done` only with evidence.
-6. Move 0001B from `ready` to `active`; implement and review it.
-7. Repeat for 0001C, 0001D, and 0001E.
-8. Use Habit Compass as an external audit/retrofit pilot before a stable release.
+2. Read the parent specification and completed `SPEC-0001A` foundation.
+3. Preserve the clean-slate architecture and public contracts established by 0001A.
+4. Move 0001B from `ready` to `active` only after its implementation plan is approved.
+5. Implement and review 0001B without adding later-spec behavior.
+6. Repeat for 0001C, 0001D, and 0001E.
+7. Use Habit Compass as an external audit/retrofit pilot before a stable release.
 
 Use only these development statuses:
 

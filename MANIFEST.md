@@ -15,7 +15,7 @@ Imported repositories and local example folders informed this revision, but thei
 5. `docs/engineering/spec-driven-workflow.md`
 6. `specs/README.md`
 7. `specs/approved/SPEC-0001-devcharter-v0.md`
-8. `specs/active/SPEC-0001A-core-foundation-and-canonical-model.md`
+8. `specs/done/SPEC-0001A-core-foundation-and-canonical-model.md`
 9. `specs/ready/SPEC-0001B-project-architect-workflow.md`
 10. `specs/ready/SPEC-0001C-specification-architect.md`
 11. `specs/ready/SPEC-0001D-ecosystem-generator-and-codex-adapter.md`
