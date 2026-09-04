@@ -12,6 +12,7 @@ import {
   modeSchema,
   plannedFileChangeSchema,
   projectFactSchema,
+  repositoryFingerprintInputsSchema,
   scopeSchema,
   specStatusSchema,
   validationResultSchema
@@ -46,6 +47,20 @@ describe("canonical concepts", () => {
     expect(result.success).toBe(false);
   });
 
+  it("requires repository fingerprint algorithm version 2", () => {
+    const inputs = {
+      algorithmVersion: 2,
+      scope: "engineering",
+      includedPaths: [],
+      excludedPaths: [],
+      gitFacts: []
+    };
+    expect(repositoryFingerprintInputsSchema.safeParse(inputs).success).toBe(true);
+    expect(
+      repositoryFingerprintInputsSchema.safeParse({ ...inputs, algorithmVersion: 1 }).success
+    ).toBe(false);
+  });
+
   it("validates a cohesive ecosystem proposal", () => {
     const fact = {
       key: "runtime",
@@ -78,7 +93,8 @@ describe("canonical concepts", () => {
       reason: "The accepted workflow requires them",
       origin: "project" as const,
       ownership: "project" as const,
-      diff: "+ scripts",
+      dependencies: ["package.json"],
+      maintenanceImplication: "Keep scripts synchronized",
       validationExpectations: ["pnpm test"]
     };
 
@@ -86,26 +102,47 @@ describe("canonical concepts", () => {
     expect(findingSchema.safeParse(finding).success).toBe(true);
     expect(plannedFileChangeSchema.safeParse(plannedChange).success).toBe(true);
 
-    const result = ecosystemProposalSchema.safeParse({
+    const proposal = {
       mode: "retrofit",
       scope: "full",
       repositoryFingerprint: "abc123",
+      proposalFingerprint: "def456",
       revision: 1,
       approved: false,
       facts: [fact],
       assumptions: [{ summary: "The package scripts are authoritative", evidence: fact.evidence }],
+      acceptedDecisions: [{ id: "project.outcome", value: "A dependable foundation" }],
+      questions: [],
       findings: [finding],
+      conflicts: [],
       desiredOutcome: "A dependable repository foundation",
+      criticalJourneys: [
+        {
+          id: "verification",
+          summary: "Run verification",
+          evidence: fact.evidence,
+          verification: "pnpm test"
+        }
+      ],
       consideredComponents: [
         { component: "CI generation", decision: "defer", reason: "Not justified by evidence" }
       ],
       plannedChanges: [plannedChange],
+      preservedPaths: ["README.md"],
       risks: ["Package scripts may change"],
       validation: ["pnpm test"],
       deferredWork: ["Adapter generation"]
-    });
+    };
+    const result = ecosystemProposalSchema.safeParse(proposal);
 
     expect(result.success).toBe(true);
+    expect(ecosystemProposalSchema.safeParse({ ...proposal, mode: "audit" }).success).toBe(false);
+    expect(
+      ecosystemProposalSchema.safeParse({
+        ...proposal,
+        plannedChanges: [plannedChange, plannedChange]
+      }).success
+    ).toBe(false);
   });
 
   it("keeps validation outcomes separate from specification statuses", () => {

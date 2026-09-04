@@ -16,22 +16,53 @@ discover → understand → propose → approve → apply → verify
 
 ## Current implementation
 
-SPEC-0001A provides the deterministic core foundation and exposes only:
+SPEC-0001A provides the deterministic core foundation. Active SPEC-0001B adds the read-only
+Project Architect commands:
 
 ```bash
+devcharter new [--scope full|governance|engineering|ai]
+devcharter retrofit [--scope full|governance|engineering|ai]
+devcharter audit [--scope full|governance|engineering|ai]
 devcharter inspect
 devcharter validate
 ```
 
-Both commands operate on the current working directory, support `--format human|json`, and are read-only. From this workspace, run them with `pnpm devcharter inspect` or `pnpm devcharter validate`.
+All commands operate on the current working directory and support `--format human|json`. The three
+Project Architect modes are deterministically read-only. New and retrofit infer strong repository
+evidence, infer a documented current outcome when confidence is adequate, ask only unresolved
+material questions, and return actionable unapproved proposals bound to complete proposal and
+repository fingerprints. Fingerprint algorithm version 2 includes canonical approval-relevant
+exclusion metadata without hashing excluded contents. Audit returns the same stable analysis sections
+without a proposal, approval state, or planned changes. Human and JSON results expose facts,
+findings, assumptions, questions, critical journeys, considered components, planned changes,
+preserved paths, conflicts, risks, validation, deferred work, and zero applied changes. Approval is
+an in-memory library contract; unresolved required questions, audit-mode proposals, replay, stale
+repository state, and material proposal mutations are rejected. Rendering and file application
+remain deferred to SPEC-0001D.
 
-The complete v0 product will support these modes after SPEC-0001B:
+Discovery classifies JavaScript/TypeScript, Python, Rust, Go, Java, and Kotlin source and tests.
+Root and manifest-backed `vendor` directories are dependency boundaries; unproven nested `vendor`
+directories remain project content and participate in preservation and approval fingerprints.
+Command checks are intentionally bounded to package scripts for npm, pnpm, yarn, and bun; static
+Python declarations and common Python verification tools; and standard Cargo, Go, and Maven
+verification commands. Unfamiliar or dynamic commands are reported as uncertainty. Explicitly
+third-party skills identified by an explicit package marker or an unambiguous version-1
+`skills-lock.json` entry remain inventoried but are excluded from project facts, findings,
+references, recommendations, and fingerprints. Runtime-AI facts use bounded declared-dependency and explicit
+source-import evidence across the supported ecosystems; dependency-only evidence remains
+unconfirmed. Semantic-inspection reporting includes only paths interpreted by a defined analyzer,
+not every enumerated, loaded, or fingerprinted source. Developer journeys prefer an authoritative
+root aggregate, CI, or root verification workflow over redundant package builds; user journeys
+require explicit current documentation or E2E evidence. Human output previews at most 20 preserved
+paths while JSON retains the complete list.
 
-```bash
-devcharter new
-devcharter retrofit
-devcharter audit
-```
+AI-scoped fingerprints bind canonical imports that match declared supported AI dependencies, so
+runtime-AI fact changes invalidate approval while unrelated source-body edits remain stable.
+Constraint and risk questions require contextual requirements or concrete failure evidence; generic
+product-domain vocabulary continues to use the explicit non-blocking empty defaults.
+
+From this workspace, run commands with `pnpm devcharter`, for example
+`pnpm devcharter audit --scope engineering --format json`.
 
 Each mode supports:
 
@@ -93,8 +124,8 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
 1. Read `AGENTS.md` and `MANIFEST.md`.
 2. Read the parent specification and completed `SPEC-0001A` foundation.
 3. Preserve the clean-slate architecture and public contracts established by 0001A.
-4. Move 0001B from `ready` to `active` only after its implementation plan is approved.
-5. Implement and review 0001B without adding later-spec behavior.
+4. Complete and independently review active 0001B without adding later-spec behavior.
+5. Move 0001B to `done` only after completion evidence and review pass.
 6. Repeat for 0001C, 0001D, and 0001E.
 7. Use Habit Compass as an external audit/retrofit pilot before a stable release.
 

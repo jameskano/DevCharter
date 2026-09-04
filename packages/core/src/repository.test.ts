@@ -83,6 +83,84 @@ describe("RepositoryReader", () => {
     });
   });
 
+  it("keeps ambiguous nested dependency-named directories as project material", async () => {
+    const repository = await temporaryRepository({
+      "vendor/root-dependency.js": "third party",
+      "app/vendor/local.ts": "export const local = true;",
+      "src/vendor/index.ts": "export const adapter = true;",
+      "packages/unproven/vendor/local.ts": "export const localPackageCode = true;",
+      "packages/app/package.json": '{"name":"app"}',
+      "packages/app/vendor/dependency.js": "third party"
+    });
+    const reader = await readerFor(repository);
+    const result = await reader.inventory();
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value).toContainEqual({
+      path: "app/vendor/local.ts",
+      kind: "source",
+      origin: "project"
+    });
+    expect(result.value).toContainEqual({
+      path: "src/vendor/index.ts",
+      kind: "source",
+      origin: "project"
+    });
+    expect(result.value).toContainEqual({
+      path: "packages/unproven/vendor/local.ts",
+      kind: "source",
+      origin: "project"
+    });
+    expect(result.value).toContainEqual({
+      path: "vendor",
+      kind: "dependency-directory",
+      origin: "third-party"
+    });
+    expect(result.value).toContainEqual({
+      path: "packages/app/vendor",
+      kind: "dependency-directory",
+      origin: "third-party"
+    });
+  });
+
+  it("classifies polyglot source and tests without treating JavaScript configuration as source", async () => {
+    const repository = await temporaryRepository({
+      "eslint.config.js": "export default [];",
+      "build.gradle.kts": 'plugins { kotlin("jvm") }',
+      "src/main.py": "def main(): pass",
+      "src/lib.rs": "pub fn value() -> u8 { 1 }",
+      "src/main.go": "package main",
+      "src/App.java": "class App {}",
+      "src/App.kt": "class App",
+      "tests/test_main.py": "def test_main(): pass",
+      "src/main_test.go": "package main"
+    });
+    const reader = await readerFor(repository);
+    const result = await reader.inventory();
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.find((item) => item.path === "eslint.config.js")?.kind).toBe(
+      "configuration"
+    );
+    expect(result.value.find((item) => item.path === "build.gradle.kts")?.kind).toBe(
+      "configuration"
+    );
+    for (const sourcePath of [
+      "src/main.py",
+      "src/lib.rs",
+      "src/main.go",
+      "src/App.java",
+      "src/App.kt"
+    ]) {
+      expect(result.value.find((item) => item.path === sourcePath)?.kind).toBe("source");
+    }
+    for (const testPath of ["tests/test_main.py", "src/main_test.go"]) {
+      expect(result.value.find((item) => item.path === testPath)?.kind).toBe("test");
+    }
+  });
+
   it("does not follow symbolic links", async () => {
     const repository = await temporaryRepository();
     const outside = await temporaryRepository({ "secret.txt": "outside" });

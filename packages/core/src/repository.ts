@@ -5,14 +5,52 @@ import type { ArtifactRecord } from "./model.js";
 import { DevCharterError, failure, success, type Result } from "./results.js";
 import { compareCanonicalText } from "./serialization.js";
 
-const DEFAULT_IGNORED_NAMES = new Set([
+const DEPENDENCY_DIRECTORY_NAMES = new Set([
+  ".pnpm",
+  ".venv",
+  ".yarn",
+  "bower_components",
+  "node_modules",
+  "Pods",
+  "vendor",
+  "venv"
+]);
+
+const CACHE_DIRECTORY_NAMES = new Set([
   ".cache",
-  ".git",
-  ".turbo",
+  ".gradle",
+  ".mypy_cache",
+  ".nox",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".tox",
+  ".turbo"
+]);
+
+const GENERATED_DIRECTORY_NAMES = new Set([
+  ".next",
+  ".nuxt",
+  ".output",
   "build",
   "coverage",
   "dist",
-  "node_modules"
+  "out",
+  "target"
+]);
+
+const DEFAULT_IGNORED_NAMES = new Set([
+  ".git",
+  ...DEPENDENCY_DIRECTORY_NAMES,
+  ...CACHE_DIRECTORY_NAMES,
+  ...GENERATED_DIRECTORY_NAMES
+]);
+
+const PACKAGE_ROOT_MANIFEST_NAMES = new Set([
+  "cargo.toml",
+  "go.mod",
+  "package.json",
+  "pom.xml",
+  "pyproject.toml"
 ]);
 
 export interface InventoryOptions {
@@ -103,19 +141,54 @@ export async function resolveRepositoryPath(
 
 function classifyFile(repositoryPath: string): Pick<ArtifactRecord, "kind" | "origin"> {
   const name = path.posix.basename(repositoryPath);
-  if (/\.(test|spec)\.[cm]?[jt]sx?$/.test(name)) {
+  const lowerPath = repositoryPath.toLowerCase();
+  if (
+    /\.(test|spec)\.[cm]?[jt]sx?$/.test(name) ||
+    /(^|\/)(test|tests|e2e)\//.test(lowerPath) ||
+    /(^|\/)(test_[^/]+|[^/]+_test)\.py$/.test(lowerPath) ||
+    /_test\.go$/.test(name)
+  ) {
     return { kind: "test", origin: "project" };
   }
   if (/\.(md|mdx|txt)$/.test(name)) return { kind: "documentation", origin: "project" };
-  if (/\.(json|ya?ml|toml)$/.test(name)) return { kind: "configuration", origin: "project" };
-  if (/\.[cm]?[jt]sx?$/.test(name)) return { kind: "source", origin: "project" };
+  if (
+    /\.(json|ya?ml|toml|xml)$/.test(name) ||
+    /^(?:eslint|prettier|vitest|jest|vite|webpack|rollup|babel|postcss|tailwind)\.config\.[cm]?[jt]s$/.test(
+      name
+    ) ||
+    /^(?:build|settings)\.gradle(?:\.kts)?$/.test(name)
+  ) {
+    return { kind: "configuration", origin: "project" };
+  }
+  if (/\.(?:[cm]?[jt]sx?|py|rs|go|java|kts?)$/.test(name)) {
+    return { kind: "source", origin: "project" };
+  }
   return { kind: "file", origin: "project" };
 }
 
 function classifyIgnored(name: string): Pick<ArtifactRecord, "kind" | "origin"> {
-  if (name === "node_modules") return { kind: "dependency-directory", origin: "third-party" };
+  if (DEPENDENCY_DIRECTORY_NAMES.has(name)) {
+    return { kind: "dependency-directory", origin: "third-party" };
+  }
+  if (CACHE_DIRECTORY_NAMES.has(name)) {
+    return { kind: "ignored-directory", origin: "unknown" };
+  }
   if (name === ".git") return { kind: "version-control-directory", origin: "third-party" };
   return { kind: "generated-directory", origin: "generated-vendor" };
+}
+
+function shouldIgnoreDirectory(
+  repositoryPath: string,
+  name: string,
+  parentEntryNames: ReadonlySet<string>
+): boolean {
+  if (!DEFAULT_IGNORED_NAMES.has(name)) return false;
+  if (/^\.agents\/skills\/[^/]+$/i.test(repositoryPath)) return false;
+  if (name === "vendor") {
+    if (repositoryPath === "vendor") return true;
+    return [...PACKAGE_ROOT_MANIFEST_NAMES].some((manifest) => parentEntryNames.has(manifest));
+  }
+  return true;
 }
 
 function matchesCustomIgnore(repositoryPath: string, options: InventoryOptions): boolean {
@@ -198,6 +271,7 @@ export class RepositoryReader {
       const visit = async (directory: string, relativeDirectory: string): Promise<void> => {
         const entries = await readdir(directory, { withFileTypes: true });
         entries.sort((left, right) => compareCanonicalText(left.name, right.name));
+        const entryNames = new Set(entries.map((entry) => entry.name.toLowerCase()));
 
         for (const entry of entries) {
           const repositoryPath = relativeDirectory
@@ -215,7 +289,7 @@ export class RepositoryReader {
           }
 
           if (entry.isDirectory()) {
-            if (DEFAULT_IGNORED_NAMES.has(entry.name)) {
+            if (shouldIgnoreDirectory(repositoryPath, entry.name, entryNames)) {
               if (entry.name !== ".git") {
                 artifacts.push({ path: repositoryPath, ...classifyIgnored(entry.name) });
               }

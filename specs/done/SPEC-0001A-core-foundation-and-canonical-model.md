@@ -69,12 +69,12 @@ Artifact kinds are internal analysis categories, not new public scopes.
 
 ### `EcosystemProposal`
 
-- mode, scope, and repository revision/fingerprint;
-- facts, assumptions, findings, and desired outcome;
-- considered components;
-- planned file changes;
+- mode, scope, scoped repository fingerprint, and complete proposal fingerprint;
+- facts, assumptions, accepted decisions, questions, findings, and desired outcome;
+- critical journeys and considered components;
+- staged planned file changes and explicitly preserved paths;
 - risks, validation, and deferred work;
-- proposal revision and approval state.
+- proposal revision and derived approval state.
 
 ### `PlannedFileChange`
 
@@ -82,9 +82,15 @@ Artifact kinds are internal analysis categories, not new public scopes.
 - action: create, update, skip, or conflict;
 - purpose and reason;
 - origin/ownership classification;
-- proposed content or diff;
-- applicable adapter;
+- dependencies and maintenance implication;
+- proposed content or diff when the change has reached the rendered application stage;
+- applicable adapter when rendering selects one;
 - validation expectations.
+
+SPEC-0001B evolves this neutral record into a staged contract: abstract Project Architect
+create/update decisions do not yet require content, diff, or adapter. SPEC-0001D must narrow the
+same record before application so rendered create/update changes contain reviewable content or a
+diff. This evolution preserves the SPEC-0001A action, path-safety, and validation guarantees.
 
 ### `ValidationResult`
 
@@ -231,6 +237,7 @@ Only packages/core and packages/cli exist. Runtime dependencies are limited to Z
 | Negative CLI tests | Passed for later modes, check, sessions, generation, migration, positional roots, and invalid formats. |
 | Read-only integration checks | Passed using before/after path, content-hash, size, and modification-time snapshots. |
 | Dependency/import audit | Passed; no runtime network or telemetry imports and only Zod/YAML production dependencies. |
+| Follow-up prompt-routing review | Passed; README, MANIFEST, the audit-and-plan prompt, and specification statuses route the next implementation plan to SPEC-0001B. |
 
 Dependency installation completed from the available package cache while the environment reported certificate-chain warnings for registry metadata. Runtime and verification require no network.
 
@@ -253,7 +260,7 @@ Dependency installation completed from the available package cache while the env
 | 13 | Production dependency and source-import audits show no network/telemetry capability; CLI integration runs locally without network. |
 | 14 | Human/JSON, line-ending, object-key, array-order, path-set, and hash tests pass. |
 | 15 | The 51-test suite covers records, config/YAML, serialization, filesystem safety, writer failures, representative legacy input, exact CLI surface, and zero-write behavior. |
-| 16 | README and architecture status are synchronized here; affected documentation was reviewed as listed below. |
+| 16 | README, architecture status, manifest routing, and current Codex prompts are synchronized; affected documentation was reviewed as listed below. |
 
 ### Independent completion review
 
@@ -261,11 +268,17 @@ The initial fresh read-only review found no later-spec scope drift but required 
 
 The repeated read-only review inspected the acceptance criteria, full implementation diff, public exports, source and tests, dependency graph, CLI behavior, current documentation, Git state, and verification output. It found no remaining blocking or important findings and returned PASS. SPEC-0001A is eligible for `done`.
 
+A later independent read-only follow-up review reran the recorded checks and found one important documentation issue: the audit-and-plan prompt referenced the completed SPEC-0001A file while still asking for a plan to complete SPEC-0001A. That review returned PASS WITH FIXES and withheld a `done` recommendation until the routing was corrected.
+
+The follow-up correction retargeted the audit-and-plan prompt to ready SPEC-0001B, preserved SPEC-0001A as the completed foundation, and updated this completion record. A narrow routing and status review then confirmed that README, MANIFEST, current prompts, and specification locations consistently identify SPEC-0001B as the next implementation-planning target. With the important finding closed, SPEC-0001A remains eligible for `done`.
+
 ### Documentation review and deferrals
 
-Updated: README.md, the system overview, the parent and SPEC-0001A clean-slate wording, the manifest, and the reconciliation prompt.
+Updated during implementation: README.md, the system overview, the parent and SPEC-0001A clean-slate wording, and the manifest.
 
-Reviewed unchanged: AGENTS.md, purpose and scope, quality and decision model, spec-driven workflow, Codex capability reference, specs index, implementation/review prompts, and SPEC-0001B–E. They remain consistent with this foundation.
+Updated after the follow-up completion review: the audit-and-plan prompt was retargeted from completed SPEC-0001A to ready SPEC-0001B, and this completion evidence was corrected to record the finding and verification.
+
+Reviewed unchanged: AGENTS.md, purpose and scope, quality and decision model, spec-driven workflow, Codex capability reference, specs index, implementation and completion-review prompts, and SPEC-0001B–E. They remain consistent with this foundation and route later behavior to its owning specification.
 
 Deferred exactly as specified:
 

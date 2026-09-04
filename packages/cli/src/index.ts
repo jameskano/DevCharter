@@ -12,6 +12,11 @@ import {
   type ProjectFact,
   type ValidationResult
 } from "@devcharter/core/read-only";
+import {
+  runProjectArchitect,
+  type ProjectArchitectResult
+} from "@devcharter/core/project-architect";
+import type { Mode, Scope } from "@devcharter/core/read-only";
 
 export const DEVCHARTER_VERSION = "0.1.0";
 
@@ -28,7 +33,7 @@ interface InspectResult {
 
 interface CliEnvelope<T> {
   formatVersion: 1;
-  command: "inspect" | "validate";
+  command: "inspect" | "validate" | Mode;
   ok: boolean;
   result?: T;
   warnings: string[];
@@ -36,9 +41,14 @@ interface CliEnvelope<T> {
 }
 
 type ParsedInvocation =
-  | { kind: "help"; command?: "inspect" | "validate" }
+  | { kind: "help"; command?: "inspect" | "validate" | Mode }
   | { kind: "version" }
-  | { kind: "command"; command: "inspect" | "validate"; format: "human" | "json" }
+  | {
+      kind: "command";
+      command: "inspect" | "validate" | Mode;
+      format: "human" | "json";
+      scope?: Scope;
+    }
   | { kind: "error"; message: string };
 
 const HELP = normalizeGeneratedText(
@@ -46,12 +56,18 @@ const HELP = normalizeGeneratedText(
     "DevCharter " + DEVCHARTER_VERSION,
     "",
     "Usage:",
+    "  devcharter new [--scope full|governance|engineering|ai] [--format human|json]",
+    "  devcharter retrofit [--scope full|governance|engineering|ai] [--format human|json]",
+    "  devcharter audit [--scope full|governance|engineering|ai] [--format human|json]",
     "  devcharter inspect [--format human|json]",
     "  devcharter validate [--format human|json]",
     "  devcharter --help",
     "  devcharter --version",
     "",
     "Commands:",
+    "  new       Analyze a new project and return an unapproved proposal without writing",
+    "  retrofit  Analyze an established project and return an unapproved proposal without writing",
+    "  audit     Audit the selected scope without writing",
     "  inspect   Inventory the current working directory without writing",
     "  validate  Validate DevCharter configuration and legacy YAML without writing"
   ].join("\n")
@@ -65,6 +81,7 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
       strict: true,
       options: {
         format: { type: "string" },
+        scope: { type: "string" },
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" }
       }
@@ -80,7 +97,7 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
 
     if (parsed.positionals.length === 0) {
       if (parsed.values.help === true) return { kind: "help" };
-      return { kind: "error", message: "Expected inspect or validate" };
+      return { kind: "error", message: "Expected new, retrofit, audit, inspect, or validate" };
     }
     if (parsed.positionals.length > 1) {
       return {
@@ -89,7 +106,13 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
           "Positional repository arguments are not supported; commands use the current directory"
       };
     }
-    if (command !== "inspect" && command !== "validate") {
+    if (
+      command !== "new" &&
+      command !== "retrofit" &&
+      command !== "audit" &&
+      command !== "inspect" &&
+      command !== "validate"
+    ) {
       return { kind: "error", message: "Unknown command: " + command };
     }
     if (parsed.values.help === true) return { kind: "help", command };
@@ -98,7 +121,20 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
     if (format !== "human" && format !== "json") {
       return { kind: "error", message: "--format must be human or json" };
     }
-    return { kind: "command", command, format };
+    if ((command === "inspect" || command === "validate") && parsed.values.scope !== undefined) {
+      return { kind: "error", message: "--scope is supported only by new, retrofit, and audit" };
+    }
+    const scope = parsed.values.scope;
+    if (
+      scope !== undefined &&
+      scope !== "full" &&
+      scope !== "governance" &&
+      scope !== "engineering" &&
+      scope !== "ai"
+    ) {
+      return { kind: "error", message: "--scope must be full, governance, engineering, or ai" };
+    }
+    return { kind: "command", command, format, ...(scope === undefined ? {} : { scope }) };
   } catch (error) {
     return {
       kind: "error",
@@ -244,13 +280,114 @@ function humanValidate(envelope: CliEnvelope<ValidationResult>): string {
   return normalizeGeneratedText(lines.join("\n"));
 }
 
+function humanProjectArchitect(envelope: CliEnvelope<ProjectArchitectResult>): string {
+  const lines = [`DevCharter ${envelope.command}`];
+  if (envelope.result !== undefined) {
+    const result = envelope.result;
+    lines.push(`Scope: ${result.scope}`);
+    lines.push(`Summary: ${result.summary}`);
+    lines.push(
+      `Recommendation: ${result.recommendation.recommendedMode} (${result.recommendation.confidence} confidence)`
+    );
+    if (result.recommendation.uncertainty !== undefined) {
+      lines.push(`Recommendation uncertainty: ${result.recommendation.uncertainty}`);
+    }
+    for (const signal of result.recommendation.signals) {
+      lines.push(
+        `- signal ${signal.kind} [${signal.strength}; ${signal.confidence} confidence]: ${signal.evidence
+          .map((item) => item.source)
+          .join(", ")}`
+      );
+    }
+    lines.push(`Repository fingerprint: ${result.repositoryFingerprint}`);
+    lines.push(
+      `Fingerprint inputs: ${result.fingerprintInputs.includedPaths.length} included, ${result.fingerprintInputs.excludedPaths.length} excluded`
+    );
+    lines.push(`Semantic inspection: ${result.semanticallyInspectedPaths.length} path(s)`);
+    lines.push(`Facts: ${result.facts.length}`);
+    for (const fact of result.facts) {
+      lines.push(
+        `- ${fact.key} [${fact.state}${fact.confidence === undefined ? "" : `; ${fact.confidence} confidence`}]: ${JSON.stringify(fact.value)}`
+      );
+      lines.push(`  Evidence: ${fact.evidence.map((item) => item.source).join(", ")}`);
+    }
+    lines.push(`Findings: ${result.findings.length}`);
+    for (const finding of result.findings) {
+      lines.push(
+        `- ${finding.code} [${finding.impact}; ${finding.confidence} confidence]: ${finding.summary}`
+      );
+      lines.push(`  Evidence: ${finding.evidence.map((item) => item.source).join(", ")}`);
+      if (finding.uncertainty !== undefined) {
+        lines.push(`  Uncertainty: ${finding.uncertainty}`);
+      }
+      lines.push(`  Recommended action: ${finding.recommendedAction}`);
+    }
+    lines.push(`Assumptions: ${result.assumptions.length}`);
+    for (const assumption of result.assumptions) lines.push(`- ${assumption.summary}`);
+    lines.push(`Questions: ${result.questions.length}`);
+    for (const question of result.questions) {
+      lines.push(`- ${question.id}: ${question.question}`);
+      lines.push(`  Context: ${question.context}`);
+      lines.push(`  Reason: ${question.reason}`);
+      if (question.recommendedDefault !== undefined) {
+        lines.push(`  Recommended default: ${JSON.stringify(question.recommendedDefault)}`);
+      }
+    }
+    lines.push(`Critical journeys: ${result.criticalJourneys.length}`);
+    for (const journey of result.criticalJourneys) {
+      lines.push(`- ${journey.id}: ${journey.summary}`);
+      lines.push(`  Evidence: ${journey.evidence.map((item) => item.source).join(", ")}`);
+      lines.push(`  Verification: ${journey.verification}`);
+    }
+    lines.push(`Considered components: ${result.consideredComponents.length}`);
+    for (const component of result.consideredComponents) {
+      lines.push(`- ${component.decision} ${component.component}: ${component.reason}`);
+    }
+    if (result.proposal !== undefined) {
+      lines.push(`Proposal revision: ${result.proposal.revision} (unapproved)`);
+      lines.push(`Proposal fingerprint: ${result.proposal.proposalFingerprint}`);
+      lines.push("Application: deferred to SPEC-0001D");
+    } else {
+      lines.push("Proposal: none");
+    }
+    lines.push(`Planned changes: ${result.plannedChanges.length}`);
+    for (const change of result.plannedChanges) {
+      lines.push(`- ${change.action} ${change.path}: ${change.reason}`);
+    }
+    lines.push(`Preserved paths: ${result.preservedPaths.length}`);
+    for (const preservedPath of result.preservedPaths.slice(0, 20)) {
+      lines.push(`- ${preservedPath}`);
+    }
+    if (result.preservedPaths.length > 20) {
+      lines.push(
+        `- ${result.preservedPaths.length - 20} additional preserved path(s) omitted; use JSON for the complete list`
+      );
+    }
+    lines.push(`Conflicts: ${result.conflicts.length}`);
+    for (const conflict of result.conflicts) {
+      lines.push(`- ${conflict.code}: ${conflict.summary}`);
+    }
+    lines.push(`Risks: ${result.risks.length}`);
+    for (const risk of result.risks) lines.push(`- ${risk}`);
+    lines.push(`Validation: ${result.validation.length}`);
+    for (const validation of result.validation) lines.push(`- ${validation}`);
+    lines.push(`Deferred work: ${result.deferredWork.length}`);
+    for (const deferred of result.deferredWork) lines.push(`- ${deferred}`);
+    lines.push("Applied changes: 0");
+  }
+  for (const error of envelope.errors) lines.push(`Error ${error.code}: ${error.message}`);
+  return normalizeGeneratedText(lines.join("\n"));
+}
+
 function emit<T>(envelope: CliEnvelope<T>, format: "human" | "json", io: CliIo): void {
   if (format === "json") {
     io.stdout(stableJson(envelope as unknown as JsonValue));
   } else if (envelope.command === "inspect") {
     io.stdout(humanInspect(envelope as CliEnvelope<InspectResult>));
-  } else {
+  } else if (envelope.command === "validate") {
     io.stdout(humanValidate(envelope as CliEnvelope<ValidationResult>));
+  } else {
+    io.stdout(humanProjectArchitect(envelope as CliEnvelope<ProjectArchitectResult>));
   }
 }
 
@@ -284,6 +421,37 @@ export async function runCli(args: readonly string[], io: CliIo): Promise<number
 
   if (invocation.command === "inspect") {
     const envelope = await inspect(readerResult.value);
+    emit(envelope, invocation.format, io);
+    return envelope.ok ? 0 : 1;
+  }
+
+  if (
+    invocation.command === "new" ||
+    invocation.command === "retrofit" ||
+    invocation.command === "audit"
+  ) {
+    const result = await runProjectArchitect(io.cwd, {
+      mode: invocation.command,
+      ...(invocation.scope === undefined ? {} : { scope: invocation.scope })
+    });
+    const envelope: CliEnvelope<ProjectArchitectResult> = result.ok
+      ? {
+          formatVersion: 1,
+          command: invocation.command,
+          ok: true,
+          result: result.value,
+          warnings: result.value.fingerprintInputs.excludedPaths
+            .filter((item) => item.uncertainty !== undefined)
+            .map((item) => `${item.path}: ${item.uncertainty}`),
+          errors: []
+        }
+      : {
+          formatVersion: 1,
+          command: invocation.command,
+          ok: false,
+          warnings: [],
+          errors: [result.error]
+        };
     emit(envelope, invocation.format, io);
     return envelope.ok ? 0 : 1;
   }

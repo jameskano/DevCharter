@@ -43,6 +43,13 @@ validation expectations
 
 The user can review exactly what will happen.
 
+SPEC-0001B supplies the same `PlannedFileChange` records at the abstract proposal stage, where
+content, diff, and adapter are optional. Before any SPEC-0001D application, create/update records
+must be narrowed to rendered changes containing proposed content or a reviewable diff and the
+selected adapter where applicable. Rendering changes approval-relevant proposal content, so the
+rendered proposal receives a new fingerprint and explicit write approval; abstract approval from
+SPEC-0001B cannot be replayed as write approval.
+
 ## Minimum generation rule
 
 Generate only approved artifacts that satisfy a detected current need.
