@@ -568,3 +568,22 @@ On 2026-09-05, after the final bounded Maven correction and all recorded author 
 user explicitly directed that SPEC-0001B be marked completed. This approval closes the earlier
 pending-review checkpoint and authorizes the `active` to `done` lifecycle transition. No claim is
 made that the final Maven correction received a separate independent review in this turn.
+
+### Post-completion Maven XML well-formedness correction
+
+On 2026-09-06, before SPEC-0001C activation, the bounded Maven tag-context scanner was corrected to
+return no dependency evidence for duplicate attributes, undeclared entities, unbound namespace
+prefixes, or foreign non-Maven element namespaces. Namespace handling remains deliberately narrow:
+ordinary unqualified POM fixtures, the Maven POM namespace, its conventional XML Schema Instance
+metadata, predefined XML namespaces, and numeric or predefined entity syntax are recognized only
+to establish well-formed bounded input. The scanner still does not resolve effective Maven models,
+parents, BOMs, properties, profiles, plugins, local repositories, or network metadata.
+
+Direct runtime-AI tests now cover valid Maven namespace forms plus duplicate raw and expanded
+attributes, undeclared entities, unbound prefixes, and foreign namespaces. Public Project Architect
+regressions prove the absence of runtime and unused-dependency facts, stable AI-scope fingerprints
+and current approvals across invalid-only changes, and stale approval when invalid XML becomes a
+valid direct supported dependency. Targeted verification passed 262 tests across the 98-test direct
+runtime-AI suite and 164-test Project Architect suite. The complete repository suite passed 10 files
+and 332 tests. SPEC-0001B remains `done`; this correction narrows malformed input accepted by its
+existing contract and adds no feature, public API, status, command, or general Maven resolver.

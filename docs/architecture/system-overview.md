@@ -28,8 +28,9 @@ SPEC-0001A implements the deterministic core foundation and the read-only `inspe
 CLI commands. Completed SPEC-0001B adds scoped repository analysis, evidence-weighted mode
 recommendations, explicit specification/command/instruction authority maps, bounded reference and
 command validation, unapproved staged proposals, proposal/repository fingerprints, pure in-memory
-approval, and the read-only `new`, `retrofit`, and `audit` commands. Specification Architect
-workflows remain assigned to ready SPEC-0001C; rendering/application, the Codex adapter, and release
+approval, and the read-only `new`, `retrofit`, and `audit` commands. Active SPEC-0001C implements
+the model-neutral Specification Architect workflow as one instruction-only Codex repository skill,
+without a parallel core API or CLI command. Rendering/application, the Codex adapter, and release
 qualification remain assigned to SPEC-0001D–E.
 
 The CLI depends only on the core read-only and Project Architect entry points. The atomic writer is
@@ -59,6 +60,11 @@ structurally unable to import the writer.
 ### Specification Architect
 
 Creates or refines one definitive, implementation-ready specification for non-trivial behavior. It connects intent, acceptance criteria, implementation, tests, and documentation.
+
+In v0 this is a repository skill at `.agents/skills/specification-architect/SKILL.md`. Codex performs
+the semantic inspection, questioning, drafting, and review procedure using repository evidence. The
+deterministic core keeps its existing neutral records and Project Architect authority analysis; no
+runtime Specification Architect consumer currently justifies another public schema or package API.
 
 ### Deterministic core
 

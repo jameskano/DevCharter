@@ -324,10 +324,24 @@ describe("bounded Maven application dependency authority", () => {
     [
       "Maven namespace and XML declaration",
       `<?xml version="1.0" encoding="UTF-8"?>
-       <project xmlns="http://maven.apache.org/POM/4.0.0">
+       <project xmlns="http://maven.apache.org/POM/4.0.0"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 maven-4.0.0.xsd">
          <modelVersion>4.0.0</modelVersion>
          <dependencies>${directDependency("<version>${openai.version}</version>")}</dependencies>
        </project>`,
+      "src/App.java"
+    ],
+    [
+      "bound Maven namespace prefix",
+      `<m:project xmlns:m="http://maven.apache.org/POM/4.0.0">
+         <m:dependencies>
+           <m:dependency>
+             <m:groupId>com.openai</m:groupId>
+             <m:artifactId>openai-java</m:artifactId>
+           </m:dependency>
+         </m:dependencies>
+       </m:project>`,
       "src/App.java"
     ],
     [
@@ -429,6 +443,26 @@ describe("bounded Maven application dependency authority", () => {
       "<project><dependencies><dependency><groupId>com.openai</groupId><artifactId>openai-java</artifactId></dependencies></project>"
     ],
     ["malformed ancestry", `<project><dependencies>${directDependency()}</project></dependencies>`],
+    [
+      "duplicate attributes",
+      `<project duplicate="first" duplicate="second"><dependencies>${directDependency()}</dependencies></project>`
+    ],
+    [
+      "duplicate expanded attributes",
+      `<project xmlns:a="http://maven.apache.org/POM/4.0.0" xmlns:b="http://maven.apache.org/POM/4.0.0" a:value="first" b:value="second"><dependencies>${directDependency()}</dependencies></project>`
+    ],
+    [
+      "undeclared entity",
+      `<project><name>&example;</name><dependencies>${directDependency()}</dependencies></project>`
+    ],
+    [
+      "unbound namespace prefix",
+      `<project><m:dependencies>${directDependency()}</m:dependencies></project>`
+    ],
+    [
+      "foreign non-Maven namespace",
+      `<project xmlns:foreign="https://example.com/schema"><foreign:dependencies>${directDependency()}</foreign:dependencies></project>`
+    ],
     [
       "lookalike identifiers",
       pom(

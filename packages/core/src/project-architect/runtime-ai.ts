@@ -343,6 +343,15 @@ function readMavenDependencies(text: string): string[] {
   interface MavenElement {
     qualifiedName: string;
     localName: string;
+    namespaceUri: string;
+    namespaceBindings: Map<string, string>;
+  }
+
+  interface MavenAttribute {
+    qualifiedName: string;
+    prefix?: string;
+    localName: string;
+    value: string;
   }
 
   interface MavenDependency {
@@ -367,10 +376,34 @@ function readMavenDependencies(text: string): string[] {
   let rootSeen = false;
   let rootClosed = false;
 
+  const MAVEN_NAMESPACE = "http://maven.apache.org/POM/4.0.0";
+  const XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace";
+  const XMLNS_NAMESPACE = "http://www.w3.org/2000/xmlns/";
+  const XSI_NAMESPACE = "http://www.w3.org/2001/XMLSchema-instance";
+  const ALLOWED_DECLARED_NAMESPACES = new Set(["", MAVEN_NAMESPACE, XML_NAMESPACE, XSI_NAMESPACE]);
+
   const fail = (): string[] => [];
-  const localName = (qualifiedName: string): string =>
-    qualifiedName.slice(qualifiedName.lastIndexOf(":") + 1);
+  const splitQualifiedName = (
+    qualifiedName: string
+  ): { prefix?: string; localName: string } | undefined => {
+    const match = qualifiedName.match(
+      /^(?:([A-Za-z_][A-Za-z0-9_.-]*):)?([A-Za-z_][A-Za-z0-9_.-]*)$/
+    );
+    if (match === null) return undefined;
+    return {
+      ...(match[1] === undefined ? {} : { prefix: match[1] }),
+      localName: match[2] as string
+    };
+  };
   const ancestry = (): string[] => stack.map((element) => element.localName);
+  const validEntityReferences = (value: string): boolean => {
+    for (let index = value.indexOf("&"); index !== -1; index = value.indexOf("&", index + 1)) {
+      const reference = value.slice(index).match(/^&(?:amp|lt|gt|apos|quot|#\d+|#x[0-9A-Fa-f]+);/);
+      if (reference === null) return false;
+      index += reference[0].length - 1;
+    }
+    return true;
+  };
   const finishCapture = (): boolean => {
     if (capture === undefined || dependency === undefined) return false;
     const value = capture.text.trim();
@@ -403,14 +436,86 @@ function readMavenDependencies(text: string): string[] {
     }
     return undefined;
   };
-  const validAttributes = (value: string): boolean => {
+  const readAttributes = (value: string): MavenAttribute[] | undefined => {
+    const attributes: MavenAttribute[] = [];
     let rest = value;
     while (rest.trim() !== "") {
-      const attribute = rest.match(/^\s+[A-Za-z_][A-Za-z0-9_.:-]*\s*=\s*(?:"[^"]*"|'[^']*')/)?.[0];
-      if (attribute === undefined) return false;
-      rest = rest.slice(attribute.length);
+      const match = rest.match(/^\s+([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/);
+      if (match === null) return undefined;
+      const qualifiedName = match[1] as string;
+      const name = splitQualifiedName(qualifiedName);
+      const attributeValue = (match[2] ?? match[3]) as string;
+      if (name === undefined || !validEntityReferences(attributeValue)) return undefined;
+      attributes.push({ qualifiedName, ...name, value: attributeValue });
+      rest = rest.slice(match[0].length);
     }
-    return true;
+    return attributes;
+  };
+  const resolveElement = (
+    qualifiedName: string,
+    attributes: readonly MavenAttribute[]
+  ): MavenElement | undefined => {
+    const name = splitQualifiedName(qualifiedName);
+    if (name === undefined || name.prefix === "xmlns") return undefined;
+    const namespaceBindings = new Map(stack.at(-1)?.namespaceBindings ?? [["xml", XML_NAMESPACE]]);
+
+    for (const attribute of attributes) {
+      const namespacePrefix =
+        attribute.qualifiedName === "xmlns"
+          ? ""
+          : attribute.prefix === "xmlns"
+            ? attribute.localName
+            : undefined;
+      if (namespacePrefix === undefined) continue;
+      if (
+        namespacePrefix === "xmlns" ||
+        (namespacePrefix === "xml" && attribute.value !== XML_NAMESPACE) ||
+        (namespacePrefix !== "xml" && attribute.value === XML_NAMESPACE) ||
+        !ALLOWED_DECLARED_NAMESPACES.has(attribute.value) ||
+        (namespacePrefix !== "" && attribute.value === "")
+      ) {
+        return undefined;
+      }
+      namespaceBindings.set(namespacePrefix, attribute.value);
+    }
+
+    const namespaceUri =
+      name.prefix === undefined
+        ? (namespaceBindings.get("") ?? "")
+        : namespaceBindings.get(name.prefix);
+    if (namespaceUri === undefined || (namespaceUri !== "" && namespaceUri !== MAVEN_NAMESPACE)) {
+      return undefined;
+    }
+
+    const expandedAttributes = new Set<string>();
+    for (const attribute of attributes) {
+      let attributeNamespace = "";
+      let attributeLocalName = attribute.localName;
+      if (attribute.qualifiedName === "xmlns") {
+        attributeNamespace = XMLNS_NAMESPACE;
+        attributeLocalName = "xmlns";
+      } else if (attribute.prefix === "xmlns") {
+        attributeNamespace = XMLNS_NAMESPACE;
+      } else if (attribute.prefix !== undefined) {
+        const resolved = namespaceBindings.get(attribute.prefix);
+        if (resolved === undefined) return undefined;
+        attributeNamespace = resolved;
+      }
+      if (
+        attributeNamespace !== "" &&
+        attributeNamespace !== MAVEN_NAMESPACE &&
+        attributeNamespace !== XML_NAMESPACE &&
+        attributeNamespace !== XMLNS_NAMESPACE &&
+        attributeNamespace !== XSI_NAMESPACE
+      ) {
+        return undefined;
+      }
+      const expandedName = `{${attributeNamespace}}${attributeLocalName}`;
+      if (expandedAttributes.has(expandedName)) return undefined;
+      expandedAttributes.add(expandedName);
+    }
+
+    return { qualifiedName, localName: name.localName, namespaceUri, namespaceBindings };
   };
 
   for (let index = 0; index < source.length;) {
@@ -418,6 +523,7 @@ function readMavenDependencies(text: string): string[] {
       const nextTag = source.indexOf("<", index);
       const end = nextTag === -1 ? source.length : nextTag;
       const value = source.slice(index, end);
+      if (!validEntityReferences(value)) return fail();
       if (stack.length === 0 && value.trim() !== "") return fail();
       if (capture !== undefined && stack.length === capture.depth) capture.text += value;
       index = end;
@@ -483,11 +589,13 @@ function readMavenDependencies(text: string): string[] {
     const opening = tagBody.match(/^\s*([A-Za-z_][A-Za-z0-9_.:-]*)/)?.[1];
     if (opening === undefined) return fail();
     const openingEnd = tagBody.indexOf(opening) + opening.length;
-    if (!validAttributes(tagBody.slice(openingEnd))) return fail();
+    const attributes = readAttributes(tagBody.slice(openingEnd));
+    if (attributes === undefined) return fail();
     if (rootClosed) return fail();
     if (capture !== undefined) capture.invalid = true;
 
-    const element = { qualifiedName: opening, localName: localName(opening) };
+    const element = resolveElement(opening, attributes);
+    if (element === undefined) return fail();
     if (stack.length === 0) {
       if (rootSeen || element.localName !== "project") return fail();
       rootSeen = true;

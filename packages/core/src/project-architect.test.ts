@@ -2460,6 +2460,24 @@ describe("final SPEC-0001B Maven dependency authority correction", () => {
       <artifactId>openai-java</artifactId>
     </dependency>`;
   const directPom = `<project><dependencies>${directDependency}</dependencies></project>`;
+  const invalidPomFixtures = [
+    [
+      "duplicate attributes",
+      `<project duplicate="first" duplicate="second"><dependencies>${directDependency}</dependencies></project>`
+    ],
+    [
+      "undeclared entity",
+      `<project><name>&example;</name><dependencies>${directDependency}</dependencies></project>`
+    ],
+    [
+      "unbound namespace prefix",
+      `<project><m:dependencies>${directDependency}</m:dependencies></project>`
+    ],
+    [
+      "foreign non-Maven namespace",
+      `<project xmlns:foreign="https://example.com/schema"><foreign:dependencies>${directDependency}</foreign:dependencies></project>`
+    ]
+  ] as const;
   const runtimeFact = (facts: readonly { key: string }[]): { key: string } | undefined =>
     facts.find((fact) => fact.key === "ai.runtimeImplementation");
 
@@ -2545,6 +2563,83 @@ describe("final SPEC-0001B Maven dependency authority correction", () => {
     expect(result.value.facts).toContainEqual(
       expect.objectContaining({ key: "ai.unusedOrUnconfirmedDependencies" })
     );
+  });
+
+  it.each(invalidPomFixtures)("produces no Maven evidence for %s", async (_name, manifest) => {
+    const repository = await temporaryRepository({
+      "pom.xml": manifest,
+      "src/App.java": javaImport
+    });
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(runtimeFact(result.value.facts)).toBeUndefined();
+    expect(result.value.facts.map((fact) => fact.key)).not.toContain(
+      "ai.unusedOrUnconfirmedDependencies"
+    );
+  });
+
+  it("keeps AI facts and fingerprints stable across invalid Maven XML changes", async () => {
+    const repository = await temporaryRepository({
+      "pom.xml": invalidPomFixtures[0][1],
+      "src/App.java": javaImport
+    });
+    const first = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    await repository.write("pom.xml", invalidPomFixtures[1][1]);
+    const second = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(first.ok && second.ok).toBe(true);
+    if (!first.ok || !second.ok) return;
+    expect(runtimeFact(first.value.facts)).toBeUndefined();
+    expect(runtimeFact(second.value.facts)).toBeUndefined();
+    expect(second.value.repositoryFingerprint).toBe(first.value.repositoryFingerprint);
+  });
+
+  it("keeps approval current across invalid Maven XML changes", async () => {
+    const repository = await temporaryRepository({
+      "pom.xml": invalidPomFixtures[2][1],
+      "src/App.java": javaImport
+    });
+    const initial = await runProjectArchitect(repository.root, {
+      mode: "retrofit",
+      scope: "ai",
+      acceptedDecisions: [...decisionsForScope("ai"), { id: "project.mode", value: "retrofit" }]
+    });
+    expect(initial.ok).toBe(true);
+    if (!initial.ok || initial.value.proposal === undefined) return;
+    const proposal = initial.value.proposal;
+    await repository.write("pom.xml", invalidPomFixtures[3][1]);
+    await expect(
+      approveProposal(repository.root, proposal, {
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    ).resolves.toEqual({ ok: true, value: { ...proposal, approved: true } });
+  });
+
+  it("stales approval when invalid Maven XML becomes a valid direct dependency", async () => {
+    const repository = await temporaryRepository({
+      "pom.xml": invalidPomFixtures[0][1],
+      "src/App.java": javaImport
+    });
+    const initial = await runProjectArchitect(repository.root, {
+      mode: "retrofit",
+      scope: "ai",
+      acceptedDecisions: [...decisionsForScope("ai"), { id: "project.mode", value: "retrofit" }]
+    });
+    expect(initial.ok).toBe(true);
+    if (!initial.ok || initial.value.proposal === undefined) return;
+    const proposal = initial.value.proposal;
+    await repository.write("pom.xml", directPom);
+    await expect(
+      approveProposal(repository.root, proposal, {
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    ).resolves.toMatchObject({ ok: false, error: { code: "STALE_PROPOSAL" } });
   });
 
   it.each([

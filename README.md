@@ -38,7 +38,9 @@ findings, assumptions, questions, critical journeys, considered components, plan
 preserved paths, conflicts, risks, validation, deferred work, and zero applied changes. Approval is
 an in-memory library contract; unresolved required questions, audit-mode proposals, replay, stale
 repository state, and material proposal mutations are rejected. Rendering and file application
-remain deferred to SPEC-0001D.
+remain deferred to SPEC-0001D. Active SPEC-0001C adds the v0 Specification Architect as one
+instruction-only repository skill at `.agents/skills/specification-architect/SKILL.md`; it adds no
+CLI command, runtime API, session, persistence, adapter, or generator.
 
 Discovery classifies JavaScript/TypeScript, Python, Rust, Go, Java, and Kotlin source and tests.
 Root and manifest-backed `vendor` directories are dependency boundaries; unproven nested `vendor`
@@ -124,8 +126,9 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
 1. Read `AGENTS.md` and `MANIFEST.md`.
 2. Read the parent specification and completed `SPEC-0001A` and `SPEC-0001B` foundations.
 3. Preserve the clean-slate architecture and public contracts established by 0001A and 0001B.
-4. Plan and activate ready `SPEC-0001C` without adding 0001D or 0001E behavior.
-5. Move 0001C to `done` only after implementation, completion evidence, and review.
+4. Complete active `SPEC-0001C` without adding 0001D or 0001E behavior.
+5. Move 0001C to `done` only after author verification, a fresh independent completion review,
+   and explicit user approval.
 6. Repeat for 0001D and 0001E.
 7. Use Habit Compass as an external audit/retrofit pilot before a stable release.
 
