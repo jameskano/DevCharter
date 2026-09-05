@@ -6,7 +6,8 @@
 |---|---|
 | ID | SPEC-0001B |
 | Parent | SPEC-0001 |
-| Status | active |
+| Status | done |
+| Reason | Implementation, acceptance evidence, and required author verification are complete; the user explicitly approved the completion transition |
 
 ## Purpose
 
@@ -310,10 +311,9 @@ count; JSON retains the complete array.
 
 ## Implementation evidence
 
-Status: completion-review corrections are implemented and author verification is current. The
-standalone 12-combination CLI matrix passed, and the full-repository read-only audit passed. A fresh
-independent completion review is still pending, so the specification remains active and is not yet
-eligible for `done`.
+Status: complete. The implementation, acceptance evidence, 313-test suite, standalone
+12-combination CLI matrix, validation, and full-repository read-only audit passed. The user
+explicitly approved the completion transition after reviewing the final bounded correction.
 
 ### Implemented behavior
 
@@ -380,6 +380,26 @@ eligible for `done`.
   examples, and template raw text while retaining executable template interpolations and the
   supported static, side-effect, `require`, and dynamic import forms. Facts, proposals, scoped
   fingerprints, and approval validation continue to consume the same canonical evidence result.
+- Extended inactive-region masking to Python, Rust, Go, Java, and Kotlin while preserving their
+  bounded supported active import declarations. Rust nested block comments and raw strings, Go raw
+  strings and declaration-only import extraction, Python triple-quoted examples, and Kotlin
+  triple-quoted examples are covered explicitly.
+- Restricted Python dependency discovery to `[project].dependencies`, keys under
+  `[project.optional-dependencies]`, and `[tool.poetry.dependencies]`; unrelated arrays, comments,
+  and malformed relevant input remain unconfirmed.
+- Made production eligibility consume the existing artifact classifier: only normalized paths
+  classified as project `source` can confirm runtime implementation. Classifier-provided test paths
+  are tracked separately as test-only matches and cannot contribute facts or matching-import
+  fingerprints.
+- Replaced provider-word equivalence with a small ecosystem-specific registry of exact dependency
+  identities and deliberately supported import identifiers/prefixes. Lookalike declarations remain
+  unconfirmed and cannot authorize provider imports or alter canonical matching evidence.
+- Replaced unrestricted Maven dependency matching with a deterministic tag-context scanner. Maven
+  runtime-AI authority is limited to a direct `dependency` child of the root project's direct
+  `dependencies` element. XML comments, CDATA, dependency management, build/reporting plugins,
+  profiles, arbitrary nesting, and `test` or `import` scopes are ignored; malformed or ambiguous XML
+  yields no Maven dependency evidence. The result continues through the single canonical fact,
+  fingerprint, proposal-identity, and approval-freshness path.
 - Replaced vocabulary-only constraint/risk detection with contextual section and sentence evidence,
   preventing product-domain words from creating blocking questions while retaining explicit
   restrictions, compatibility decisions, and concrete risks.
@@ -395,13 +415,13 @@ eligible for `done`.
 | `pnpm format:check` | Passed. |
 | `pnpm lint` | Passed. |
 | `pnpm typecheck` | Passed. |
-| `pnpm test` | Passed: 9 test files and 210 tests. |
+| `pnpm test` | Passed: 9 test files and 313 tests. |
 | `pnpm build` | Passed. |
 | `pnpm devcharter validate` | Passed in the approved external execution context; the restricted sandbox launcher still returns `EPERM` while resolving the workspace parent. |
-| Targeted runtime-AI correction tests | Passed: 2 test files and 146 tests, including 23 direct authority/masking cases plus Project Architect fact, fingerprint, and stale-approval regressions. |
+| Targeted runtime-AI correction tests | Passed: 2 test files and 249 tests, including 92 direct canonical-module cases and 157 public Project Architect tests; the Maven additions cover direct dependency authority, ignored contexts, production/test evidence, deterministic ordering, fingerprints, and approval freshness. |
 | Targeted contextual-question tests | Passed: 9 tests covering negative and positive fixtures, blocking, and accepted decisions. |
 | CLI mode/scope matrix | Passed all 12 combinations through the built CLI; every result used the requested scope and reported zero applied changes. |
-| Audit repository/Git snapshots | Passed: the 23-line pre-audit Git status was unchanged; `.git/index` SHA-256 remained `EC5F83CD390BDFD7C57A1AFA4D1B7FB1889BCEF94D6133EC97A539F166036B9F` and its UTC modification time remained `2026-08-25T10:38:16.5847475Z`; audit reported zero applied changes. |
+| Audit repository/Git snapshots | Passed: the six-line pre-audit Git status was byte-for-byte unchanged; `.git/index` SHA-256 remained `B9624911DB93F9A53E959E510F3FB5677761059CBD1788012BE7A760F077B2C4` and its UTC modification time remained `2026-09-04T17:34:18.5976369Z`; the independently built audit reported no proposal, zero planned changes, and zero applied changes. |
 | Built full-scope audit | Passed in the approved external execution context with zero findings, no proposal, no planned changes, and zero applied changes. |
 | Project Architect import audit | Passed across the orchestrator and all three internal modules; no writer, adapter, generator, application, network, or telemetry import is reachable. |
 | `git diff --check` | Passed; Git reported only working-tree line-ending notices. |
@@ -414,27 +434,31 @@ eligible for `done`.
 | 2 | CLI/core snapshot tests cover successful/failing audit behavior, worktree files, and contained Git metadata; import audits prove no writer path. |
 | 3 | Inventory/fingerprint tests distinguish enumeration, loaded/hash-only inputs, reference dependencies, and analyzer-confirmed semantic-inspection paths. |
 | 4 | Boundary tests keep root and manifest-backed `vendor` directories third-party while unproven nested `app`, `src`, `lib`, and package-subtree variants remain inspected project material; cache/dependency and skill-provenance coverage remains intact. |
-| 5 | Canonical schema, recommendation, human-output, and journey tests require evidence and confidence for inferred facts and mode signals. |
+| 5 | Canonical schema, recommendation, human-output, and journey tests require evidence and confidence for inferred facts and mode signals; Maven runtime-AI facts require a structurally authoritative direct dependency plus matching active production import. |
 | 6 | Fixtures cover duplicate specification authority, native instruction precedence, command authority, status/precedence conflicts, links and path-only inline references, reference fingerprints, fenced-example exclusions, and documentation/CI drift. |
-| 7 | Table-driven polyglot and package-authority fixtures distinguish declared-and-imported runtime AI from dependency-only evidence, prevent sibling and cross-ecosystem authorization, enforce the nearest applicable manifest, mask inactive JavaScript/TypeScript examples, preserve live imports including template interpolation, and bind only canonical authoritative matches to approval identity. |
+| 7 | Table-driven polyglot and package-authority fixtures distinguish declared-and-production-imported runtime AI from dependency/test-only evidence, prevent sibling and cross-ecosystem authorization, enforce the nearest applicable manifest, mask inactive examples in every supported language, restrict Python manifest authority, reject lookalike dependency mappings, and prove that only direct root-project Maven dependencies outside comments, CDATA, management, plugins, profiles, arbitrary nesting, and test/import scopes can confirm JVM runtime AI. |
 | 8 | Skill fixtures distinguish repository-authored, explicitly marked third-party, unambiguously locked third-party, and invalid/ambiguous provenance without trusting installed instructions. |
 | 9 | Question tests cover documented outcome inference, placeholder rejection, domain-word false positives, contextual restrictions and risks, accepted decisions, blocking behavior, and non-blocking evidence-backed empty defaults. |
 | 10 | Staged proposal tests exercise content-aware create, update, skip, and conflict decisions; considered components are empty unless evidence or a proposal decision makes an optional component relevant. |
 | 11 | Schema and proposal tests require repository-specific reason, dependencies, maintenance implication, and validation expectations without rendering fields. |
 | 12 | Approval tests bind explicit confirmation to revision plus independently recomputed proposal and repository fingerprints, block unresolved questions and empty actions, and reject audit proposals defensively. |
-| 13 | Tests reject cross-proposal replay, proposal mutations, relevant uncertain-exclusion and valid authoritative runtime-AI evidence changes, inline-reference changes, and project-content changes while ignoring inactive import examples, secret contents, and irrelevant scoped churn. |
+| 13 | Tests reject cross-proposal replay, proposal mutations, relevant uncertain-exclusion and valid authoritative production runtime-AI evidence changes, inline-reference changes, and project-content changes. Maven tests prove direct dependency/import changes stale approval while comment, CDATA, dependency-management, plugin, profile, and test-scope-only changes leave AI approval current. |
 | 14 | Proposals enumerate preserved project-origin paths including unproven nested `vendor` files; target aggregation prevents replacement duplication; repository and Git snapshots prove no deletion, rendering, or write. |
 | 15 | Canonical hashing, repeated-result equality, bounded human-output fixtures, complete JSON arrays, and all-mode contract tests cover every required section and audit's lack of a proposal. |
-| 16 | All 210 unit/integration tests plus the 12-case standalone built-CLI matrix and built full audit cover discovery/classification, package/ecosystem authority, lexical masking, provenance, semantic accounting, decisions, proposals, approval, negative behavior, stale state, Git failure, and no-write guarantees. |
+| 16 | All 313 unit/integration tests plus the 12-case standalone built-CLI matrix and built full audit cover discovery/classification, package/ecosystem authority, bounded Maven structure, polyglot lexical masking, Python section authority, production/test eligibility, exact dependency mapping, provenance, semantic accounting, decisions, proposals, approval, deterministic repetition, negative behavior, stale state, Git failure, and no-write guarantees. |
 
 ### Documentation review and limitations
 
-Updated: README, system overview, manifest routing, audit/plan prompt, this active specification,
-the staged SPEC-0001A contract description, and the narrow SPEC-0001D rendered-change boundary.
+Updated by the current correction: the system overview now states the direct-Maven-dependency
+authority boundary, and this completed specification records its implementation and evidence. Earlier
+SPEC-0001B passes also updated README, manifest routing, the audit/plan prompt, the staged SPEC-0001A
+contract description, and the narrow SPEC-0001D rendered-change boundary.
 
-Reviewed unchanged: AGENTS.md, purpose and scope, quality and decision model, spec-driven workflow,
-official Codex capability reference, specs index, SPEC-0001C, SPEC-0001E, and implementation/review
-prompts. Their responsibilities and product boundaries remain accurate.
+Reviewed unchanged for the current correction: AGENTS.md, MANIFEST.md, README, purpose and scope,
+quality and decision model, spec-driven workflow, official Codex capability reference, specs index,
+SPEC-0001A, SPEC-0001C, SPEC-0001D, SPEC-0001E, and implementation/review prompts. Their
+responsibilities, public contracts, and later-spec boundaries remain accurate; only the system
+overview required clarification of the runtime-AI discovery model.
 
 Limitations and deferred work:
 
@@ -448,13 +472,17 @@ Limitations and deferred work:
   non-empty `path` and `source` strings. Other shapes remain conservative and report uncertainty.
 - A root or applicable-manifest-backed `vendor` directory is a dependency boundary; other nested
   `vendor` directories remain project material unless stronger provenance is available.
-- Runtime-AI recognition is intentionally limited to a documented identifier registry, bounded
-  manifest declarations, nearest-ancestor package authority within the supported JavaScript,
-  Python, Rust, Go, and JVM ecosystems, and explicit imports; it does not implement package-manager
-  module resolution or claim semantic use from prose or network package metadata. The bounded
-  JavaScript/TypeScript scanner masks comments, quoted examples, and template raw text but is not a
-  general-purpose parser. AI-scope source fingerprints bind only matching canonical authoritative
-  import evidence unless the path is otherwise selected for complete content hashing.
+- Runtime-AI recognition is intentionally limited to a small exact identifier registry, bounded
+  authoritative manifest sections, nearest-ancestor package authority within the supported
+  JavaScript, Python, Rust, Go, and JVM ecosystems, and active imports from classifier-designated
+  production sources. It does not implement package-manager module resolution or claim semantic use
+  from prose, tests, inactive examples, or network package metadata. The bounded language scanners
+  are not general-purpose parsers. AI-scope source fingerprints bind only matching canonical
+  authoritative production-import evidence unless the path is otherwise selected for complete
+  content hashing. Maven inspection is a bounded tag-context scan, not effective-model resolution:
+  it does not resolve parents, BOMs, profiles, properties, plugins, the local Maven cache, XML
+  entities, or network metadata, and it returns no dependency evidence for malformed or
+  structurally ambiguous XML.
 - Command interpretation is intentionally limited to statically recognizable package-manager,
   Python, Cargo, Go, and Maven forms. Shell composition, plugins, aliases, and dynamically selected
   commands are reported as uncertainty rather than interpreted.
@@ -463,7 +491,11 @@ Limitations and deferred work:
 - Specification authoring remains in SPEC-0001C; rendering, refreshed write approval, and
   application remain in SPEC-0001D; release qualification remains in SPEC-0001E.
 
-### Independent completion review
+### Completion review history and final approval
+
+The paragraphs below preserve the sequence of earlier review findings and corrections. Statements
+that a fresh review was pending describe those checkpoints and are superseded by the final
+completion approval recorded at the end of this section.
 
 The initial read-only completion pass converted all 16 acceptance criteria into evidence checks,
 reviewed the implementation and documentation diff, reran the built full audit, and found one
@@ -480,18 +512,17 @@ untrustworthy acceptance/verification evidence.
 
 This correction pass addresses those findings in the deterministic core, public contracts, CLI
 output, tests, and current documentation while keeping all Project Architect workflows read-only.
-Author verification is recorded above, but it is not a substitute for the required independent
-completion review. A fresh independent review is pending. SPEC-0001B must remain `active` and must
-not move to `done` unless that review finds no blocking or required important findings.
+Author verification was recorded, but at that checkpoint it was not a substitute for the required
+independent completion review, so SPEC-0001B remained `active` pending further review.
 
 A second failed verification identified narrower semantic gaps after that broad correction:
 third-party skill provenance was applied too late; source/test and command classification was too
 JavaScript/pnpm-specific; mode recommendation over-weighted counts and history; native Codex
 override precedence was treated as conflict; journeys were hard-coded; existing placeholder targets
 could be skipped; and human findings omitted decision-critical evidence. The current correction
-implements those bounded fixes without adding a shell parser, public contract, persistence,
-generation, application, or later-spec behavior. Its author verification must likewise be followed
-by a fresh independent read-only review before any `done` transition.
+implemented those bounded fixes without adding a shell parser, public contract, persistence,
+generation, application, or later-spec behavior. At that checkpoint, author verification still
+required a fresh independent read-only review before a `done` transition.
 
 The next independent review reproduced three remaining acceptance failures: unproven `app/vendor`
 project content was excluded from preservation and approval identity, path-only Markdown references
@@ -499,18 +530,41 @@ were not validated, and runtime-AI inference was JavaScript-only. This correctio
 approved bounded plan for evidence-based vendor boundaries, reference-intent-aware inline paths,
 and polyglot declared-dependency/import evidence. Targeted and broad author verification now pass,
 including the previously blocked standalone matrix and full-repository audit. The specification
-remains `active` pending a fresh independent read-only completion review.
+remained `active` at that checkpoint pending a fresh independent read-only completion review.
 
 The final independent review found a runtime-AI approval-freshness defect, vocabulary-only
 constraint/risk questions, and a normative considered-component inconsistency. This correction
 binds canonical runtime-AI evidence to AI-scoped fingerprints, requires contextual question
-evidence, and synchronizes the normative contract. Author verification passes. A fresh independent
-completion review remains required. SPEC-0001B remains active and is not yet eligible for `done`.
+evidence, and synchronized the normative contract. Author verification passed, but the
+specification remained active at that checkpoint pending a fresh completion review.
 
 A subsequent implementation review found that runtime-AI dependency evidence could cross sibling
 package or ecosystem boundaries and that JavaScript/TypeScript imports in comments and strings were
 treated as executable. The current correction adds nearest applicable manifest authority and
 bounded lexical masking in the single canonical runtime-AI evidence module, with direct and
 Project Architect regressions for facts, scoped fingerprints, and approval freshness. Author
-verification passes; no independent verification is claimed. A fresh independent completion review
-is required, so SPEC-0001B remains `active` and is not yet eligible for `done`.
+verification passed; no independent verification was claimed, and SPEC-0001B remained `active` at
+that checkpoint.
+
+A further implementation review found polyglot inactive-import false positives, over-broad Python
+TOML arrays, test-only product evidence, and provider-word dependency equivalence. The current
+correction adds bounded inactive-region filtering for every supported language, exact supported
+Python dependency sections, classifier-supplied production/test eligibility, and an explicit
+ecosystem-specific dependency/import registry in the shared canonical evidence path. Author
+verification passed for facts, fingerprints, and approval freshness; no independent verification
+was claimed, and SPEC-0001B remained `active` at that checkpoint.
+
+The final bounded correction addresses Maven declarations that were syntactically present but not
+authoritative application dependencies. A deterministic tag-context scanner now accepts only the
+root `project` → direct `dependencies` → direct `dependency` structure and rejects ignored scopes,
+inactive XML regions, unsupported ancestry, and malformed ambiguity. Direct and public regressions
+cover facts, production/test evidence, AI-scoped fingerprints, stale/current approvals, and repeated
+determinism. All author checks passed, but no independent verification was claimed at that
+checkpoint.
+
+### Final completion approval
+
+On 2026-09-05, after the final bounded Maven correction and all recorded author checks passed, the
+user explicitly directed that SPEC-0001B be marked completed. This approval closes the earlier
+pending-review checkpoint and authorizes the `active` to `done` lifecycle transition. No claim is
+made that the final Maven correction received a separate independent review in this turn.

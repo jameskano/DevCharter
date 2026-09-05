@@ -23,8 +23,152 @@ export interface RuntimeAiEvidence {
   matchedDependencies: AiDependency[];
   unmatchedDependencies: AiDependency[];
   matchedImportsBySource: ReadonlyMap<string, readonly string[]>;
+  matchedTestImportsBySource: ReadonlyMap<string, readonly string[]>;
   dependenciesByManifest: ReadonlyMap<string, readonly string[]>;
 }
+
+export interface RuntimeAiAnalysisInput {
+  texts: ReadonlyMap<string, string>;
+  productionSourcePaths: ReadonlySet<string>;
+  testSourcePaths?: ReadonlySet<string>;
+}
+
+interface RuntimeAiRegistryEntry {
+  ecosystem: RuntimeAiEcosystem;
+  dependency: string;
+  exactImports: readonly string[];
+  importPrefixes?: readonly string[];
+}
+
+const RUNTIME_AI_REGISTRY: readonly RuntimeAiRegistryEntry[] = [
+  {
+    ecosystem: "javascript",
+    dependency: "openai",
+    exactImports: ["openai"],
+    importPrefixes: ["openai/"]
+  },
+  {
+    ecosystem: "javascript",
+    dependency: "@anthropic-ai/sdk",
+    exactImports: ["@anthropic-ai/sdk"],
+    importPrefixes: ["@anthropic-ai/sdk/"]
+  },
+  {
+    ecosystem: "javascript",
+    dependency: "langchain",
+    exactImports: ["langchain"],
+    importPrefixes: ["langchain/"]
+  },
+  {
+    ecosystem: "javascript",
+    dependency: "@langchain/core",
+    exactImports: ["@langchain/core"],
+    importPrefixes: ["@langchain/core/"]
+  },
+  {
+    ecosystem: "javascript",
+    dependency: "@langchain/langgraph",
+    exactImports: ["@langchain/langgraph"],
+    importPrefixes: ["@langchain/langgraph/"]
+  },
+  {
+    ecosystem: "javascript",
+    dependency: "llamaindex",
+    exactImports: ["llamaindex"],
+    importPrefixes: ["llamaindex/"]
+  },
+  {
+    ecosystem: "javascript",
+    dependency: "ollama",
+    exactImports: ["ollama"],
+    importPrefixes: ["ollama/"]
+  },
+  { ecosystem: "javascript", dependency: "ai", exactImports: ["ai"], importPrefixes: ["ai/"] },
+  {
+    ecosystem: "javascript",
+    dependency: "@ai-sdk/openai",
+    exactImports: ["@ai-sdk/openai"],
+    importPrefixes: ["@ai-sdk/openai/"]
+  },
+  {
+    ecosystem: "python",
+    dependency: "openai",
+    exactImports: ["openai"],
+    importPrefixes: ["openai."]
+  },
+  {
+    ecosystem: "python",
+    dependency: "anthropic",
+    exactImports: ["anthropic"],
+    importPrefixes: ["anthropic."]
+  },
+  {
+    ecosystem: "python",
+    dependency: "langchain",
+    exactImports: ["langchain"],
+    importPrefixes: ["langchain."]
+  },
+  {
+    ecosystem: "python",
+    dependency: "langgraph",
+    exactImports: ["langgraph"],
+    importPrefixes: ["langgraph."]
+  },
+  {
+    ecosystem: "python",
+    dependency: "llama-index",
+    exactImports: ["llama_index"],
+    importPrefixes: ["llama_index."]
+  },
+  {
+    ecosystem: "python",
+    dependency: "ollama",
+    exactImports: ["ollama"],
+    importPrefixes: ["ollama."]
+  },
+  {
+    ecosystem: "python",
+    dependency: "semantic-kernel",
+    exactImports: ["semantic_kernel"],
+    importPrefixes: ["semantic_kernel."]
+  },
+  {
+    ecosystem: "rust",
+    dependency: "async-openai",
+    exactImports: ["async_openai"],
+    importPrefixes: ["async_openai::"]
+  },
+  {
+    ecosystem: "go",
+    dependency: "github.com/sashabaranov/go-openai",
+    exactImports: ["github.com/sashabaranov/go-openai"],
+    importPrefixes: ["github.com/sashabaranov/go-openai/"]
+  },
+  {
+    ecosystem: "jvm",
+    dependency: "com.openai:openai-java",
+    exactImports: ["com.openai"],
+    importPrefixes: ["com.openai."]
+  },
+  {
+    ecosystem: "jvm",
+    dependency: "com.anthropic:anthropic-java",
+    exactImports: ["com.anthropic"],
+    importPrefixes: ["com.anthropic."]
+  },
+  {
+    ecosystem: "jvm",
+    dependency: "dev.langchain4j:langchain4j",
+    exactImports: ["dev.langchain4j"],
+    importPrefixes: ["dev.langchain4j."]
+  },
+  {
+    ecosystem: "jvm",
+    dependency: "org.springframework.ai:spring-ai-openai",
+    exactImports: ["org.springframework.ai"],
+    importPrefixes: ["org.springframework.ai."]
+  }
+];
 
 function normalizeIdentifier(value: string): string {
   return value.trim().replace(/\\/g, "/").toLowerCase();
@@ -61,7 +205,7 @@ function sourceEcosystem(repositoryPath: string): RuntimeAiEcosystem | undefined
   return undefined;
 }
 
-function isAiDependencyName(value: string): boolean {
+function isAiDependencyCandidate(value: string): boolean {
   return /openai|anthropic|langchain|langgraph|llama[-_.]?index|ollama|semantic[-_.]?kernel|ai-sdk|spring[-_.]?ai/i.test(
     value
   );
@@ -73,23 +217,85 @@ function dependencyName(value: string): string | undefined {
 
 function readPythonDependencies(text: string): string[] {
   const dependencies = new Set<string>();
-  for (const match of text
-    .replace(/\r\n?/g, "\n")
-    .matchAll(/(?:^|\n)\s*(?:dependencies|[A-Za-z0-9_-]+)\s*=\s*\[([\s\S]*?)]/g)) {
-    for (const quoted of (match[1] ?? "").matchAll(/["']([^"']+)["']/g)) {
-      const name = dependencyName(quoted[1] ?? "");
-      if (name !== undefined && isAiDependencyName(name))
-        dependencies.add(normalizeIdentifier(name));
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  let section = "";
+
+  const stripComment = (line: string): string => {
+    let quote: "'" | '"' | undefined;
+    let escaped = false;
+    for (let index = 0; index < line.length; index += 1) {
+      const current = line[index];
+      if (quote !== undefined) {
+        if (quote === '"' && current === "\\" && !escaped) {
+          escaped = true;
+          continue;
+        }
+        if (current === quote && !escaped) quote = undefined;
+        escaped = false;
+        continue;
+      }
+      if (current === "'" || current === '"') quote = current;
+      else if (current === "#") return line.slice(0, index);
     }
-  }
-  const poetry = text
-    .replace(/\r\n?/g, "\n")
-    .match(/(?:^|\n)\s*\[tool\.poetry\.dependencies]\s*\n([\s\S]*?)(?=\n\s*\[|$)/i)?.[1];
-  if (poetry !== undefined) {
-    for (const line of poetry.split("\n")) {
-      const name = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=/)?.[1];
-      if (name !== undefined && isAiDependencyName(name))
-        dependencies.add(normalizeIdentifier(name));
+    return line;
+  };
+
+  const readArray = (
+    startIndex: number,
+    assignment: string
+  ): { values: string[]; end: number } | undefined => {
+    let value = assignment;
+    let end = startIndex;
+    while (!value.includes("]") && end + 1 < lines.length) {
+      end += 1;
+      const next = stripComment(lines[end] ?? "");
+      if (/^\s*\[/.test(next)) return undefined;
+      value += `\n${next}`;
+    }
+    const array = value.match(/^\s*\[([\s\S]*)]\s*,?\s*$/)?.[1];
+    if (array === undefined || /'''|"""/.test(array)) return undefined;
+    const values: string[] = [];
+    let remainder = array;
+    const quoted = /(?:"((?:\\.|[^"\\])*)"|'([^']*)')/g;
+    for (const match of array.matchAll(quoted)) {
+      values.push((match[1] ?? match[2] ?? "").replace(/\\(["'\\])/g, "$1"));
+      remainder = remainder.replace(match[0], "");
+    }
+    if (!/^[\s,]*$/.test(remainder)) return undefined;
+    return { values, end };
+  };
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = stripComment(lines[index] ?? "");
+    const header = line
+      .match(/^\s*\[([^\]]+)]\s*$/)?.[1]
+      ?.trim()
+      .toLowerCase();
+    if (header !== undefined) {
+      section = header;
+      continue;
+    }
+    const assignment = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=\s*([\s\S]*)$/);
+    if (assignment === null) continue;
+    const key = normalizeIdentifier(assignment[1] ?? "");
+    const value = assignment[2] ?? "";
+    if (
+      (section === "project" && key === "dependencies") ||
+      section === "project.optional-dependencies"
+    ) {
+      const parsed = readArray(index, value);
+      if (parsed === undefined) continue;
+      index = parsed.end;
+      for (const requirement of parsed.values) {
+        const name = dependencyName(requirement);
+        if (name !== undefined && isAiDependencyCandidate(name)) {
+          dependencies.add(normalizeIdentifier(name));
+        }
+      }
+    } else if (section === "tool.poetry.dependencies") {
+      if (value.trim() !== "" && !/'''|"""/.test(value) && isAiDependencyCandidate(key)) {
+        dependencies.add(key);
+      }
     }
   }
   return [...dependencies].sort(compareCanonicalText);
@@ -106,7 +312,8 @@ function readCargoDependencies(text: string): string[] {
     }
     if (!dependencySection || /^\s*(?:#|$)/.test(line)) continue;
     const name = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=/)?.[1];
-    if (name !== undefined && isAiDependencyName(name)) dependencies.add(normalizeIdentifier(name));
+    if (name !== undefined && isAiDependencyCandidate(name))
+      dependencies.add(normalizeIdentifier(name));
   }
   return [...dependencies].sort(compareCanonicalText);
 }
@@ -126,25 +333,201 @@ function readGoDependencies(text: string): string[] {
     const value = requireBlock
       ? line.match(/^\s*([^\s/][^\s]*)\s+v\S+/)?.[1]
       : line.match(/^\s*require\s+([^\s]+)\s+v\S+/)?.[1];
-    if (value !== undefined && isAiDependencyName(value))
+    if (value !== undefined && isAiDependencyCandidate(value))
       dependencies.add(normalizeIdentifier(value));
   }
   return [...dependencies].sort(compareCanonicalText);
 }
 
 function readMavenDependencies(text: string): string[] {
-  const dependencies = new Set<string>();
-  for (const match of text
-    .replace(/\r\n?/g, "\n")
-    .matchAll(/<dependency>([\s\S]*?)<\/dependency>/gi)) {
-    const block = match[1] ?? "";
-    const group = block.match(/<groupId>\s*([^<\s]+)\s*<\/groupId>/i)?.[1];
-    const artifact = block.match(/<artifactId>\s*([^<\s]+)\s*<\/artifactId>/i)?.[1];
-    const name = [group, artifact]
-      .filter((value): value is string => value !== undefined)
-      .join(":");
-    if (name !== "" && isAiDependencyName(name)) dependencies.add(normalizeIdentifier(name));
+  interface MavenElement {
+    qualifiedName: string;
+    localName: string;
   }
+
+  interface MavenDependency {
+    groupId?: string;
+    artifactId?: string;
+    scope?: string;
+    invalid: boolean;
+  }
+
+  interface MavenTextCapture {
+    field: "groupId" | "artifactId" | "scope";
+    depth: number;
+    text: string;
+    invalid: boolean;
+  }
+
+  const dependencies = new Set<string>();
+  const source = text.replace(/\r\n?/g, "\n");
+  const stack: MavenElement[] = [];
+  let dependency: MavenDependency | undefined;
+  let capture: MavenTextCapture | undefined;
+  let rootSeen = false;
+  let rootClosed = false;
+
+  const fail = (): string[] => [];
+  const localName = (qualifiedName: string): string =>
+    qualifiedName.slice(qualifiedName.lastIndexOf(":") + 1);
+  const ancestry = (): string[] => stack.map((element) => element.localName);
+  const finishCapture = (): boolean => {
+    if (capture === undefined || dependency === undefined) return false;
+    const value = capture.text.trim();
+    if (
+      capture.invalid ||
+      value === "" ||
+      value.includes("&") ||
+      dependency[capture.field] !== undefined
+    ) {
+      dependency.invalid = true;
+    } else {
+      dependency[capture.field] = value;
+    }
+    capture = undefined;
+    return true;
+  };
+  const readTagEnd = (start: number): number | undefined => {
+    let quote: "'" | '"' | undefined;
+    for (let index = start; index < source.length; index += 1) {
+      const current = source[index];
+      if (quote !== undefined) {
+        if (current === quote) quote = undefined;
+      } else if (current === "'" || current === '"') {
+        quote = current;
+      } else if (current === "<") {
+        return undefined;
+      } else if (current === ">") {
+        return index;
+      }
+    }
+    return undefined;
+  };
+  const validAttributes = (value: string): boolean => {
+    let rest = value;
+    while (rest.trim() !== "") {
+      const attribute = rest.match(/^\s+[A-Za-z_][A-Za-z0-9_.:-]*\s*=\s*(?:"[^"]*"|'[^']*')/)?.[0];
+      if (attribute === undefined) return false;
+      rest = rest.slice(attribute.length);
+    }
+    return true;
+  };
+
+  for (let index = 0; index < source.length;) {
+    if (source[index] !== "<") {
+      const nextTag = source.indexOf("<", index);
+      const end = nextTag === -1 ? source.length : nextTag;
+      const value = source.slice(index, end);
+      if (stack.length === 0 && value.trim() !== "") return fail();
+      if (capture !== undefined && stack.length === capture.depth) capture.text += value;
+      index = end;
+      continue;
+    }
+
+    if (source.startsWith("<!--", index)) {
+      const end = source.indexOf("-->", index + 4);
+      if (end === -1 || source.slice(index + 4, end).includes("--")) return fail();
+      if (capture !== undefined) capture.invalid = true;
+      index = end + 3;
+      continue;
+    }
+    if (source.startsWith("<![CDATA[", index)) {
+      const end = source.indexOf("]]>", index + 9);
+      if (end === -1 || stack.length === 0) return fail();
+      if (capture !== undefined) capture.invalid = true;
+      index = end + 3;
+      continue;
+    }
+    if (source.startsWith("<?", index)) {
+      const end = source.indexOf("?>", index + 2);
+      if (end === -1) return fail();
+      if (capture !== undefined) capture.invalid = true;
+      index = end + 2;
+      continue;
+    }
+    if (source.startsWith("<!", index)) return fail();
+
+    const end = readTagEnd(index + 1);
+    if (end === undefined) return fail();
+    const rawTag = source.slice(index + 1, end);
+    if (rawTag.startsWith("/")) {
+      const closing = rawTag.match(/^\/\s*([A-Za-z_][A-Za-z0-9_.:-]*)\s*$/)?.[1];
+      const current = stack.at(-1);
+      if (closing === undefined || current === undefined || current.qualifiedName !== closing) {
+        return fail();
+      }
+      if (capture !== undefined && capture.depth === stack.length) finishCapture();
+      if (dependency !== undefined && stack.length === 3 && current.localName === "dependency") {
+        const groupId = dependency.groupId?.trim();
+        const artifactId = dependency.artifactId?.trim();
+        const scope = dependency.scope?.trim();
+        if (
+          !dependency.invalid &&
+          groupId !== undefined &&
+          artifactId !== undefined &&
+          (scope === undefined || ["compile", "runtime", "provided", "system"].includes(scope))
+        ) {
+          const name = `${groupId}:${artifactId}`;
+          if (isAiDependencyCandidate(name)) dependencies.add(normalizeIdentifier(name));
+        }
+        dependency = undefined;
+      }
+      stack.pop();
+      if (stack.length === 0) rootClosed = true;
+      index = end + 1;
+      continue;
+    }
+
+    const selfClosing = /\/\s*$/.test(rawTag);
+    const tagBody = selfClosing ? rawTag.replace(/\/\s*$/, "") : rawTag;
+    const opening = tagBody.match(/^\s*([A-Za-z_][A-Za-z0-9_.:-]*)/)?.[1];
+    if (opening === undefined) return fail();
+    const openingEnd = tagBody.indexOf(opening) + opening.length;
+    if (!validAttributes(tagBody.slice(openingEnd))) return fail();
+    if (rootClosed) return fail();
+    if (capture !== undefined) capture.invalid = true;
+
+    const element = { qualifiedName: opening, localName: localName(opening) };
+    if (stack.length === 0) {
+      if (rootSeen || element.localName !== "project") return fail();
+      rootSeen = true;
+    }
+    stack.push(element);
+    const currentAncestry = ancestry();
+    if (
+      currentAncestry.length === 3 &&
+      currentAncestry[0] === "project" &&
+      currentAncestry[1] === "dependencies" &&
+      currentAncestry[2] === "dependency"
+    ) {
+      dependency = { invalid: selfClosing };
+    } else if (
+      dependency !== undefined &&
+      currentAncestry.length === 4 &&
+      (element.localName === "groupId" ||
+        element.localName === "artifactId" ||
+        element.localName === "scope")
+    ) {
+      capture = {
+        field: element.localName,
+        depth: stack.length,
+        text: "",
+        invalid: selfClosing
+      };
+    }
+
+    if (selfClosing) {
+      if (capture !== undefined && capture.depth === stack.length) finishCapture();
+      if (dependency !== undefined && stack.length === 3 && element.localName === "dependency") {
+        dependency = undefined;
+      }
+      stack.pop();
+      if (stack.length === 0) rootClosed = true;
+    }
+    index = end + 1;
+  }
+
+  if (!rootSeen || !rootClosed || stack.length !== 0 || capture !== undefined) return fail();
   return [...dependencies].sort(compareCanonicalText);
 }
 
@@ -167,7 +550,7 @@ function readRuntimeAiManifests(texts: ReadonlyMap<string, string>): RuntimeAiMa
               ? Object.keys(value as Record<string, unknown>)
               : [];
           })
-          .filter(isAiDependencyName)
+          .filter(isAiDependencyCandidate)
           .map(normalizeIdentifier);
       } catch {
         names = [];
@@ -319,18 +702,176 @@ function maskJavascriptInactiveRegions(text: string): string {
   return masked.join("");
 }
 
-function aiImportTokens(dependency: string): string[] {
-  const lower = normalizeIdentifier(dependency);
-  if (lower.includes("openai")) return ["openai", "async_openai", "com.openai"];
-  if (lower.includes("anthropic")) return ["anthropic", "com.anthropic"];
-  if (lower.includes("langchain")) return ["langchain", "dev.langchain4j"];
-  if (lower.includes("langgraph")) return ["langgraph"];
-  if (/llama[-_.]?index/.test(lower)) return ["llama_index", "llamaindex"];
-  if (lower.includes("ollama")) return ["ollama"];
-  if (/semantic[-_.]?kernel/.test(lower)) return ["semantic_kernel"];
-  if (lower.includes("spring") && lower.includes("ai")) return ["org.springframework.ai"];
-  if (lower.includes("ai-sdk")) return ["ai", "@ai-sdk"];
-  return [];
+interface MaskedStringLiteral {
+  start: number;
+  end: number;
+  kind: "double" | "other";
+}
+
+interface MaskedSource {
+  text: string;
+  literals: readonly MaskedStringLiteral[];
+}
+
+function maskPythonInactiveRegions(text: string): string {
+  const masked = [...text];
+  const mask = (index: number): void => {
+    if (masked[index] !== "\n") masked[index] = " ";
+  };
+  for (let index = 0; index < text.length; index += 1) {
+    const current = text[index];
+    if (current === "#") {
+      while (index < text.length && text[index] !== "\n") mask(index++);
+      index -= 1;
+      continue;
+    }
+    if (current !== "'" && current !== '"') continue;
+    const triple = text.slice(index, index + 3) === current.repeat(3);
+    const delimiter = triple ? current.repeat(3) : current;
+    for (let count = 0; count < delimiter.length; count += 1) mask(index + count);
+    index += delimiter.length;
+    while (index < text.length) {
+      if (!triple && text[index] === "\\") {
+        mask(index);
+        if (index + 1 < text.length) mask(++index);
+      } else if (text.slice(index, index + delimiter.length) === delimiter) {
+        for (let count = 0; count < delimiter.length; count += 1) mask(index + count);
+        index += delimiter.length - 1;
+        break;
+      } else {
+        mask(index);
+      }
+      index += 1;
+    }
+  }
+  return masked.join("");
+}
+
+function maskCLikeInactiveRegions(
+  text: string,
+  options: {
+    nestedBlockComments?: boolean;
+    backtickStrings?: boolean;
+    tripleDoubleStrings?: boolean;
+    rustRawStrings?: boolean;
+  } = {}
+): MaskedSource {
+  const masked = [...text];
+  const literals: MaskedStringLiteral[] = [];
+  const mask = (index: number): void => {
+    if (masked[index] !== "\n") masked[index] = " ";
+  };
+  const maskRange = (start: number, end: number): void => {
+    for (let index = start; index <= end; index += 1) mask(index);
+  };
+
+  for (let index = 0; index < text.length; index += 1) {
+    const current = text[index];
+    const next = text[index + 1];
+    if (current === "/" && next === "/") {
+      while (index < text.length && text[index] !== "\n") mask(index++);
+      index -= 1;
+      continue;
+    }
+    if (current === "/" && next === "*") {
+      let depth = 1;
+      maskRange(index, index + 1);
+      index += 2;
+      while (index < text.length && depth > 0) {
+        if (options.nestedBlockComments && text[index] === "/" && text[index + 1] === "*") {
+          depth += 1;
+          maskRange(index, index + 1);
+          index += 2;
+          continue;
+        }
+        if (text[index] === "*" && text[index + 1] === "/") {
+          depth -= 1;
+          maskRange(index, index + 1);
+          index += 2;
+          continue;
+        }
+        mask(index++);
+      }
+      index -= 1;
+      continue;
+    }
+    if (options.rustRawStrings) {
+      const raw = text.slice(index).match(/^(?:br|r)(#{0,16})"/);
+      if (raw !== null) {
+        const close = `"${raw[1] ?? ""}`;
+        const contentStart = index + raw[0].length;
+        const closingIndex = text.indexOf(close, contentStart);
+        const end = closingIndex < 0 ? text.length - 1 : closingIndex + close.length - 1;
+        maskRange(index, end);
+        literals.push({ start: index, end, kind: "other" });
+        index = end;
+        continue;
+      }
+    }
+    if (options.tripleDoubleStrings && text.slice(index, index + 3) === '"""') {
+      const closingIndex = text.indexOf('"""', index + 3);
+      const end = closingIndex < 0 ? text.length - 1 : closingIndex + 2;
+      maskRange(index, end);
+      literals.push({ start: index, end, kind: "other" });
+      index = end;
+      continue;
+    }
+    if (options.backtickStrings && current === "`") {
+      const closingIndex = text.indexOf("`", index + 1);
+      const end = closingIndex < 0 ? text.length - 1 : closingIndex;
+      maskRange(index, end);
+      literals.push({ start: index, end, kind: "other" });
+      index = end;
+      continue;
+    }
+    const characterLiteral =
+      current === "'" ? /^'(?:\\.|[^'\\\n])'/.exec(text.slice(index))?.[0] : undefined;
+    if (current !== '"' && characterLiteral === undefined) continue;
+    const literalStart = index;
+    const quote = current;
+    if (characterLiteral !== undefined) {
+      index += characterLiteral.length - 1;
+      maskRange(literalStart, index);
+    } else {
+      mask(index);
+      index += 1;
+      while (index < text.length) {
+        if (text[index] === "\\") {
+          mask(index);
+          if (index + 1 < text.length) mask(++index);
+        } else if (text[index] === quote) {
+          mask(index);
+          break;
+        } else {
+          mask(index);
+        }
+        index += 1;
+      }
+    }
+    literals.push({ start: literalStart, end: index, kind: quote === '"' ? "double" : "other" });
+  }
+  return { text: masked.join(""), literals };
+}
+
+function restoreGoImportStrings(text: string, masked: MaskedSource): string {
+  const restored = [...masked.text];
+  const groupedRanges = [...masked.text.matchAll(/^\s*import\s*\([\s\S]*?^\s*\)/gm)].map(
+    (match) => [match.index, (match.index ?? 0) + match[0].length] as const
+  );
+  for (const literal of masked.literals) {
+    if (literal.kind !== "double") continue;
+    const lineStart = masked.text.lastIndexOf("\n", literal.start - 1) + 1;
+    const prefix = masked.text.slice(lineStart, literal.start);
+    const direct = /^\s*import(?:\s+[._A-Za-z][A-Za-z0-9_]*)?\s*$/.test(prefix);
+    const grouped = groupedRanges.some(
+      ([start, end]) => literal.start >= start && literal.end < end
+    );
+    if (!direct && !grouped) continue;
+    for (let index = literal.start; index <= literal.end; index += 1) {
+      restored[index] = text[index] ?? "";
+    }
+  }
+  return restored.join("");
 }
 
 export function sourceImports(repositoryPath: string, rawText: string): string[] {
@@ -344,100 +885,132 @@ export function sourceImports(repositoryPath: string, rawText: string): string[]
       if (match[1] !== undefined) imports.add(normalizeIdentifier(match[1]));
     }
   } else if (/\.py$/i.test(normalizedPath)) {
-    for (const match of text.matchAll(/^\s*(?:from|import)\s+([A-Za-z0-9_.]+)/gm)) {
+    for (const match of maskPythonInactiveRegions(text).matchAll(
+      /^\s*(?:from|import)\s+([A-Za-z0-9_.]+)/gm
+    )) {
       if (match[1] !== undefined) imports.add(normalizeIdentifier(match[1]));
     }
   } else if (/\.rs$/i.test(normalizedPath)) {
-    for (const match of text.matchAll(/^\s*(?:use|extern\s+crate)\s+([A-Za-z0-9_]+)/gm)) {
+    const masked = maskCLikeInactiveRegions(text, {
+      nestedBlockComments: true,
+      rustRawStrings: true
+    }).text;
+    for (const match of masked.matchAll(/^\s*(?:use|extern\s+crate)\s+([A-Za-z0-9_]+)/gm)) {
       if (match[1] !== undefined) imports.add(normalizeIdentifier(match[1]));
     }
   } else if (/\.go$/i.test(normalizedPath)) {
-    for (const match of text.matchAll(/\bimport\s*(?:\(([\s\S]*?)\)|"([^"]+)")/g)) {
+    const goText = restoreGoImportStrings(
+      text,
+      maskCLikeInactiveRegions(text, { backtickStrings: true })
+    );
+    for (const match of goText.matchAll(/^\s*import\s*(?:\(([\s\S]*?)\)|"([^"]+)")/gm)) {
       if (match[2] !== undefined) imports.add(normalizeIdentifier(match[2]));
       for (const quoted of (match[1] ?? "").matchAll(/"([^"]+)"/g)) {
         if (quoted[1] !== undefined) imports.add(normalizeIdentifier(quoted[1]));
       }
     }
   } else if (/\.(?:java|kt|kts)$/i.test(normalizedPath)) {
-    for (const match of text.matchAll(/^\s*import\s+([A-Za-z0-9_.]+)/gm)) {
+    const masked = maskCLikeInactiveRegions(text, {
+      tripleDoubleStrings: /\.(?:kt|kts)$/i.test(normalizedPath)
+    }).text;
+    for (const match of masked.matchAll(/^\s*import\s+([A-Za-z0-9_.]+)/gm)) {
       if (match[1] !== undefined) imports.add(normalizeIdentifier(match[1]));
     }
   }
   return [...imports].sort(compareCanonicalText);
 }
 
-function importMatchesDependency(importName: string, dependency: string): boolean {
+function importMatchesDependency(
+  importName: string,
+  dependency: string,
+  ecosystem: RuntimeAiEcosystem
+): boolean {
   const normalizedImport = normalizeIdentifier(importName);
-  const fullDependency = normalizeIdentifier(dependency);
-  const normalizedDependency = fullDependency.split(":").pop() ?? fullDependency;
-  if (
-    normalizedImport === fullDependency ||
-    normalizedImport.startsWith(fullDependency + "/") ||
-    normalizedImport === normalizedDependency ||
-    normalizedImport.startsWith(normalizedDependency + "/")
-  ) {
-    return true;
-  }
-  return aiImportTokens(fullDependency).some(
-    (token) =>
-      normalizedImport === token ||
-      normalizedImport.startsWith(token + "/") ||
-      normalizedImport.startsWith(token + ".") ||
-      normalizedImport.includes("/" + token)
+  const entry = RUNTIME_AI_REGISTRY.find(
+    (candidate) =>
+      candidate.ecosystem === ecosystem && candidate.dependency === normalizeIdentifier(dependency)
+  );
+  return (
+    entry !== undefined &&
+    (entry.exactImports.includes(normalizedImport) ||
+      entry.importPrefixes?.some((prefix) => normalizedImport.startsWith(prefix)) === true)
   );
 }
 
-export function analyzeRuntimeAiEvidence(texts: ReadonlyMap<string, string>): RuntimeAiEvidence {
+function isRegisteredDependency(dependency: AiDependency): boolean {
+  return RUNTIME_AI_REGISTRY.some(
+    (entry) => entry.ecosystem === dependency.ecosystem && entry.dependency === dependency.name
+  );
+}
+
+export function analyzeRuntimeAiEvidence(input: RuntimeAiAnalysisInput): RuntimeAiEvidence {
+  const { texts } = input;
   const manifests = readRuntimeAiManifests(texts);
   const dependencies = readAiDependencies(texts);
   const matchedDependencyKeys = new Set<string>();
   const matchedImportsBySource = new Map<string, readonly string[]>();
+  const matchedTestImportsBySource = new Map<string, readonly string[]>();
   const dependenciesByManifest = new Map<string, readonly string[]>();
 
-  for (const dependency of dependencies) {
+  for (const dependency of dependencies.filter(isRegisteredDependency)) {
     const current = dependenciesByManifest.get(dependency.manifestPath) ?? [];
     dependenciesByManifest.set(
       dependency.manifestPath,
       [...new Set([...current, dependency.name])].sort(compareCanonicalText)
     );
   }
-  for (const [rawPath, text] of texts) {
-    const repositoryPath = normalizeRepositoryPath(rawPath);
-    const ecosystem = sourceEcosystem(repositoryPath);
-    if (ecosystem === undefined) continue;
-    const sourceDirectory = path.posix.dirname(repositoryPath);
-    const applicableManifest = manifests
-      .filter(
-        (manifest) =>
-          manifest.ecosystem === ecosystem &&
-          (manifest.directory === "" ||
-            sourceDirectory === manifest.directory ||
-            sourceDirectory.startsWith(manifest.directory + "/"))
-      )
-      .sort(
-        (left, right) =>
-          (right.directory === "" ? 0 : right.directory.split("/").length) -
-            (left.directory === "" ? 0 : left.directory.split("/").length) ||
-          compareCanonicalText(left.path, right.path)
-      )[0];
-    if (applicableManifest === undefined) continue;
-    const imports = sourceImports(repositoryPath, text);
-    const matches = new Set<string>();
-    const applicableDependencies = dependencies.filter(
-      (dependency) =>
-        dependency.ecosystem === ecosystem && dependency.manifestPath === applicableManifest.path
-    );
-    for (const dependency of applicableDependencies) {
-      for (const importName of imports) {
-        if (!importMatchesDependency(importName, dependency.name)) continue;
-        matches.add(`${dependency.name}=>${importName}`);
-        matchedDependencyKeys.add(`${dependency.manifestPath}\0${dependency.name}`);
+  const matchSources = (
+    rawPaths: ReadonlySet<string>,
+    target: Map<string, readonly string[]>,
+    confirmRuntime: boolean
+  ): void => {
+    const paths = [...rawPaths].map(normalizeRepositoryPath).sort(compareCanonicalText);
+    for (const repositoryPath of paths) {
+      const text = texts.get(repositoryPath) ?? texts.get(repositoryPath.replace(/\//g, "\\"));
+      if (text === undefined) continue;
+      const ecosystem = sourceEcosystem(repositoryPath);
+      if (ecosystem === undefined) continue;
+      const sourceDirectory = path.posix.dirname(repositoryPath);
+      const applicableManifest = manifests
+        .filter(
+          (manifest) =>
+            manifest.ecosystem === ecosystem &&
+            (manifest.directory === "" ||
+              sourceDirectory === manifest.directory ||
+              sourceDirectory.startsWith(manifest.directory + "/"))
+        )
+        .sort(
+          (left, right) =>
+            (right.directory === "" ? 0 : right.directory.split("/").length) -
+              (left.directory === "" ? 0 : left.directory.split("/").length) ||
+            compareCanonicalText(left.path, right.path)
+        )[0];
+      if (applicableManifest === undefined) continue;
+      const imports = sourceImports(repositoryPath, text);
+      const matches = new Set<string>();
+      const applicableDependencies = dependencies.filter(
+        (dependency) =>
+          dependency.ecosystem === ecosystem &&
+          dependency.manifestPath === applicableManifest.path &&
+          isRegisteredDependency(dependency)
+      );
+      for (const dependency of applicableDependencies) {
+        for (const importName of imports) {
+          if (!importMatchesDependency(importName, dependency.name, ecosystem)) continue;
+          matches.add(`${dependency.name}=>${importName}`);
+          if (confirmRuntime) {
+            matchedDependencyKeys.add(`${dependency.manifestPath}\0${dependency.name}`);
+          }
+        }
+      }
+      if (matches.size > 0) {
+        target.set(repositoryPath, [...matches].sort(compareCanonicalText));
       }
     }
-    if (matches.size > 0) {
-      matchedImportsBySource.set(repositoryPath, [...matches].sort(compareCanonicalText));
-    }
-  }
+  };
+
+  matchSources(input.productionSourcePaths, matchedImportsBySource, true);
+  matchSources(input.testSourcePaths ?? new Set<string>(), matchedTestImportsBySource, false);
   const matchedDependencies = dependencies.filter((dependency) =>
     matchedDependencyKeys.has(`${dependency.manifestPath}\0${dependency.name}`)
   );
@@ -449,6 +1022,7 @@ export function analyzeRuntimeAiEvidence(texts: ReadonlyMap<string, string>): Ru
     matchedDependencies,
     unmatchedDependencies,
     matchedImportsBySource,
+    matchedTestImportsBySource,
     dependenciesByManifest
   };
 }

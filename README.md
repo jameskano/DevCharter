@@ -16,7 +16,7 @@ discover → understand → propose → approve → apply → verify
 
 ## Current implementation
 
-SPEC-0001A provides the deterministic core foundation. Active SPEC-0001B adds the read-only
+SPEC-0001A provides the deterministic core foundation. Completed SPEC-0001B adds the read-only
 Project Architect commands:
 
 ```bash
@@ -122,11 +122,11 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
 ## Codex implementation order
 
 1. Read `AGENTS.md` and `MANIFEST.md`.
-2. Read the parent specification and completed `SPEC-0001A` foundation.
-3. Preserve the clean-slate architecture and public contracts established by 0001A.
-4. Complete and independently review active 0001B without adding later-spec behavior.
-5. Move 0001B to `done` only after completion evidence and review pass.
-6. Repeat for 0001C, 0001D, and 0001E.
+2. Read the parent specification and completed `SPEC-0001A` and `SPEC-0001B` foundations.
+3. Preserve the clean-slate architecture and public contracts established by 0001A and 0001B.
+4. Plan and activate ready `SPEC-0001C` without adding 0001D or 0001E behavior.
+5. Move 0001C to `done` only after implementation, completion evidence, and review.
+6. Repeat for 0001D and 0001E.
 7. Use Habit Compass as an external audit/retrofit pilot before a stable release.
 
 Use only these development statuses:

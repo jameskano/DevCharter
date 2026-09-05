@@ -690,8 +690,7 @@ function isAiPath(repositoryPath: string): boolean {
     basename === "agents.override.md" ||
     basename === "skills-lock.json" ||
     /^(\.agents|\.codex|prompts|agents|hooks|mcp)(\/|$)/.test(lower) ||
-    /(^|\/)(ai|llm|openai|anthropic)([-_./]|$)/.test(lower) ||
-    basename === "package.json"
+    /(^|\/)(ai|llm|openai|anthropic)([-_./]|$)/.test(lower)
   );
 }
 
@@ -1021,9 +1020,19 @@ async function buildFingerprint(
     }
   }
 
-  const runtimeAiEvidence = analyzeRuntimeAiEvidence(
-    scopeIncludes(scope, "ai") ? texts : new Map<string, string>()
-  );
+  const runtimeAiEvidence = analyzeRuntimeAiEvidence({
+    texts: scopeIncludes(scope, "ai") ? texts : new Map<string, string>(),
+    productionSourcePaths: new Set(
+      artifacts
+        .filter((artifact) => artifact.origin === "project" && artifact.kind === "source")
+        .map((artifact) => artifact.path)
+    ),
+    testSourcePaths: new Set(
+      artifacts
+        .filter((artifact) => artifact.origin === "project" && artifact.kind === "test")
+        .map((artifact) => artifact.path)
+    )
+  });
   if (scopeIncludes(scope, "ai")) {
     for (const input of includedPaths) {
       if (input.reason !== "mode-classification" || input.digest === undefined) continue;

@@ -2206,6 +2206,464 @@ describe("SPEC-0001B authoritative runtime-AI evidence correction", () => {
   });
 });
 
+describe("SPEC-0001B conservative polyglot runtime-AI evidence", () => {
+  const productionWithoutImport = `
+export function createClient() {
+  const endpoint = "local";
+  return { endpoint, ready: true, transport: "in-process", retries: 3 };
+}
+`;
+  const productionWithImport = `
+import OpenAI from "openai";
+
+export function createClient() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
+`;
+  it.each([
+    {
+      language: "Python",
+      manifestPath: "pyproject.toml",
+      manifest: '[project]\ndependencies = ["openai"]',
+      sourcePath: "src/client.py",
+      source: 'EXAMPLE = """\nimport openai\n"""'
+    },
+    {
+      language: "Rust",
+      manifestPath: "Cargo.toml",
+      manifest: '[dependencies]\nasync-openai = "0.27"',
+      sourcePath: "src/lib.rs",
+      source: "/* use async_openai::Client; */"
+    },
+    {
+      language: "Go",
+      manifestPath: "go.mod",
+      manifest: "module example.test/demo\nrequire github.com/sashabaranov/go-openai v1.40.1",
+      sourcePath: "src/main.go",
+      source: '// import "github.com/sashabaranov/go-openai"'
+    },
+    {
+      language: "Java",
+      manifestPath: "pom.xml",
+      manifest:
+        "<project><dependencies><dependency><groupId>com.openai</groupId><artifactId>openai-java</artifactId></dependency></dependencies></project>",
+      sourcePath: "src/App.java",
+      source: 'String example = "import com.openai.client.OpenAIClient;";'
+    },
+    {
+      language: "Kotlin",
+      manifestPath: "pom.xml",
+      manifest:
+        "<project><dependencies><dependency><groupId>com.anthropic</groupId><artifactId>anthropic-java</artifactId></dependency></dependencies></project>",
+      sourcePath: "src/App.kt",
+      source: 'val example = """\nimport com.anthropic.client.AnthropicClient\n"""'
+    }
+  ])("does not create a runtime fact from inactive $language imports", async (fixture) => {
+    const repository = await temporaryRepository({
+      [fixture.manifestPath]: fixture.manifest,
+      [fixture.sourcePath]: fixture.source
+    });
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.facts.map((fact) => fact.key)).not.toContain("ai.runtimeImplementation");
+    expect(result.value.facts.map((fact) => fact.key)).toContain(
+      "ai.unusedOrUnconfirmedDependencies"
+    );
+  });
+
+  it.each([
+    ["keywords", '[project]\nkeywords = ["openai"]'],
+    ["classifiers", '[project]\nclassifiers = ["openai"]'],
+    ["tool array", '[tool.example]\npackages = ["openai"]']
+  ])("does not authorize Python imports from %s", async (_name, manifest) => {
+    const repository = await temporaryRepository({
+      "pyproject.toml": manifest,
+      "src/client.py": "import openai"
+    });
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.facts.map((fact) => fact.key)).not.toContain("ai.runtimeImplementation");
+    }
+  });
+
+  it.each([
+    {
+      language: "JavaScript",
+      manifestPath: "package.json",
+      manifest: '{"dependencies":{"openai":"1"}}',
+      testPath: "src/client.test.ts",
+      testImport: 'import OpenAI from "openai";'
+    },
+    {
+      language: "Python",
+      manifestPath: "pyproject.toml",
+      manifest: '[project]\ndependencies = ["openai"]',
+      testPath: "tests/test_client.py",
+      testImport: "import openai"
+    }
+  ])("does not treat a test-only $language import as product runtime AI", async (fixture) => {
+    const repository = await temporaryRepository({
+      [fixture.manifestPath]: fixture.manifest,
+      [fixture.testPath]: fixture.testImport
+    });
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const runtimeFact = result.value.facts.find((fact) => fact.key === "ai.runtimeImplementation");
+    expect(runtimeFact).toBeUndefined();
+    expect(result.value.facts.map((fact) => fact.key)).toContain(
+      "ai.unusedOrUnconfirmedDependencies"
+    );
+  });
+
+  it("cites production evidence when production and test imports both exist", async () => {
+    const repository = await temporaryRepository({
+      "package.json": '{"dependencies":{"openai":"1"}}',
+      "src/client.ts": 'import OpenAI from "openai";',
+      "src/client.test.ts": 'import OpenAI from "openai";'
+    });
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const runtimeFact = result.value.facts.find((fact) => fact.key === "ai.runtimeImplementation");
+    expect(runtimeFact?.evidence).toContainEqual(
+      expect.objectContaining({ source: "src/client.ts" })
+    );
+    expect(runtimeFact?.evidence).not.toContainEqual(
+      expect.objectContaining({ source: "src/client.test.ts" })
+    );
+  });
+
+  it("keeps test-only changes stable and changes AI identity when the import moves to production", async () => {
+    const repository = await temporaryRepository({
+      "package.json": '{"dependencies":{"openai":"1"}}',
+      "src/client.ts": productionWithoutImport,
+      "src/client.test.ts": 'import OpenAI from "openai";'
+    });
+    const initial = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    await repository.write(
+      "src/client.test.ts",
+      '// changed test body\nimport OpenAI from "openai";\nconst expected = true;'
+    );
+    const testChanged = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    await repository.write("src/client.test.ts", "const expected = true;");
+    await repository.write("src/client.ts", productionWithImport);
+    const moved = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(initial.ok && testChanged.ok && moved.ok).toBe(true);
+    if (!initial.ok || !testChanged.ok || !moved.ok) return;
+    expect(testChanged.value.repositoryFingerprint).toBe(initial.value.repositoryFingerprint);
+    expect(moved.value.repositoryFingerprint).not.toBe(initial.value.repositoryFingerprint);
+    expect(moved.value.facts.map((fact) => fact.key)).toContain("ai.runtimeImplementation");
+  });
+
+  it.each(["@types/openai", "openai-mock", "not-openai"])(
+    "does not let lookalike dependency %s authorize an openai import",
+    async (dependency) => {
+      const repository = await temporaryRepository({
+        "package.json": JSON.stringify({ dependencies: { [dependency]: "1" } }),
+        "src/client.ts": 'import OpenAI from "openai";'
+      });
+      const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.facts.map((fact) => fact.key)).not.toContain(
+          "ai.runtimeImplementation"
+        );
+      }
+    }
+  );
+
+  it("keeps inactive metadata and lookalike declarations out of the AI fingerprint", async () => {
+    const python = await temporaryRepository({
+      "pyproject.toml": '[project]\nname = "demo"',
+      "src/client.py": "import openai"
+    });
+    const pythonInitial = await runProjectArchitect(python.root, { mode: "audit", scope: "ai" });
+    await python.write(
+      "pyproject.toml",
+      '[project]\nname = "demo"\nkeywords = ["openai"]\nclassifiers = ["openai"]'
+    );
+    const pythonChanged = await runProjectArchitect(python.root, { mode: "audit", scope: "ai" });
+
+    const javascript = await temporaryRepository({
+      "package.json": '{"name":"demo"}',
+      "src/client.ts": 'import OpenAI from "openai";'
+    });
+    const javascriptInitial = await runProjectArchitect(javascript.root, {
+      mode: "audit",
+      scope: "ai"
+    });
+    await javascript.write("package.json", '{"name":"demo","devDependencies":{"not-openai":"1"}}');
+    const javascriptChanged = await runProjectArchitect(javascript.root, {
+      mode: "audit",
+      scope: "ai"
+    });
+    expect(
+      pythonInitial.ok && pythonChanged.ok && javascriptInitial.ok && javascriptChanged.ok
+    ).toBe(true);
+    if (!pythonInitial.ok || !pythonChanged.ok || !javascriptInitial.ok || !javascriptChanged.ok) {
+      return;
+    }
+    expect(pythonChanged.value.repositoryFingerprint).toBe(
+      pythonInitial.value.repositoryFingerprint
+    );
+    expect(javascriptChanged.value.repositoryFingerprint).toBe(
+      javascriptInitial.value.repositoryFingerprint
+    );
+  });
+
+  it("keeps an approval current across inactive, test-only, metadata, and lookalike changes", async () => {
+    const repository = await temporaryRepository({
+      "package.json": '{"dependencies":{"openai":"1"}}',
+      "pyproject.toml": '[project]\nname = "demo"',
+      "src/client.ts": '// import OpenAI from "openai";',
+      "src/client.test.ts": "const expected = true;",
+      "src/client.py": "import openai"
+    });
+    const initial = await runProjectArchitect(repository.root, {
+      mode: "retrofit",
+      scope: "ai"
+    });
+    expect(initial.ok).toBe(true);
+    if (!initial.ok || initial.value.proposal === undefined) return;
+    const proposal = initial.value.proposal;
+    expect(proposal.questions.filter((question) => question.requiredForApproval)).toEqual([]);
+    expect(proposal.plannedChanges.length).toBeGreaterThan(0);
+
+    await repository.write("src/client.ts", 'const example = `import("openai")`;');
+    await repository.write("src/client.test.ts", 'import OpenAI from "openai";');
+    await repository.write(
+      "package.json",
+      '{"dependencies":{"openai":"1"},"devDependencies":{"not-openai":"1"}}'
+    );
+    await repository.write("pyproject.toml", '[project]\nname = "demo"\nkeywords = ["openai"]');
+
+    await expect(
+      approveProposal(repository.root, proposal, {
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    ).resolves.toEqual({ ok: true, value: { ...proposal, approved: true } });
+  });
+});
+
+describe("final SPEC-0001B Maven dependency authority correction", () => {
+  const javaImport = "import com.openai.client.OpenAIClient;\nclass App {}";
+  const kotlinImport = "import com.openai.client.OpenAIClient\nclass App";
+  const directDependency = `
+    <dependency>
+      <groupId>com.openai</groupId>
+      <artifactId>openai-java</artifactId>
+    </dependency>`;
+  const directPom = `<project><dependencies>${directDependency}</dependencies></project>`;
+  const runtimeFact = (facts: readonly { key: string }[]): { key: string } | undefined =>
+    facts.find((fact) => fact.key === "ai.runtimeImplementation");
+
+  it.each([
+    [
+      "commented",
+      `<project><!-- <dependencies>${directDependency}</dependencies> --></project>`,
+      "src/App.java",
+      javaImport
+    ],
+    [
+      "dependency-management",
+      `<project><dependencyManagement><dependencies>${directDependency}</dependencies></dependencyManagement></project>`,
+      "src/App.java",
+      javaImport
+    ],
+    [
+      "build-plugin",
+      `<project><build><plugins><plugin><dependencies>${directDependency}</dependencies></plugin></plugins></build></project>`,
+      "src/App.java",
+      javaImport
+    ],
+    [
+      "profile-only",
+      `<project><profiles><profile><dependencies>${directDependency}</dependencies></profile></profiles></project>`,
+      "src/App.kt",
+      kotlinImport
+    ],
+    [
+      "test-scoped",
+      `<project><dependencies>${directDependency.replace("</dependency>", "<scope>test</scope></dependency>")}</dependencies></project>`,
+      "src/App.java",
+      javaImport
+    ]
+  ])(
+    "does not confirm runtime AI from a %s Maven declaration",
+    async (_name, manifest, sourcePath, source) => {
+      const repository = await temporaryRepository({ "pom.xml": manifest, [sourcePath]: source });
+      const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(runtimeFact(result.value.facts)).toBeUndefined();
+      expect(result.value.facts.map((fact) => fact.key)).not.toContain(
+        "ai.unusedOrUnconfirmedDependencies"
+      );
+    }
+  );
+
+  it("confirms a direct Maven dependency only from production evidence", async () => {
+    const repository = await temporaryRepository({
+      "pom.xml": directPom,
+      "src/App.java": javaImport,
+      "src/test/java/AppTest.java": javaImport
+    });
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.facts).toContainEqual(
+      expect.objectContaining({
+        key: "ai.runtimeImplementation",
+        confidence: "high",
+        evidence: expect.arrayContaining([
+          expect.objectContaining({ source: "pom.xml" }),
+          expect.objectContaining({ source: "src/App.java" })
+        ])
+      })
+    );
+    const fact = result.value.facts.find((item) => item.key === "ai.runtimeImplementation");
+    expect(fact?.evidence).not.toContainEqual(
+      expect.objectContaining({ source: "src/test/java/AppTest.java" })
+    );
+  });
+
+  it("keeps a direct dependency with only a test import unconfirmed", async () => {
+    const repository = await temporaryRepository({
+      "pom.xml": directPom,
+      "src/test/java/AppTest.java": javaImport
+    });
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(runtimeFact(result.value.facts)).toBeUndefined();
+    expect(result.value.facts).toContainEqual(
+      expect.objectContaining({ key: "ai.unusedOrUnconfirmedDependencies" })
+    );
+  });
+
+  it.each([
+    [
+      "comments",
+      `<project><!-- <dependencies>${directDependency}</dependencies> --></project>`,
+      `<project><!-- changed ${directDependency}</project> --> </project>`
+    ],
+    [
+      "CDATA",
+      `<project><description><![CDATA[<dependencies>${directDependency}</dependencies>]]></description></project>`,
+      `<project><description><![CDATA[changed <dependency>${directDependency}</dependency>]]></description></project>`
+    ],
+    [
+      "dependency management",
+      `<project><dependencyManagement><dependencies>${directDependency}</dependencies></dependencyManagement></project>`,
+      `<project><dependencyManagement><dependencies>${directDependency.replace("openai-java", "openai-java-client-okhttp")}</dependencies></dependencyManagement></project>`
+    ],
+    [
+      "plugins",
+      `<project><build><plugins><plugin><dependencies>${directDependency}</dependencies></plugin></plugins></build></project>`,
+      `<project><build><plugins><plugin><dependencies>${directDependency.replace("openai-java", "openai-java-core")}</dependencies></plugin></plugins></build></project>`
+    ],
+    [
+      "profiles",
+      `<project><profiles><profile><dependencies>${directDependency}</dependencies></profile></profiles></project>`,
+      `<project><profiles><profile><dependencies>${directDependency.replace("openai-java", "openai-java-client-okhttp")}</dependencies></profile></profiles></project>`
+    ],
+    [
+      "test scope",
+      `<project><dependencies>${directDependency.replace("</dependency>", "<scope>test</scope></dependency>")}</dependencies></project>`,
+      `<project><dependencies>${directDependency.replace("</dependency>", "<scope>test</scope><version>2</version></dependency>")}</dependencies></project>`
+    ]
+  ])("keeps the AI fingerprint stable across ignored %s changes", async (_name, before, after) => {
+    const repository = await temporaryRepository({ "pom.xml": before, "src/App.java": javaImport });
+    const initial = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    await repository.write("pom.xml", after);
+    const changed = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(initial.ok && changed.ok).toBe(true);
+    if (!initial.ok || !changed.ok) return;
+    expect(changed.value.repositoryFingerprint).toBe(initial.value.repositoryFingerprint);
+    expect(runtimeFact(changed.value.facts)).toBeUndefined();
+  });
+
+  it("changes the AI fingerprint when a supported dependency moves into or out of direct dependencies", async () => {
+    const managedPom = `<project><dependencyManagement><dependencies>${directDependency}</dependencies></dependencyManagement></project>`;
+    const repository = await temporaryRepository({
+      "pom.xml": managedPom,
+      "src/App.java": javaImport
+    });
+    const managed = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    await repository.write("pom.xml", directPom);
+    const direct = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    await repository.write("pom.xml", "<project />");
+    const removed = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(managed.ok && direct.ok && removed.ok).toBe(true);
+    if (!managed.ok || !direct.ok || !removed.ok) return;
+    expect(direct.value.repositoryFingerprint).not.toBe(managed.value.repositoryFingerprint);
+    expect(removed.value.repositoryFingerprint).not.toBe(direct.value.repositoryFingerprint);
+  });
+
+  it("rejects approval after a direct Maven dependency/import change", async () => {
+    const repository = await temporaryRepository({
+      "pom.xml": "<project />",
+      "src/App.java": javaImport
+    });
+    const initial = await runProjectArchitect(repository.root, {
+      mode: "retrofit",
+      scope: "ai",
+      acceptedDecisions: [...decisionsForScope("ai"), { id: "project.mode", value: "retrofit" }]
+    });
+    expect(initial.ok).toBe(true);
+    if (!initial.ok || initial.value.proposal === undefined) return;
+    const proposal = initial.value.proposal;
+    await repository.write("pom.xml", directPom);
+    await expect(
+      approveProposal(repository.root, proposal, {
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    ).resolves.toMatchObject({ ok: false, error: { code: "STALE_PROPOSAL" } });
+  });
+
+  it("keeps approval current after an ignored Maven-only change", async () => {
+    const before = `<project><dependencyManagement><dependencies>${directDependency}</dependencies></dependencyManagement></project>`;
+    const repository = await temporaryRepository({ "pom.xml": before, "src/App.java": javaImport });
+    const initial = await runProjectArchitect(repository.root, {
+      mode: "retrofit",
+      scope: "ai",
+      acceptedDecisions: [...decisionsForScope("ai"), { id: "project.mode", value: "retrofit" }]
+    });
+    expect(initial.ok).toBe(true);
+    if (!initial.ok || initial.value.proposal === undefined) return;
+    const proposal = initial.value.proposal;
+    await repository.write("pom.xml", before.replace("openai-java", "openai-java-core"));
+    await expect(
+      approveProposal(repository.root, proposal, {
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    ).resolves.toEqual({ ok: true, value: { ...proposal, approved: true } });
+  });
+
+  it("returns identical Maven facts, evidence ordering, and fingerprints repeatedly", async () => {
+    const repository = await temporaryRepository({
+      "pom.xml": directPom,
+      "src/App.java": javaImport,
+      "src/App.kt": kotlinImport
+    });
+    const first = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    const second = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(second).toEqual(first);
+  });
+});
+
 describe("final SPEC-0001B contextual question correction", () => {
   it.each([
     "This project helps teams improve security documentation by collecting and presenting clear repository guidance for developers and maintainers.",

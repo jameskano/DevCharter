@@ -25,12 +25,12 @@ Target repository
 ## Current implementation status
 
 SPEC-0001A implements the deterministic core foundation and the read-only `inspect` and `validate`
-CLI commands. Active SPEC-0001B adds scoped repository analysis, evidence-weighted mode
+CLI commands. Completed SPEC-0001B adds scoped repository analysis, evidence-weighted mode
 recommendations, explicit specification/command/instruction authority maps, bounded reference and
 command validation, unapproved staged proposals, proposal/repository fingerprints, pure in-memory
 approval, and the read-only `new`, `retrofit`, and `audit` commands. Specification Architect
-workflows, rendering/application, the Codex adapter, and release qualification remain assigned to
-SPEC-0001C–E.
+workflows remain assigned to ready SPEC-0001C; rendering/application, the Codex adapter, and release
+qualification remain assigned to SPEC-0001D–E.
 
 The CLI depends only on the core read-only and Project Architect entry points. The atomic writer is
 a separately exported and tested primitive that none of the current commands can access.
@@ -109,12 +109,20 @@ path-only inline code outside fenced examples. Existing inline targets can exten
 fingerprint; missing inline targets are findings only when the surrounding prose expresses
 reference intent, avoiding false findings for optional mechanism names.
 
-Runtime-AI classification uses bounded dependency declarations and explicit source imports across
-package.json, Python, Cargo, Go, and Maven projects, including Java and Kotlin sources. A declared
-AI dependency without matching source evidence remains unused or unconfirmed; developer-AI
-configuration is classified independently. The same canonical matcher binds AI-scoped
-mode-classification source fingerprints to matching import evidence, so fact changes stale approval
-without treating unrelated source bodies as complete AI-scope inputs.
+Runtime-AI classification uses bounded authoritative dependency declarations and active production
+source imports across package.json, Python, Cargo, Go, and Maven projects, including Java and Kotlin
+sources. The repository artifact classifier supplies production and test paths; test-only imports,
+comments, strings, and other inactive examples cannot establish product implementation. Python
+dependencies are limited to supported PEP 621 and Poetry sections, and a small ecosystem-specific
+registry maps exact dependency identities to supported import identities. A declared dependency
+without matching production evidence remains unused or unconfirmed; developer-AI configuration is
+classified independently. Maven authority is deliberately limited to direct `dependency` children
+of the root project's direct `dependencies` element. Comments, CDATA, dependency management,
+build/reporting plugins, profiles, arbitrary nesting, and `test` or `import` scopes cannot establish
+runtime-AI dependency evidence; malformed or ambiguous XML produces no Maven evidence. The same
+canonical matcher binds AI-scoped mode-classification source fingerprints to authoritative
+production matches, so fact changes stale approval without treating unrelated source or test
+bodies as complete AI-scope inputs.
 
 Command authority is deliberately small and deterministic. It validates npm, pnpm, yarn, and bun
 scripts against the applicable `package.json`; static Python script/tool declarations against
