@@ -28,7 +28,7 @@ SPEC-0001A implements the deterministic core foundation and the read-only `inspe
 CLI commands. Completed SPEC-0001B adds scoped repository analysis, evidence-weighted mode
 recommendations, explicit specification/command/instruction authority maps, bounded reference and
 command validation, unapproved staged proposals, proposal/repository fingerprints, pure in-memory
-approval, and the read-only `new`, `retrofit`, and `audit` commands. Active SPEC-0001C implements
+approval, and the read-only `new`, `retrofit`, and `audit` commands. Completed SPEC-0001C implements
 the model-neutral Specification Architect workflow as one instruction-only Codex repository skill,
 without a parallel core API or CLI command. Rendering/application, the Codex adapter, and release
 qualification remain assigned to SPEC-0001D–E.

@@ -38,7 +38,7 @@ findings, assumptions, questions, critical journeys, considered components, plan
 preserved paths, conflicts, risks, validation, deferred work, and zero applied changes. Approval is
 an in-memory library contract; unresolved required questions, audit-mode proposals, replay, stale
 repository state, and material proposal mutations are rejected. Rendering and file application
-remain deferred to SPEC-0001D. Active SPEC-0001C adds the v0 Specification Architect as one
+remain deferred to SPEC-0001D. Completed SPEC-0001C adds the v0 Specification Architect as one
 instruction-only repository skill at `.agents/skills/specification-architect/SKILL.md`; it adds no
 CLI command, runtime API, session, persistence, adapter, or generator.
 
@@ -124,12 +124,13 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
 ## Codex implementation order
 
 1. Read `AGENTS.md` and `MANIFEST.md`.
-2. Read the parent specification and completed `SPEC-0001A` and `SPEC-0001B` foundations.
-3. Preserve the clean-slate architecture and public contracts established by 0001A and 0001B.
-4. Complete active `SPEC-0001C` without adding 0001D or 0001E behavior.
-5. Move 0001C to `done` only after author verification, a fresh independent completion review,
+2. Read the parent specification and completed `SPEC-0001A`, `SPEC-0001B`, and `SPEC-0001C`
+   foundations.
+3. Preserve the clean-slate architecture and public contracts established by 0001A–C.
+4. Activate and implement ready `SPEC-0001D` without adding 0001E behavior.
+5. Move 0001D to `done` only after author verification, a fresh independent completion review,
    and explicit user approval.
-6. Repeat for 0001D and 0001E.
+6. Repeat for 0001E.
 7. Use Habit Compass as an external audit/retrofit pilot before a stable release.
 
 Use only these development statuses:

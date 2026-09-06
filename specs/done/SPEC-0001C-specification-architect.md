@@ -6,7 +6,7 @@
 |---|---|
 | ID | SPEC-0001C |
 | Parent | SPEC-0001 |
-| Status | active |
+| Status | done |
 
 ## Purpose
 
@@ -130,7 +130,9 @@ draft → ready → active → done
 draft|ready|active → cancelled
 ```
 
-- The workflow creates or updates `draft`.
+- Creation starts at `draft`. Refining a `draft` keeps it `draft`.
+- Refining a `ready` or `active` specification preserves its status; refinement never creates an unsupported backward transition.
+- If a refinement materially changes approved behavior, record that renewed approval is required and do not begin or continue the affected implementation until a human explicitly approves the revision. Approval state is metadata, not another status.
 - Only explicit human approval makes it `ready`.
 - Implementation makes it `active`.
 - Evidence-based completion makes it `done`.
@@ -180,11 +182,14 @@ The verifier reads the spec before the diff, maps requirements to code and test 
 15. Current documentation is reviewed before `done`.
 16. The model-neutral workflow is exposed as a correctly structured Codex skill.
 17. Tests cover classification, context, assumptions, approval, supersession, evidence mapping, and completion gates.
+18. Refinement keeps `draft` specifications in `draft`, preserves `ready` or `active` status, and gates affected implementation on renewed explicit human approval when approved behavior changes materially.
 
 ## Implementation evidence
 
-Status: implementation and author verification are complete. This specification remains `active`
-pending a fresh independent completion review and explicit user approval.
+Status: done. The minimum completion fixes and author verification are complete. A fresh independent
+completion review found no blocking gaps, and the user explicitly approved the `active -> done`
+transition on 2026-09-06. No separate forward model evaluation was run; the scenario matrix remains
+author walkthrough evidence and is not represented as independent model evidence.
 
 ### Implemented behavior
 
@@ -195,6 +200,11 @@ pending a fresh independent completion review and explicit user approval.
   explicit context precedence, separate knowledge and decision categories, material questions,
   sensitive-decision confirmation, cohesive draft authoring, observable criteria, verification
   mapping, supersession, and lifecycle gates.
+- Clarified refinement lifecycle behavior: a draft remains draft, a ready or active specification
+  preserves its status, and a material change to approved behavior pauses affected implementation
+  until renewed explicit human approval without inventing a backward status transition.
+- Replaced the test's hardcoded active path with deterministic discovery of exactly one declared
+  `SPEC-0001C` across the specification tree, including directory/status agreement.
 - Completion review requires implementation, tests, acceptance evidence, documentation dispositions,
   limitations, and deferred work. A material deviation must be incorporated into the authoritative
   specification and explicitly approved; informal approval cannot bypass `done` requirements.
@@ -211,6 +221,9 @@ they validate the instruction outcome without claiming an independent model eval
 | Trivial behavior-preserving maintenance | Requires evidence that observable behavior and the existing contract remain unchanged, then proceeds without a placeholder specification. | Pass |
 | Material feature | Requires an authoritative specification and creates one cohesive `draft` before implementation. | Pass |
 | Existing authoritative specification | Routes to refine or review of that file instead of creating a duplicate ID. | Pass |
+| Refine a draft | Preserves `draft` while incorporating supported evidence and decisions. | Pass |
+| Refine a ready specification | Preserves `ready`; a material approved-behavior change requires renewed explicit human approval before implementation begins. | Pass |
+| Refine an active specification | Preserves `active`; a material approved-behavior change pauses the affected implementation until renewed explicit human approval. | Pass |
 | Conflicting or duplicate authority | Exposes the conflict and blocks readiness until authority is resolved explicitly. | Pass |
 | Sensitive unresolved decision | Requires explicit confirmation and prohibits converting the decision into an assumption or default. | Pass |
 | Readiness review | Checks authority, scope, decisions, assumptions, criteria, verification mapping, and explicit human approval before `ready`. | Pass |
@@ -221,20 +234,26 @@ they validate the instruction outcome without claiming an independent model eval
 
 | Command or check | Actual result |
 |---|---|
-| Targeted SPEC-0001B Maven correction tests | Passed: 2 files and 262 tests; 98 direct runtime-AI tests and 164 public Project Architect tests. |
-| Targeted Specification Architect skill tests | Passed: 1 file and 6 tests. |
-| Bundled `quick_validate.py` | Skipped: no Python interpreter is installed. Equivalent frontmatter, name/path, and unfinished-layout invariants are covered by the Vitest skill checks. |
-| `pnpm format:check` | Passed. |
+| Targeted Specification Architect skill tests | Initial run exposed one wording mismatch between the specification and its exact assertion; after aligning the wording, passed: 1 file and 10 tests. |
+| `pnpm format:check` | Initial check identified the expanded test for formatting; after Prettier, passed. |
 | `pnpm lint` | Passed. |
 | `pnpm typecheck` | Passed. |
-| `pnpm test` | Passed: 10 files and 332 tests, including the build performed by the test script. |
+| `pnpm test` | Passed: 10 files and 336 tests, including the build performed by the test script. |
 | `pnpm build` | Passed independently after the full test run. |
 | `pnpm devcharter validate --format json` | Passed with no configuration, legacy files, warnings, failures, skipped checks, or changed paths. The restricted launcher returned `EPERM`; the same command passed in the approved execution context. |
-| Built CLI mode/scope matrix | Passed all 12 `new|retrofit|audit × full|governance|engineering|ai` combinations with the requested scope and zero applied changes; audit returned no proposal. |
-| Built full-scope audit | Passed with zero findings, no proposal, zero planned changes, and zero applied changes. |
-| Audit Git/no-write verification | Passed: the final 12-entry in-progress Git status was byte-for-byte unchanged and `.git/index` retained SHA-256 `428B03CA7DD5C4527898C66215A90BB4FCC8CB84B61072486439475BCE069245` and its modification time. |
-| Project Architect import boundary | Passed the focused test; static search found no writer, network, fetch, or telemetry reference in Project Architect modules or the CLI entry point. |
-| `git diff --check` and final diff/status review | Passed; only line-ending notices were reported. The review found the intended SPEC-0001B correction, SPEC-0001C lifecycle move, single skill, focused tests, and current-documentation updates, with no unrelated external changes. |
+| Built full-scope read-only audit | Passed with zero findings, no proposal, zero planned changes, and zero applied changes. The restricted launcher returned `EPERM`; the same command passed in the approved execution context. |
+| Audit Git/no-write verification | Passed: the three-entry intended Git status was unchanged and `.git/index` retained SHA-256 `C50011CD329A96E0B739CBA5C8BFFBFA0203DDF6F451B8EC41742F8DCF6347CF`, UTC modification time `2026-09-05 23:28:22`, and length 6882 bytes. |
+| `git diff --check` and final diff/status review | Passed; only line-ending notices were reported. The review showed three intended files, 130 insertions, and 41 deletions, with no unrelated changes. |
+
+### Independent completion review
+
+On 2026-09-06, a fresh reviewer read this specification before the implementation diff, mapped all
+18 acceptance criteria to the skill and focused tests, confirmed that no SPEC-0001D or SPEC-0001E
+behavior was added, and found no completion blocker. The reviewer reran the focused 10-test suite,
+formatting, linting, type checking, all 336 tests, an independent build, the built validator, and a
+full-scope read-only audit. Every check passed; the audit reported zero findings, no proposal, no
+planned changes, and no applied changes. The validator and audit required the approved execution
+context after the restricted launcher returned `EPERM` while resolving the workspace path.
 
 ### Acceptance evidence
 
@@ -255,23 +274,22 @@ they validate the instruction outcome without claiming an independent model eval
 | 13 | Refinement requires explicit `supersedes` or `superseded_by` metadata and applicable index or parent updates. |
 | 14 | The implementation gate blocks non-trivial work for missing, conflicted, or draft authority and helps create/refine the contract. |
 | 15 | Completion review requires current-documentation review and a reason for every reviewed-but-unchanged document. |
-| 16 | The six-test skill suite validates the native repository location, frontmatter, triggers, workflow, lifecycle, status consistency, single-file layout, and prohibited extras. |
-| 17 | Automated checks and the eight-case author walkthrough cover classification, context, assumptions, approval, supersession, evidence mapping, and completion gates. |
+| 16 | The ten-test skill suite validates the native repository location, frontmatter, triggers, workflow, lifecycle, authoritative-spec discovery, directory/status consistency, single-file layout, and prohibited extras. |
+| 17 | Focused automated assertions and the author walkthrough matrix cover classification, context and authority, assumptions, approval, supersession, evidence mapping, and completion gates. |
+| 18 | Focused skill and authoritative-spec assertions cover draft preservation, ready/active status preservation, prohibition of backward transitions, and renewed explicit approval before affected implementation proceeds after a material approved-behavior change. |
 
 ### Documentation review, limitations, and deferred work
 
-Updated: README current implementation and next step, the system overview current implementation and
-skill boundary, MANIFEST active-spec routing, the audit/plan prompt's active path, SPEC-0001B
-correction evidence, and this implementation record.
+Updated in this completion-fix and closeout pass: this authoritative specification's lifecycle rule,
+acceptance criteria, completion evidence, status, and location; the Specification Architect skill;
+its focused instruction tests; MANIFEST and README routing; the system overview's current status;
+and the audit/plan prompt for the next ready specification.
 
-Reviewed unchanged: AGENTS.md already defines the governing specification, decision, safety, and
-completion rules; purpose and scope already state the correct product boundary; the quality and
-decision model already defines evidence, assumptions, precedence, and approval; the spec-driven
-workflow already matches the skill; the official Codex capability reference already uses the native
-skill path and instruction-first design; the specs index and parent SPEC-0001 already define the
-correct authority and lifecycle; completed SPEC-0001A remains historical foundation evidence;
-SPEC-0001D–E remain accurate future boundaries; and the generic implementation and completion-review
-prompts require no change.
+Reviewed unchanged: AGENTS.md, the purpose and scope, quality and decision model, spec-driven
+workflow, specs index, parent SPEC-0001, official Codex capability reference, implementation and
+completion-review prompts, and the SPEC-0001A/B and SPEC-0001D/E specifications. Their authority,
+product-boundary, lifecycle, and later-spec boundaries remain accurate. Ready SPEC-0001D/E status
+was not changed.
 
 Limitations: the skill is an instruction workflow rather than a deterministic semantic engine; its
 behavior depends on the invoking model correctly following repository evidence and the skill. The

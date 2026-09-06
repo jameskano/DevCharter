@@ -12,7 +12,7 @@ Define one implementation-ready behavior contract without turning routine mainte
 Use the requested operation when the user supplies one:
 
 - `create`: decide whether a specification is needed, find existing authority, and create one draft only when necessary.
-- `refine <spec-id>`: improve the authoritative draft or reconcile it with discovered behavior and decisions.
+- `refine <spec-id>`: improve the authoritative specification or reconcile it with discovered behavior and decisions without inventing a backward lifecycle transition.
 - `review <spec-id>`: perform a readiness, implementation-gate, or completion review without rewriting implementation unless explicitly asked.
 
 If the operation is omitted, infer it from the requested outcome. Ask only when choosing the wrong operation would materially change the work.
@@ -88,7 +88,9 @@ Edit only the authoritative specification. Preserve compatible behavior, identif
 
 Keep one authoritative file per ID. When behavior replaces another specification, record an explicit `supersedes` or `superseded_by` relationship and update the applicable index or parent relationship. A duplicate ID, missing relationship target, directory/status mismatch, or unresolved precedence conflict blocks readiness.
 
-Update scope, behavior, decisions, risks, dependencies, criteria, verification, and affected-documentation expectations only where new evidence or an accepted decision requires it. Leave material open questions visible and keep the status `draft`.
+Update scope, behavior, decisions, risks, dependencies, criteria, verification, and affected-documentation expectations only where new evidence or an accepted decision requires it. Leave material open questions visible.
+
+Refining a `draft` keeps it `draft`. Refining a `ready` or `active` specification preserves its current status; do not move it backward to represent renewed review. When a refinement materially changes approved behavior, record that renewed approval is required and do not begin or continue the affected implementation until a human explicitly approves the revised behavior. Approval state is review metadata, not another lifecycle status.
 
 ## Review
 
