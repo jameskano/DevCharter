@@ -25,6 +25,8 @@ devcharter retrofit [--scope full|governance|engineering|ai]
 devcharter audit [--scope full|governance|engineering|ai]
 devcharter inspect
 devcharter validate
+devcharter render --proposal <file> --approval <file> --adapter codex
+devcharter apply --plan <file> --approval <file>
 ```
 
 All commands operate on the current working directory and support `--format human|json`. The three
@@ -36,9 +38,16 @@ exclusion metadata without hashing excluded contents. Audit returns the same sta
 without a proposal, approval state, or planned changes. Human and JSON results expose facts,
 findings, assumptions, questions, critical journeys, considered components, planned changes,
 preserved paths, conflicts, risks, validation, deferred work, and zero applied changes. Approval is
-an in-memory library contract; unresolved required questions, audit-mode proposals, replay, stale
-repository state, and material proposal mutations are rejected. Rendering and file application
-remain deferred to SPEC-0001D. Completed SPEC-0001C adds the v0 Specification Architect as one
+an in-memory library contract; unresolved required questions, audit-mode proposals, stale repository
+state, and material proposal mutations are rejected. Active SPEC-0001D adds read-only `render` and
+writer-capable `apply` lifecycle commands with structurally separate approvals. When an engineering
+proposal needs to create or repair a `package.json` verification surface, DevCharter requires an
+explicit `project.packageScripts` decision before rendering. It creates only the accepted scripts in
+a new manifest, or surgically updates the `scripts` object of a strict JSON manifest while preserving
+unrelated fields and existing script order. Render output exposes the complete content or diff in
+both human and JSON formats. Apply output reports a terminal result for every target and, when
+applicable, the managed receipt: `created`, `updated`, `skipped`, `conflict`, `failed`, or
+`not-attempted`. Completed SPEC-0001C adds the v0 Specification Architect as one
 instruction-only repository skill at `.agents/skills/specification-architect/SKILL.md`; it adds no
 CLI command, runtime API, session, persistence, adapter, or generator.
 
@@ -62,6 +71,11 @@ AI-scoped fingerprints bind canonical imports that match declared supported AI d
 runtime-AI fact changes invalidate approval while unrelated source-body edits remain stable.
 Constraint and risk questions require contextual requirements or concrete failure evidence; generic
 product-domain vocabulary continues to use the explicit non-blocking empty defaults.
+
+Rendered plans carry a compact versioned retry digest over bounded repository evidence and explicit
+Git state. An already-applied retry is accepted only when that capture is exact and every planned
+output already matches; unreadable, unsupported, binary, oversized, or otherwise uncertain evidence
+forces a fresh proposal and approval.
 
 From this workspace, run commands with `pnpm devcharter`, for example
 `pnpm devcharter audit --scope engineering --format json`.
@@ -127,7 +141,7 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
 2. Read the parent specification and completed `SPEC-0001A`, `SPEC-0001B`, and `SPEC-0001C`
    foundations.
 3. Preserve the clean-slate architecture and public contracts established by 0001A–C.
-4. Activate and implement ready `SPEC-0001D` without adding 0001E behavior.
+4. Complete active `SPEC-0001D` without adding 0001E behavior.
 5. Move 0001D to `done` only after author verification, a fresh independent completion review,
    and explicit user approval.
 6. Repeat for 0001E.

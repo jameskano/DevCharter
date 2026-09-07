@@ -51,6 +51,7 @@ function resolvedNewDecisions(outcomeValue = "Ship a dependable application"): A
   return [
     outcome(outcomeValue),
     { id: "project.aiTools", value: ["Codex"] },
+    { id: "project.packageScripts", value: { test: "vitest run" } },
     { id: "project.constraints", value: [] },
     { id: "project.risks", value: [] }
   ];
@@ -64,7 +65,10 @@ function decisionsForScope(
     { id: "project.constraints", value: [] },
     { id: "project.risks", value: [] },
     ...(scope === "full" || scope === "engineering"
-      ? [{ id: "project.technologies", value: ["TypeScript", "Node.js"] }]
+      ? [
+          { id: "project.technologies", value: ["TypeScript", "Node.js"] },
+          { id: "project.packageScripts", value: { test: "vitest run" } }
+        ]
       : []),
     ...(scope === "full" || scope === "ai" ? [{ id: "project.aiTools", value: ["Codex"] }] : [])
   ];
@@ -1053,6 +1057,51 @@ describe("completion-review classification and analysis", () => {
 });
 
 describe("completion-review questions, proposals, and approval", () => {
+  it("requires exact package scripts before approving a package.json repair", async () => {
+    const repository = await temporaryRepository();
+    const unresolved = await runProjectArchitect(repository.root, {
+      mode: "new",
+      scope: "engineering",
+      acceptedDecisions: [
+        outcome(),
+        { id: "project.technologies", value: ["TypeScript", "Node.js"] }
+      ]
+    });
+    expect(unresolved).toMatchObject({
+      ok: true,
+      value: {
+        questions: [
+          {
+            id: "project.packageScripts",
+            requiredForApproval: true
+          }
+        ]
+      }
+    });
+    if (!unresolved.ok || unresolved.value.proposal === undefined)
+      throw new Error("proposal failed");
+    const proposal = unresolved.value.proposal;
+    await expect(
+      approveProposal(repository.root, proposal, {
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    ).resolves.toMatchObject({ ok: false, error: { code: "APPROVAL_REQUIRED" } });
+
+    const resolved = await runProjectArchitect(repository.root, {
+      mode: "new",
+      scope: "engineering",
+      acceptedDecisions: [
+        outcome(),
+        { id: "project.technologies", value: ["TypeScript", "Node.js"] },
+        { id: "project.packageScripts", value: { test: "vitest run" } }
+      ]
+    });
+    expect(resolved).toMatchObject({ ok: true, value: { questions: [] } });
+  });
+
   it.each(["full", "governance", "engineering", "ai"] as const)(
     "produces an actionable resolved new proposal for %s",
     async (scope) => {
@@ -1839,7 +1888,8 @@ describe("SPEC-0001B correction pass", () => {
     const proposal = await proposalFor(repository, [
       outcome(),
       { id: "project.technologies", value: ["TypeScript", "Node.js"] },
-      { id: "project.aiTools", value: ["Codex"] }
+      { id: "project.aiTools", value: ["Codex"] },
+      { id: "project.packageScripts", value: { test: "vitest run" } }
     ]);
     expect(proposal.questions).toEqual([]);
     const approved = await approveProposal(repository.root, proposal, {

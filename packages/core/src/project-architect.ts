@@ -1,4 +1,3 @@
-import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { lstat, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
@@ -34,6 +33,7 @@ import {
 } from "./model.js";
 import { RepositoryReader } from "./repository.js";
 import { DevCharterError, failure, success, type Result } from "./results.js";
+import { executeSafeGit, SAFE_GIT_PREFIX } from "./safe-git.js";
 import { compareCanonicalText, stableHash } from "./serialization.js";
 import { computeScopedRepositoryFingerprint } from "./project-architect/fingerprint.js";
 import { classifySkillProvenance } from "./project-architect/skill-provenance.js";
@@ -171,7 +171,8 @@ const DECISION_IDS = new Set([
   "project.constraints",
   "project.risks",
   "project.mode",
-  "project.manifestPath"
+  "project.manifestPath",
+  "project.packageScripts"
 ]);
 
 type CommandAuthorityKind = "package-json" | "python" | "cargo" | "go" | "maven";
@@ -728,41 +729,6 @@ function selectedByScope(roles: readonly string[], scope: Scope): boolean {
   return scope === "full" ? roles.length > 0 : roles.includes(scope);
 }
 
-function executeGit(root: string, arguments_: readonly string[]): Promise<string> {
-  return new Promise((resolve, reject) => {
-    execFile(
-      "git",
-      [...arguments_],
-      {
-        cwd: root,
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          GIT_OPTIONAL_LOCKS: "0",
-          GIT_TERMINAL_PROMPT: "0",
-          LC_ALL: "C"
-        },
-        maxBuffer: 1024 * 1024,
-        timeout: 5000,
-        windowsHide: true
-      },
-      (error, stdout) => {
-        if (error) reject(error);
-        else resolve(stdout);
-      }
-    );
-  });
-}
-
-const GIT_PREFIX = [
-  "--no-optional-locks",
-  "--no-pager",
-  "-c",
-  "core.fsmonitor=false",
-  "-c",
-  "core.untrackedCache=false"
-] as const;
-
 async function inspectGit(
   root: string,
   includedPaths: ReadonlySet<string>,
@@ -817,7 +783,7 @@ async function inspectGit(
     const name = names[index];
     if (name === undefined) continue;
     try {
-      const output = await runner(root, [...GIT_PREFIX, ...invocation]);
+      const output = await runner(root, [...SAFE_GIT_PREFIX, ...invocation]);
       if (name === "status") {
         const entries = output
           .split("\0")
@@ -2030,6 +1996,15 @@ function validateDecisionSet(decisions: readonly AcceptedDecision[]): string | u
       if (typeof decision.value !== "string" || !safeDecisionPath(decision.value)) {
         return "project.manifestPath must be a safe repository-relative path using forward slashes";
       }
+    } else if (decision.id === "project.packageScripts") {
+      if (
+        decision.value === null ||
+        Array.isArray(decision.value) ||
+        typeof decision.value !== "object" ||
+        Object.keys(decision.value).length === 0
+      ) {
+        return "project.packageScripts must be a non-empty object of script names and bodies";
+      }
     } else {
       if (
         !Array.isArray(decision.value) ||
@@ -2190,6 +2165,26 @@ function buildQuestions(
       "Which repository-relative manifest path should own engineering commands?",
       "The selected technology does not have an unambiguous conventional manifest path.",
       "A concrete safe target is required before an engineering proposal can be approved."
+    );
+  }
+  const manifestPath = inferredManifestPath(artifacts, context, decisions);
+  const manifest =
+    manifestPath === undefined
+      ? undefined
+      : context.manifests.find((item) => item.path === manifestPath);
+  const packageScriptsNeeded =
+    scopeIncludes(scope, "engineering") &&
+    manifestPath?.toLowerCase().endsWith("package.json") === true &&
+    (manifest === undefined ||
+      ![...manifest.scripts].some((script) => VERIFICATION_COMMAND_NAMES.has(script)));
+  if (packageScriptsNeeded && !decided.has("project.packageScripts")) {
+    add(
+      "project.packageScripts",
+      "Which exact package.json scripts should provide project verification?",
+      manifest === undefined
+        ? "The proposed package.json does not exist and no script bodies can be inferred safely."
+        : "The applicable package.json has no adequate verification script authority.",
+      "Exact script bodies are required so DevCharter does not guess or execute project tooling."
     );
   }
   return questions.sort((left, right) => compareCanonicalText(left.id, right.id));
@@ -2541,7 +2536,7 @@ export async function approveProposal(
   const fingerprint = await buildFingerprint(
     reader.value,
     parsedProposal.data.scope,
-    options.gitRunner ?? executeGit
+    options.gitRunner ?? executeSafeGit
   );
   if (!fingerprint.ok) return fingerprint;
   return validateProposalApproval(
@@ -2802,7 +2797,7 @@ function createProposal(
       "Re-run scoped discovery before rendering or application",
       "Validate all referenced paths and commands"
     ],
-    deferredWork: ["Render and apply approved changes in SPEC-0001D"]
+    deferredWork: ["Release qualification remains in SPEC-0001E"]
   };
   const proposalFingerprint = computeProposalFingerprint(draft);
   const revision =
@@ -2866,7 +2861,11 @@ export async function runProjectArchitect(
   }
   const reader = await RepositoryReader.create(root);
   if (!reader.ok) return reader;
-  const fingerprint = await buildFingerprint(reader.value, scope, options.gitRunner ?? executeGit);
+  const fingerprint = await buildFingerprint(
+    reader.value,
+    scope,
+    options.gitRunner ?? executeSafeGit
+  );
   if (!fingerprint.ok) return fingerprint;
 
   const recommendation = recommendMode(
@@ -2908,7 +2907,7 @@ export async function runProjectArchitect(
     "Repository and Git state remain unchanged",
     "Fingerprint inputs are reproducible"
   ];
-  const deferredWork = ["Rendering and application are deferred to SPEC-0001D"];
+  const deferredWork = ["Release qualification remains in SPEC-0001E"];
   const assumptions = buildAssumptions(fingerprint.value, mode, acceptedDecisions, detectedContext);
   const consideredComponents = buildConsideredComponents(findings);
   const conflicts = findings.filter(isConflictFinding);

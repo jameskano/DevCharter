@@ -35,7 +35,11 @@ Official documentation:
 
 ## Codex-specific configuration
 
-Generate `.codex/` configuration or custom-agent assets only when the selected Codex capability is officially supported and the repository has a demonstrated need. DevCharter must not invent configuration formats copied from other AI tools.
+Generate project configuration only at `.codex/config.toml`, only when the selected capability is
+officially supported and the repository has a demonstrated need. Codex loads project configuration
+only for trusted projects, and project-local configuration cannot override machine-local provider,
+authentication, notification, profile-selection, or telemetry routing. DevCharter must not invent
+configuration formats copied from other AI tools.
 
 `AGENTS.override.md` is an override mechanism, not a normal generated project instruction file.
 

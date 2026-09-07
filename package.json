@@ -7,7 +7,7 @@
     "node": ">=20.11"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "pnpm --filter @devcharter/adapter-codex prepare-assets && tsc -b",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
     "format:check": "prettier --check .",

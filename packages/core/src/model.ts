@@ -129,7 +129,69 @@ export const acceptedDecisionSchema = z
     value: z.json(),
     evidence: z.array(evidenceSchema).optional()
   })
-  .strict();
+  .strict()
+  .superRefine((decision, context) => {
+    if (decision.id !== "project.packageScripts") return;
+    if (
+      decision.value === null ||
+      Array.isArray(decision.value) ||
+      typeof decision.value !== "object"
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["value"],
+        message: "packageScripts must be an object"
+      });
+      return;
+    }
+    const entries = Object.entries(decision.value);
+    if (entries.length === 0) {
+      context.addIssue({
+        code: "custom",
+        path: ["value"],
+        message: "packageScripts must not be empty"
+      });
+    }
+    for (const [name, body] of entries) {
+      const nameHasControlCharacter = Array.from(name).some((character) => {
+        const codePoint = character.codePointAt(0) ?? 0;
+        return codePoint <= 31 || codePoint === 127;
+      });
+      if (
+        name !== name.trim() ||
+        name === "" ||
+        nameHasControlCharacter ||
+        name === "__proto__" ||
+        name === "prototype" ||
+        name === "constructor"
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["value", name],
+          message: "packageScripts contains an unsafe script name"
+        });
+      }
+      const bodyHasLineControl =
+        typeof body === "string" &&
+        Array.from(body).some((character) => {
+          const codePoint = character.codePointAt(0) ?? 0;
+          return (
+            codePoint === 0 ||
+            (codePoint >= 10 && codePoint <= 13) ||
+            codePoint === 133 ||
+            codePoint === 0x2028 ||
+            codePoint === 0x2029
+          );
+        });
+      if (typeof body !== "string" || body.trim() === "" || bodyHasLineControl) {
+        context.addIssue({
+          code: "custom",
+          path: ["value", name],
+          message: "Package script bodies must be nonblank single-line strings"
+        });
+      }
+    }
+  });
 
 export const projectQuestionSchema = z
   .object({

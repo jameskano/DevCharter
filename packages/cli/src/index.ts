@@ -1,4 +1,7 @@
+import { readFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
+
+import { codexAdapter } from "@devcharter/adapter-codex";
 
 import {
   RepositoryReader,
@@ -17,6 +20,11 @@ import {
   type ProjectArchitectResult
 } from "@devcharter/core/project-architect";
 import type { Mode, Scope } from "@devcharter/core/read-only";
+import {
+  abstractApprovalSchema,
+  renderProposal,
+  type RenderedProposal
+} from "@devcharter/core/rendering";
 
 export const DEVCHARTER_VERSION = "0.1.0";
 
@@ -33,7 +41,7 @@ interface InspectResult {
 
 interface CliEnvelope<T> {
   formatVersion: 1;
-  command: "inspect" | "validate" | Mode;
+  command: "inspect" | "validate" | "render" | "apply" | Mode;
   ok: boolean;
   result?: T;
   warnings: string[];
@@ -41,7 +49,7 @@ interface CliEnvelope<T> {
 }
 
 type ParsedInvocation =
-  | { kind: "help"; command?: "inspect" | "validate" | Mode }
+  | { kind: "help"; command?: "inspect" | "validate" | "render" | "apply" | Mode }
   | { kind: "version" }
   | {
       kind: "command";
@@ -49,6 +57,14 @@ type ParsedInvocation =
       format: "human" | "json";
       scope?: Scope;
     }
+  | {
+      kind: "render";
+      format: "human" | "json";
+      proposal: string;
+      approval: string;
+      adapter: "codex";
+    }
+  | { kind: "apply"; format: "human" | "json"; plan: string; approval: string }
   | { kind: "error"; message: string };
 
 const HELP = normalizeGeneratedText(
@@ -61,6 +77,8 @@ const HELP = normalizeGeneratedText(
     "  devcharter audit [--scope full|governance|engineering|ai] [--format human|json]",
     "  devcharter inspect [--format human|json]",
     "  devcharter validate [--format human|json]",
+    "  devcharter render --proposal <file> --approval <file> --adapter codex [--format human|json]",
+    "  devcharter apply --plan <file> --approval <file> [--format human|json]",
     "  devcharter --help",
     "  devcharter --version",
     "",
@@ -69,7 +87,9 @@ const HELP = normalizeGeneratedText(
     "  retrofit  Analyze an established project and return an unapproved proposal without writing",
     "  audit     Audit the selected scope without writing",
     "  inspect   Inventory the current working directory without writing",
-    "  validate  Validate DevCharter configuration and legacy YAML without writing"
+    "  validate  Validate DevCharter configuration and legacy YAML without writing",
+    "  render    Produce a reviewable rendered plan without writing",
+    "  apply     Apply an exactly approved rendered plan"
   ].join("\n")
 );
 
@@ -82,6 +102,10 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
       options: {
         format: { type: "string" },
         scope: { type: "string" },
+        proposal: { type: "string" },
+        approval: { type: "string" },
+        adapter: { type: "string" },
+        plan: { type: "string" },
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" }
       }
@@ -97,7 +121,10 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
 
     if (parsed.positionals.length === 0) {
       if (parsed.values.help === true) return { kind: "help" };
-      return { kind: "error", message: "Expected new, retrofit, audit, inspect, or validate" };
+      return {
+        kind: "error",
+        message: "Expected new, retrofit, audit, inspect, validate, render, or apply"
+      };
     }
     if (parsed.positionals.length > 1) {
       return {
@@ -111,7 +138,9 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
       command !== "retrofit" &&
       command !== "audit" &&
       command !== "inspect" &&
-      command !== "validate"
+      command !== "validate" &&
+      command !== "render" &&
+      command !== "apply"
     ) {
       return { kind: "error", message: "Unknown command: " + command };
     }
@@ -120,6 +149,29 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
     const format = parsed.values.format ?? "human";
     if (format !== "human" && format !== "json") {
       return { kind: "error", message: "--format must be human or json" };
+    }
+    if (command === "render") {
+      if (
+        parsed.values.proposal === undefined ||
+        parsed.values.approval === undefined ||
+        parsed.values.adapter !== "codex"
+      )
+        return {
+          kind: "error",
+          message: "render requires --proposal, --approval, and --adapter codex"
+        };
+      return {
+        kind: "render",
+        format,
+        proposal: parsed.values.proposal,
+        approval: parsed.values.approval,
+        adapter: "codex"
+      };
+    }
+    if (command === "apply") {
+      if (parsed.values.plan === undefined || parsed.values.approval === undefined)
+        return { kind: "error", message: "apply requires --plan and --approval" };
+      return { kind: "apply", format, plan: parsed.values.plan, approval: parsed.values.approval };
     }
     if ((command === "inspect" || command === "validate") && parsed.values.scope !== undefined) {
       return { kind: "error", message: "--scope is supported only by new, retrofit, and audit" };
@@ -346,7 +398,7 @@ function humanProjectArchitect(envelope: CliEnvelope<ProjectArchitectResult>): s
     if (result.proposal !== undefined) {
       lines.push(`Proposal revision: ${result.proposal.revision} (unapproved)`);
       lines.push(`Proposal fingerprint: ${result.proposal.proposalFingerprint}`);
-      lines.push("Application: deferred to SPEC-0001D");
+      lines.push("Application: render and separately approve this proposal before apply");
     } else {
       lines.push("Proposal: none");
     }
@@ -391,6 +443,72 @@ function emit<T>(envelope: CliEnvelope<T>, format: "human" | "json", io: CliIo):
   }
 }
 
+async function readJsonInput(path: string): Promise<unknown> {
+  return JSON.parse(await readFile(path, "utf8"));
+}
+
+function emitLifecycle<T>(envelope: CliEnvelope<T>, format: "human" | "json", io: CliIo): void {
+  if (format === "json") {
+    io.stdout(stableJson(envelope as unknown as JsonValue));
+    return;
+  }
+  if (!envelope.ok) {
+    io.stdout(
+      normalizeGeneratedText(
+        envelope.errors.map((error) => `Error ${error.code}: ${error.message}`).join("\n")
+      )
+    );
+    return;
+  }
+  const result = envelope.result as {
+    renderedFingerprint?: string;
+    outcome?: string;
+    changedPaths?: string[];
+    changes?: RenderedProposal["changes"];
+  };
+  const lines = [`DevCharter ${envelope.command}`];
+  if (result.renderedFingerprint !== undefined) {
+    lines.push(`Rendered fingerprint: ${result.renderedFingerprint}`, "Targets:");
+    for (const change of [...(result.changes ?? [])].sort((left, right) =>
+      left.path.localeCompare(right.path)
+    )) {
+      lines.push(
+        `- ${change.action} ${change.path}`,
+        `  Purpose: ${change.purpose}`,
+        `  Reason: ${change.reason}`,
+        `  Origin: ${change.origin}`,
+        `  Ownership: ${change.ownership ?? "unspecified"}`
+      );
+      if (change.action === "create" || change.action === "update") {
+        lines.push(
+          `  Adapter: ${change.adapter}`,
+          `  Expected state: ${change.expected}`,
+          `  Baseline hash: ${change.baselineHash ?? "none"}`,
+          `  Content hash: ${change.contentHash}`,
+          "  Validation expectations:"
+        );
+        for (const expectation of change.validationExpectations) {
+          lines.push(`    - ${expectation}`);
+        }
+        lines.push(
+          change.action === "update"
+            ? `  Deterministic diff JSON: ${JSON.stringify(change.diff)}`
+            : `  Proposed content JSON: ${JSON.stringify(change.content)}`
+        );
+      } else if (change.conflictDetail !== undefined) {
+        lines.push(`  Conflict detail: ${change.conflictDetail}`);
+      }
+    }
+    lines.push("Review this complete plan and provide a write-stage approval before apply.");
+  }
+  if (result.outcome !== undefined)
+    lines.push(
+      `Outcome: ${result.outcome}`,
+      `Changed paths: ${(result.changedPaths ?? []).length}`
+    );
+  io.stdout(normalizeGeneratedText(lines.join("\n")));
+}
+
 export async function runCli(args: readonly string[], io: CliIo): Promise<number> {
   const invocation = parseInvocation(args);
   if (invocation.kind === "error") {
@@ -408,15 +526,45 @@ export async function runCli(args: readonly string[], io: CliIo): Promise<number
 
   const readerResult = await RepositoryReader.create(io.cwd);
   if (!readerResult.ok) {
+    const command = invocation.kind === "command" ? invocation.command : invocation.kind;
     const envelope: CliEnvelope<never> = {
       formatVersion: 1,
-      command: invocation.command,
+      command,
       ok: false,
       warnings: [],
       errors: [readerResult.error]
     };
-    emit(envelope, invocation.format, io);
+    if (command === "render" || command === "apply") emitLifecycle(envelope, invocation.format, io);
+    else emit(envelope, invocation.format, io);
     return 1;
+  }
+
+  if (invocation.kind === "render") {
+    try {
+      const proposal = await readJsonInput(invocation.proposal);
+      const approval = abstractApprovalSchema.parse(await readJsonInput(invocation.approval));
+      const result = await renderProposal(io.cwd, proposal as never, approval, codexAdapter);
+      const envelope: CliEnvelope<RenderedProposal> = result.ok
+        ? {
+            formatVersion: 1,
+            command: "render",
+            ok: true,
+            result: result.value,
+            warnings: [],
+            errors: []
+          }
+        : { formatVersion: 1, command: "render", ok: false, warnings: [], errors: [result.error] };
+      emitLifecycle(envelope, invocation.format, io);
+      return envelope.ok ? 0 : 1;
+    } catch {
+      io.stderr(normalizeGeneratedText("DevCharter: render input JSON is invalid"));
+      return 2;
+    }
+  }
+
+  if (invocation.kind === "apply") {
+    const module = await import("./apply-command.js");
+    return module.runApplyCommand(invocation, io);
   }
 
   if (invocation.command === "inspect") {

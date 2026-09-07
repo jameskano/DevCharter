@@ -16,6 +16,14 @@
       "types": "./dist/project-architect.d.ts",
       "import": "./dist/project-architect.js"
     },
+    "./rendering": {
+      "types": "./dist/rendering.d.ts",
+      "import": "./dist/rendering.js"
+    },
+    "./application": {
+      "types": "./dist/application.d.ts",
+      "import": "./dist/application.js"
+    },
     "./writer": {
       "types": "./dist/writer.d.ts",
       "import": "./dist/writer.js"

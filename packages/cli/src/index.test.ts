@@ -4,6 +4,10 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 import { createTemporaryRepository, type TemporaryRepository } from "@devcharter/core/testing";
+import {
+  computeProposalFingerprint,
+  runProjectArchitect
+} from "@devcharter/core/project-architect";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { DEVCHARTER_VERSION, runCli, type CliIo } from "./index.js";
@@ -47,13 +51,15 @@ describe("exact CLI surface", () => {
     expect(help.stdout.join("")).toContain("devcharter new");
     expect(help.stdout.join("")).toContain("devcharter retrofit");
     expect(help.stdout.join("")).toContain("devcharter audit");
+    expect(help.stdout.join("")).toContain("devcharter render");
+    expect(help.stdout.join("")).toContain("devcharter apply");
 
     const version = captureIo(repository.root);
     await expect(runCli(["--version"], version.io)).resolves.toBe(0);
     expect(version.stdout.join("")).toBe("devcharter " + DEVCHARTER_VERSION + "\n");
   });
 
-  it.each(["check", "session", "generate", "apply", "migrate"])(
+  it.each(["check", "session", "generate", "migrate"])(
     "rejects the deferred or obsolete %s command",
     async (command) => {
       const repository = await temporaryRepository();
@@ -62,6 +68,290 @@ describe("exact CLI surface", () => {
       expect(output.stderr.join("")).toContain("Unknown command");
     }
   );
+
+  it("renders and applies through separate lifecycle commands", async () => {
+    const target = await temporaryRepository();
+    const inputs = await temporaryRepository();
+    const analysis = await runProjectArchitect(target.root, {
+      mode: "new",
+      scope: "ai",
+      acceptedDecisions: [
+        { id: "project.outcome", value: "A tested repository" },
+        { id: "project.aiTools", value: ["Codex"] }
+      ]
+    });
+    if (!analysis.ok || analysis.value.proposal === undefined) throw new Error("proposal failed");
+    const proposal = analysis.value.proposal;
+    await inputs.write("proposal.json", JSON.stringify(proposal));
+    await inputs.write(
+      "abstract-approval.json",
+      JSON.stringify({
+        stage: "abstract",
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    );
+    const humanRendered = captureIo(target.root);
+    await expect(
+      runCli(
+        [
+          "render",
+          "--proposal",
+          `${inputs.root}/proposal.json`,
+          "--approval",
+          `${inputs.root}/abstract-approval.json`,
+          "--adapter",
+          "codex"
+        ],
+        humanRendered.io
+      )
+    ).resolves.toBe(0);
+    expect(humanRendered.stdout.join("").replace(/[a-f0-9]{64}/g, "<hash>")).toMatchInlineSnapshot(`
+      "DevCharter render
+      Rendered fingerprint: <hash>
+      Targets:
+      - create AGENTS.md
+        Purpose: Provide concise native repository instructions for selected AI coding tools
+        Reason: No root AI instruction file exists and the selected scope includes AI
+        Origin: devcharter
+        Ownership: project
+        Adapter: codex
+        Expected state: absent
+        Baseline hash: none
+        Content hash: <hash>
+        Validation expectations:
+          - Referenced paths and commands resolve
+          - The file remains project-owned
+        Proposed content JSON: "# Repository instructions\\n\\n## Purpose\\n\\nA tested repository\\n\\n## Workflow\\n\\nInspect before changing files, preserve project-owned content, and run the repository's authoritative verification commands.\\n"
+      Review this complete plan and provide a write-stage approval before apply.
+      "
+    `);
+    const renderedOutput = captureIo(target.root);
+    await expect(
+      runCli(
+        [
+          "render",
+          "--proposal",
+          `${inputs.root}/proposal.json`,
+          "--approval",
+          `${inputs.root}/abstract-approval.json`,
+          "--adapter",
+          "codex",
+          "--format",
+          "json"
+        ],
+        renderedOutput.io
+      )
+    ).resolves.toBe(0);
+    const renderedEnvelope = JSON.parse(renderedOutput.stdout.join("")) as {
+      result: { revision: number; renderedFingerprint: string; repositoryFingerprint: string };
+    };
+    await inputs.write("plan.json", JSON.stringify(renderedEnvelope.result));
+    await inputs.write(
+      "write-approval.json",
+      JSON.stringify({
+        stage: "write",
+        confirmed: true,
+        proposalRevision: renderedEnvelope.result.revision,
+        renderedFingerprint: renderedEnvelope.result.renderedFingerprint,
+        repositoryFingerprint: renderedEnvelope.result.repositoryFingerprint
+      })
+    );
+    const appliedOutput = captureIo(target.root);
+    await expect(
+      runCli(
+        [
+          "apply",
+          "--plan",
+          `${inputs.root}/plan.json`,
+          "--approval",
+          `${inputs.root}/write-approval.json`,
+          "--format",
+          "json"
+        ],
+        appliedOutput.io
+      )
+    ).resolves.toBe(0);
+    expect(JSON.parse(appliedOutput.stdout.join(""))).toMatchObject({
+      command: "apply",
+      ok: true,
+      result: { outcome: "applied", changedPaths: ["AGENTS.md"] }
+    });
+    const humanRetry = captureIo(target.root);
+    await expect(
+      runCli(
+        [
+          "apply",
+          "--plan",
+          `${inputs.root}/plan.json`,
+          "--approval",
+          `${inputs.root}/write-approval.json`
+        ],
+        humanRetry.io
+      )
+    ).resolves.toBe(0);
+    expect(humanRetry.stdout.join("")).toMatchInlineSnapshot(`
+      "DevCharter apply
+      Outcome: already-applied
+      Target outcomes:
+      - skipped AGENTS.md: Already matches the rendered plan
+      Changed paths:
+      - none
+      Validation:
+      - All rendered targets and managed metadata already match
+      "
+    `);
+  });
+
+  it("renders an approved engineering package.json without guessing commands", async () => {
+    const target = await temporaryRepository();
+    const inputs = await temporaryRepository();
+    const analysis = await runProjectArchitect(target.root, {
+      mode: "new",
+      scope: "engineering",
+      acceptedDecisions: [
+        { id: "project.outcome", value: "A tested TypeScript package" },
+        { id: "project.technologies", value: ["TypeScript", "Node.js"] },
+        {
+          id: "project.packageScripts",
+          value: { typecheck: "tsc --noEmit", test: "vitest run" }
+        }
+      ]
+    });
+    if (!analysis.ok || analysis.value.proposal === undefined) throw new Error("proposal failed");
+    const proposal = analysis.value.proposal;
+    expect(proposal.questions).toEqual([]);
+    await inputs.write("proposal.json", JSON.stringify(proposal));
+    await inputs.write(
+      "approval.json",
+      JSON.stringify({
+        stage: "abstract",
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    );
+    const output = captureIo(target.root);
+    await expect(
+      runCli(
+        [
+          "render",
+          "--proposal",
+          `${inputs.root}/proposal.json`,
+          "--approval",
+          `${inputs.root}/approval.json`,
+          "--adapter",
+          "codex",
+          "--format",
+          "json"
+        ],
+        output.io
+      )
+    ).resolves.toBe(0);
+    const envelope = JSON.parse(output.stdout.join("")) as {
+      result: { changes: Array<{ path: string; action: string; content?: string }> };
+    };
+    expect(envelope.result.changes).toContainEqual(
+      expect.objectContaining({
+        path: "package.json",
+        action: "create",
+        content:
+          '{\n  "scripts": {\n    "test": "vitest run",\n    "typecheck": "tsc --noEmit"\n  }\n}\n'
+      })
+    );
+  });
+
+  it("reports conflicts, failures, and unattempted targets in human apply output", async () => {
+    const target = await temporaryRepository();
+    const inputs = await temporaryRepository();
+    const analysis = await runProjectArchitect(target.root, {
+      mode: "new",
+      scope: "ai",
+      acceptedDecisions: [
+        { id: "project.outcome", value: "A tested repository" },
+        { id: "project.aiTools", value: ["Codex"] }
+      ]
+    });
+    if (!analysis.ok || analysis.value.proposal === undefined) throw new Error("proposal failed");
+    const proposal = {
+      ...analysis.value.proposal,
+      plannedChanges: [
+        ...analysis.value.proposal.plannedChanges,
+        {
+          ...analysis.value.proposal.plannedChanges[0]!,
+          path: "blocked.md",
+          action: "conflict" as const,
+          reason: "An ownership decision is required"
+        }
+      ],
+      proposalFingerprint: "pending"
+    };
+    proposal.proposalFingerprint = computeProposalFingerprint(proposal);
+    await inputs.write("proposal.json", JSON.stringify(proposal));
+    await inputs.write(
+      "abstract.json",
+      JSON.stringify({
+        stage: "abstract",
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    );
+    const rendered = captureIo(target.root);
+    await runCli(
+      [
+        "render",
+        "--proposal",
+        `${inputs.root}/proposal.json`,
+        "--approval",
+        `${inputs.root}/abstract.json`,
+        "--adapter",
+        "codex",
+        "--format",
+        "json"
+      ],
+      rendered.io
+    );
+    const plan = JSON.parse(rendered.stdout.join("")) as {
+      result: { revision: number; renderedFingerprint: string; repositoryFingerprint: string };
+    };
+    await inputs.write("plan.json", JSON.stringify(plan.result));
+    await inputs.write(
+      "write.json",
+      JSON.stringify({
+        stage: "write",
+        confirmed: true,
+        proposalRevision: plan.result.revision,
+        renderedFingerprint: plan.result.renderedFingerprint,
+        repositoryFingerprint: plan.result.repositoryFingerprint
+      })
+    );
+    const output = captureIo(target.root);
+    await expect(
+      runCli(
+        ["apply", "--plan", `${inputs.root}/plan.json`, "--approval", `${inputs.root}/write.json`],
+        output.io
+      )
+    ).resolves.toBe(1);
+    expect(output.stdout.join("")).toMatchInlineSnapshot(`
+      "DevCharter apply
+      Outcome: failed
+      Target outcomes:
+      - not-attempted AGENTS.md
+      - conflict blocked.md: Rendered target has an unresolved conflict
+      Changed paths:
+      - none
+      Validation:
+      - Preflight failed before the first write
+      Failures:
+      - INVALID_ARGUMENT blocked.md: Rendered target has an unresolved conflict
+      "
+    `);
+  });
 
   it("rejects positional repository arguments and unsupported formats", async () => {
     const repository = await temporaryRepository();

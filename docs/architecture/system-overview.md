@@ -30,11 +30,17 @@ recommendations, explicit specification/command/instruction authority maps, boun
 command validation, unapproved staged proposals, proposal/repository fingerprints, pure in-memory
 approval, and the read-only `new`, `retrofit`, and `audit` commands. Completed SPEC-0001C implements
 the model-neutral Specification Architect workflow as one instruction-only Codex repository skill,
-without a parallel core API or CLI command. Rendering/application, the Codex adapter, and release
-qualification remain assigned to SPEC-0001D–E.
+without a parallel core API or CLI command. Active SPEC-0001D adds a read-only rendering subpath, a
+separate writer-capable application subpath, and the Codex adapter; release qualification remains
+assigned to SPEC-0001E.
 
-The CLI depends only on the core read-only and Project Architect entry points. The atomic writer is
-a separately exported and tested primitive that none of the current commands can access.
+The CLI depends on read-only core entry points except after `apply` has been parsed. Only that branch
+dynamically loads the application subpath that imports the separately exported atomic writer.
+Rendering captures a compact versioned retry digest without importing the writer. The digest hashes
+bounded readable files, records metadata for excluded or unsupported entries, and includes explicit
+Git state built through the same read-only, prompt-disabled Git invocation used by discovery. Target
+files, the managed receipt, and their ordinary parent directories do not make a successful apply look
+stale. Any uncertainty marks the capture inexact and prevents an `already-applied` result.
 
 The optional `.devcharter.yaml` currently persists only schema version `1` and an ordered `verificationCommands` sequence. These commands cannot be selected reliably when scripts, CI, and documentation disagree, so DevCharter validates and preserves an accepted sequence but does not execute it in SPEC-0001A. Unknown fields are rejected. The file stores no secrets, conversations, sessions, rankings, capability matrices, receipts, or generated-file state.
 
@@ -56,6 +62,13 @@ fingerprint (including conflicts), and current scoped repository fingerprint wit
 state; audit proposals are invalid. Audit returns meaningful analysis through the complete stable
 result contract, but no proposal, approval state, or planned changes. All three modes are
 structurally unable to import the writer.
+
+An engineering proposal that needs a missing or inadequate `package.json` verification surface asks
+for the exact `project.packageScripts` mapping as an approval-blocking decision. The decision accepts
+normal npm script punctuation and shell syntax while rejecting unsafe property names, blank names or
+bodies, control characters, and multiline bodies. The Codex adapter either creates the minimal
+manifest containing those scripts or performs a strict-JSON surgical update that preserves unrelated
+manifest content and existing script order.
 
 ### Specification Architect
 
@@ -237,3 +250,9 @@ Mixed generated/project-maintained regions are exceptional. Prefer whole-file ow
 ## Network and vendors
 
 Core v0 works offline and requires no telemetry. Canonical analysis is model-neutral. Adapters remain thin translations.
+
+Application preflight collects all target conflicts and failures before the first write. Every target
+and any planned managed receipt receives a terminal result. After a write failure, earlier successful
+writes remain reported accurately and all remaining writes are `not-attempted`; DevCharter never
+claims rollback it did not perform. Human and JSON lifecycle output expose the same target, receipt,
+validation, changed-path, and failure facts.

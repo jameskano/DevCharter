@@ -6,6 +6,7 @@ import {
   SCOPES,
   SPEC_STATUSES,
   artifactRecordSchema,
+  acceptedDecisionSchema,
   changeActionSchema,
   ecosystemProposalSchema,
   findingSchema,
@@ -45,6 +46,27 @@ describe("canonical concepts", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("strictly validates package script decisions without interpreting shell syntax", () => {
+    expect(
+      acceptedDecisionSchema.safeParse({
+        id: "project.packageScripts",
+        value: { "test:unit-fast": "vitest run --grep='a|b' && echo $RESULT" }
+      }).success
+    ).toBe(true);
+    for (const value of [
+      {},
+      { __proto__: "bad" },
+      { constructor: "bad" },
+      { " test": "vitest" },
+      { test: "" },
+      { test: "vitest\nrm" }
+    ]) {
+      expect(
+        acceptedDecisionSchema.safeParse({ id: "project.packageScripts", value }).success
+      ).toBe(false);
+    }
   });
 
   it("requires repository fingerprint algorithm version 2", () => {

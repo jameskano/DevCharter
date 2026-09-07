@@ -1,11 +1,8 @@
 {
-  "name": "@devcharter/cli",
+  "name": "@devcharter/adapter-codex",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": {
-    "devcharter": "./dist/cli.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,11 +10,12 @@
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "prepare-assets": "node scripts/prepare-assets.mjs",
+    "build": "pnpm prepare-assets && tsc -b",
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "@devcharter/adapter-codex": "workspace:*",
-    "@devcharter/core": "workspace:*"
+    "@devcharter/core": "workspace:*",
+    "jsonc-parser": "^3.3.1"
   }
 }
