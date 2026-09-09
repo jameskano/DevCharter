@@ -1,6 +1,12 @@
 import { readFile } from "node:fs/promises";
 
-import { failure, success, DevCharterError, type Result } from "@devcharter/core";
+import {
+  compareCanonicalText,
+  failure,
+  success,
+  DevCharterError,
+  type Result
+} from "@devcharter/core";
 import type { EcosystemAdapter } from "@devcharter/core/rendering";
 import {
   applyEdits,
@@ -60,7 +66,7 @@ function renderPackageJson(
   scripts: Record<string, string>,
   existingContent?: string
 ): Result<string> {
-  const sortedNames = Object.keys(scripts).sort((left, right) => left.localeCompare(right));
+  const sortedNames = Object.keys(scripts).sort(compareCanonicalText);
   if (existingContent === undefined) {
     return success(
       JSON.stringify(

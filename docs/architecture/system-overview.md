@@ -30,7 +30,7 @@ recommendations, explicit specification/command/instruction authority maps, boun
 command validation, unapproved staged proposals, proposal/repository fingerprints, pure in-memory
 approval, and the read-only `new`, `retrofit`, and `audit` commands. Completed SPEC-0001C implements
 the model-neutral Specification Architect workflow as one instruction-only Codex repository skill,
-without a parallel core API or CLI command. Active SPEC-0001D adds a read-only rendering subpath, a
+without a parallel core API or CLI command. Completed SPEC-0001D adds a read-only rendering subpath, a
 separate writer-capable application subpath, and the Codex adapter; release qualification remains
 assigned to SPEC-0001E.
 
@@ -41,6 +41,8 @@ bounded readable files, records metadata for excluded or unsupported entries, an
 Git state built through the same read-only, prompt-disabled Git invocation used by discovery. Target
 files, the managed receipt, and their ordinary parent directories do not make a successful apply look
 stale. Any uncertainty marks the capture inexact and prevents an `already-applied` result.
+Application also rechecks each target and receipt baseline immediately before atomic replacement, so
+a change made after aggregate preflight is preserved and reported as stale instead of overwritten.
 
 The optional `.devcharter.yaml` currently persists only schema version `1` and an ordered `verificationCommands` sequence. These commands cannot be selected reliably when scripts, CI, and documentation disagree, so DevCharter validates and preserves an accepted sequence but does not execute it in SPEC-0001A. Unknown fields are rejected. The file stores no secrets, conversations, sessions, rankings, capability matrices, receipts, or generated-file state.
 

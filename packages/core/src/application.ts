@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { approveProposal } from "./project-architect.js";
 import { RepositoryReader } from "./repository.js";
 import { captureRetryState } from "./retry-state.js";
+import { compareCanonicalText } from "./serialization.js";
 import {
   failure,
   success,
@@ -12,6 +13,7 @@ import {
 } from "./results.js";
 import {
   computeRenderedFingerprint,
+  managedReceiptSchema,
   renderedProposalSchema,
   writeApprovalSchema,
   type RenderedChange,
@@ -188,7 +190,34 @@ async function preflight(
       });
       return { failures, outcomes };
     }
-    if (!receiptExists.value) return { failures, outcomes };
+    if (plan.receiptExpected === "absent" && receiptExists.value) {
+      const error = new DevCharterError(
+        "STALE_PROPOSAL",
+        "Expected managed receipt absence no longer holds",
+        { path: RECEIPT_PATH }
+      ).toRecord();
+      failures.push(error);
+      outcomes.set(RECEIPT_PATH, {
+        path: RECEIPT_PATH,
+        outcome: "failed",
+        detail: error.message
+      });
+      return { failures, outcomes };
+    }
+    if (!receiptExists.value) {
+      if (plan.receiptExpected === "present") {
+        const error = new DevCharterError("STALE_PROPOSAL", "Expected managed receipt is missing", {
+          path: RECEIPT_PATH
+        }).toRecord();
+        failures.push(error);
+        outcomes.set(RECEIPT_PATH, {
+          path: RECEIPT_PATH,
+          outcome: "failed",
+          detail: error.message
+        });
+      }
+      return { failures, outcomes };
+    }
     const receipt = await reader.readText(RECEIPT_PATH);
     if (!receipt.ok) {
       failures.push(receipt.error);
@@ -199,9 +228,24 @@ async function preflight(
       });
       return { failures, outcomes };
     }
+    if (hashText(receipt.value) !== plan.receiptBaselineHash) {
+      const error = new DevCharterError(
+        "STALE_PROPOSAL",
+        "Managed receipt drifted after rendering",
+        { path: RECEIPT_PATH }
+      ).toRecord();
+      failures.push(error);
+      outcomes.set(RECEIPT_PATH, {
+        path: RECEIPT_PATH,
+        outcome: "failed",
+        detail: error.message
+      });
+      return { failures, outcomes };
+    }
     try {
-      const parsed = JSON.parse(receipt.value) as { version?: unknown; files?: unknown };
-      if (parsed.version !== 1 || !Array.isArray(parsed.files)) throw new Error("invalid receipt");
+      if (!managedReceiptSchema.safeParse(JSON.parse(receipt.value)).success) {
+        throw new Error("invalid receipt");
+      }
     } catch {
       const error = new DevCharterError(
         "INVALID_CONFIG",
@@ -220,7 +264,7 @@ function terminalPreflightResults(
   preflight: PreflightResult
 ): AppliedChange[] {
   const results = [...plan.changes]
-    .sort((left, right) => left.path.localeCompare(right.path))
+    .sort((left, right) => compareCanonicalText(left.path, right.path))
     .map(
       (change) =>
         preflight.outcomes.get(change.path) ?? {
@@ -270,7 +314,7 @@ export async function applyRenderedProposal(
         outcome: "already-applied",
         appliedChanges: [
           ...[...plan.data.changes]
-            .sort((left, right) => left.path.localeCompare(right.path))
+            .sort((left, right) => compareCanonicalText(left.path, right.path))
             .map((change) => ({
               path: change.path,
               outcome: "skipped" as const,
@@ -307,7 +351,9 @@ export async function applyRenderedProposal(
   if (!writerResult.ok) return writerResult;
   const results: AppliedChange[] = [];
   const changedPaths: string[] = [];
-  const ordered = [...plan.data.changes].sort((left, right) => left.path.localeCompare(right.path));
+  const ordered = [...plan.data.changes].sort((left, right) =>
+    compareCanonicalText(left.path, right.path)
+  );
   for (let index = 0; index < ordered.length; index += 1) {
     const change = ordered[index]!;
     if (change.action === "skip") {
@@ -315,7 +361,13 @@ export async function applyRenderedProposal(
       continue;
     }
     if (change.action !== "create" && change.action !== "update") continue;
-    const write = await writerResult.value.writeText(change.path, change.content!);
+    const write = await writerResult.value.writeText(
+      change.path,
+      change.content!,
+      change.expected === "present"
+        ? { expected: "present", baselineHash: change.baselineHash! }
+        : { expected: "absent" }
+    );
     if (!write.ok)
       return success({
         outcome: "failed",
@@ -341,7 +393,13 @@ export async function applyRenderedProposal(
     changedPaths.push(change.path);
   }
   if (plan.data.receiptContent !== undefined) {
-    const receipt = await writerResult.value.writeText(RECEIPT_PATH, plan.data.receiptContent);
+    const receipt = await writerResult.value.writeText(
+      RECEIPT_PATH,
+      plan.data.receiptContent,
+      plan.data.receiptExpected === "present"
+        ? { expected: "present", baselineHash: plan.data.receiptBaselineHash! }
+        : { expected: "absent" }
+    );
     if (!receipt.ok)
       return success({
         outcome: "failed",

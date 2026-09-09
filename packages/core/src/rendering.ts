@@ -13,7 +13,14 @@ import { approveProposal } from "./project-architect.js";
 import { RepositoryReader } from "./repository.js";
 import { DevCharterError, failure, success, type Result } from "./results.js";
 import { captureRetryState } from "./retry-state.js";
-import { stableHash } from "./serialization.js";
+import { compareCanonicalText, stableHash } from "./serialization.js";
+
+const RECEIPT_PATH = ".devcharter/managed-files.json";
+
+function pathIdentity(value: string): string {
+  const normalized = value.replace(/\\/g, "/");
+  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
+}
 
 export const abstractApprovalSchema = proposalApprovalSchema.extend({
   stage: z.literal("abstract")
@@ -90,9 +97,39 @@ export const renderedProposalSchema = z
     proposal: ecosystemProposalSchema,
     changes: z.array(renderedChangeSchema),
     retryState: retryStateSchema,
-    receiptContent: z.string().optional()
+    receiptContent: z.string().optional(),
+    receiptExpected: z.enum(["absent", "present"]).optional(),
+    receiptBaselineHash: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional()
   })
-  .strict();
+  .strict()
+  .superRefine((plan, context) => {
+    if (plan.receiptContent !== undefined && plan.receiptExpected === undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["receiptExpected"],
+        message: "A planned managed receipt requires its expected state"
+      });
+    }
+    if (plan.receiptExpected === "present" && plan.receiptBaselineHash === undefined) {
+      context.addIssue({
+        code: "custom",
+        path: ["receiptBaselineHash"],
+        message: "An existing managed receipt requires a baseline hash"
+      });
+    }
+    for (const [index, change] of plan.changes.entries()) {
+      if (pathIdentity(change.path) === pathIdentity(RECEIPT_PATH)) {
+        context.addIssue({
+          code: "custom",
+          path: ["changes", index, "path"],
+          message: "The managed receipt path is reserved operational metadata"
+        });
+      }
+    }
+  });
 
 export type RenderedChange = z.infer<typeof renderedChangeSchema>;
 export type RenderedProposal = z.infer<typeof renderedProposalSchema>;
@@ -109,35 +146,51 @@ export interface EcosystemAdapter {
   validateChange?(change: RenderedChange): Promise<string[]>;
 }
 
-interface ReceiptEntry {
-  path: string;
-  adapter: string;
-  baselineHash: string;
-  managed: true;
-}
+const receiptEntrySchema = z
+  .object({
+    path: z.string().trim().min(1),
+    adapter: z.string().trim().min(1),
+    baselineHash: z.string().regex(/^[a-f0-9]{64}$/),
+    managed: z.literal(true)
+  })
+  .strict();
 
-async function readReceipt(
-  reader: RepositoryReader
-): Promise<{ entries: ReceiptEntry[]; malformed: boolean }> {
-  const exists = await reader.pathExists(".devcharter/managed-files.json");
+export const managedReceiptSchema = z
+  .object({
+    version: z.literal(1),
+    files: z.array(receiptEntrySchema)
+  })
+  .strict()
+  .superRefine((receipt, context) => {
+    const seen = new Set<string>();
+    for (const [index, entry] of receipt.files.entries()) {
+      const identity = pathIdentity(entry.path);
+      if (seen.has(identity)) {
+        context.addIssue({
+          code: "custom",
+          path: ["files", index, "path"],
+          message: "Managed receipt paths must be unique"
+        });
+      }
+      seen.add(identity);
+    }
+  });
+
+type ReceiptEntry = z.infer<typeof receiptEntrySchema>;
+
+async function readReceipt(reader: RepositoryReader): Promise<{
+  entries: ReceiptEntry[];
+  malformed: boolean;
+  existingContent?: string;
+}> {
+  const exists = await reader.pathExists(RECEIPT_PATH);
   if (!exists.ok || !exists.value) return { entries: [], malformed: false };
-  const content = await reader.readText(".devcharter/managed-files.json");
+  const content = await reader.readText(RECEIPT_PATH);
   if (!content.ok) return { entries: [], malformed: true };
   try {
-    const value = JSON.parse(content.value) as { version?: unknown; files?: unknown };
-    if (value.version !== 1 || !Array.isArray(value.files)) return { entries: [], malformed: true };
-    const entries = value.files as ReceiptEntry[];
-    if (
-      entries.some(
-        (entry) =>
-          typeof entry.path !== "string" ||
-          typeof entry.adapter !== "string" ||
-          !/^[a-f0-9]{64}$/.test(entry.baselineHash) ||
-          entry.managed !== true
-      )
-    )
-      return { entries: [], malformed: true };
-    return { entries, malformed: false };
+    const parsed = managedReceiptSchema.safeParse(JSON.parse(content.value));
+    if (!parsed.success) return { entries: [], malformed: true };
+    return { entries: parsed.data.files, malformed: false, existingContent: content.value };
   } catch {
     return { entries: [], malformed: true };
   }
@@ -218,6 +271,19 @@ export async function renderProposal(
     repositoryFingerprint: approval.data.repositoryFingerprint
   });
   if (!approved.ok) return approved;
+  if (
+    approved.value.plannedChanges.some(
+      (change) => pathIdentity(change.path) === pathIdentity(RECEIPT_PATH)
+    )
+  ) {
+    return failure(
+      new DevCharterError(
+        "INVALID_ARGUMENT",
+        "The managed receipt path is reserved operational metadata",
+        { path: RECEIPT_PATH }
+      )
+    );
+  }
   const readerResult = await RepositoryReader.create(root);
   if (!readerResult.ok) return readerResult;
   const reader = readerResult.value;
@@ -303,7 +369,7 @@ export async function renderProposal(
       : JSON.stringify(
           {
             version: 1,
-            files: [...receiptEntries.values()].sort((a, b) => a.path.localeCompare(b.path))
+            files: [...receiptEntries.values()].sort((a, b) => compareCanonicalText(a.path, b.path))
           },
           null,
           2
@@ -312,7 +378,7 @@ export async function renderProposal(
     ...changes
       .filter((change) => change.action === "create" || change.action === "update")
       .map((change) => change.path),
-    ...(receiptContent === undefined ? [] : [".devcharter/managed-files.json"])
+    ...(receiptContent === undefined ? [] : [RECEIPT_PATH])
   ]);
   if (!retryState.ok) return retryState;
   const identity = {
@@ -325,7 +391,16 @@ export async function renderProposal(
     proposal: { ...approved.value, approved: false },
     changes,
     retryState: retryState.value,
-    ...(receiptContent === undefined ? {} : { receiptContent })
+    ...(receiptContent === undefined
+      ? {}
+      : {
+          receiptContent,
+          receiptExpected:
+            receipt.existingContent === undefined ? ("absent" as const) : ("present" as const),
+          ...(receipt.existingContent === undefined
+            ? {}
+            : { receiptBaselineHash: hashText(receipt.existingContent) })
+        })
   };
   return success(
     renderedProposalSchema.parse({ ...identity, renderedFingerprint: fingerprintPlan(identity) })

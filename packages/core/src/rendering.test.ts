@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { symlink, unlink } from "node:fs/promises";
+import { mkdir, readFile, symlink, unlink, writeFile } from "node:fs/promises";
 import { promisify } from "node:util";
 
 import { describe, expect, it } from "vitest";
@@ -37,6 +37,33 @@ async function plan(files: Record<string, string> = {}) {
   if (!result.ok || result.value.proposal === undefined) throw new Error("proposal failed");
   const proposal = result.value.proposal;
   return { repository, proposal };
+}
+
+async function renderManagedPlan(files: Record<string, string> = {}) {
+  const { repository, proposal } = await plan(files);
+  const managedProposal = {
+    ...proposal,
+    plannedChanges: proposal.plannedChanges.map((item) => ({
+      ...item,
+      ownership: "devcharter-managed" as const
+    })),
+    proposalFingerprint: "pending"
+  };
+  managedProposal.proposalFingerprint = computeProposalFingerprint(managedProposal);
+  const rendered = await renderProposal(
+    repository.root,
+    managedProposal,
+    {
+      stage: "abstract",
+      confirmed: true,
+      proposalRevision: managedProposal.revision,
+      proposalFingerprint: managedProposal.proposalFingerprint,
+      repositoryFingerprint: managedProposal.repositoryFingerprint
+    },
+    adapter
+  );
+  if (!rendered.ok) throw new Error(rendered.error.message);
+  return { repository, rendered: rendered.value };
 }
 
 describe("render and application boundaries", () => {
@@ -485,6 +512,370 @@ describe("render and application boundaries", () => {
     );
     expect(conflict).toMatchObject({ ok: true, value: { changes: [{ action: "conflict" }] } });
     await malformed.repository.cleanup();
+  });
+
+  it.each([
+    {
+      location: "root",
+      receipt: {
+        version: 1,
+        files: [],
+        secret: "must-not-survive"
+      }
+    },
+    {
+      location: "entry",
+      receipt: {
+        version: 1,
+        files: [
+          {
+            path: "old.md",
+            adapter: "codex",
+            baselineHash: "a".repeat(64),
+            managed: true,
+            secret: "must-not-survive"
+          }
+        ]
+      }
+    }
+  ])(
+    "rejects undeclared managed receipt $location fields instead of carrying sensitive data forward",
+    async ({ receipt }) => {
+      const existingReceipt = JSON.stringify(receipt, null, 2) + "\n";
+      const { repository, rendered } = await renderManagedPlan({
+        ".devcharter/managed-files.json": existingReceipt
+      });
+
+      expect(rendered).toMatchObject({
+        changes: [{ action: "conflict", conflictDetail: expect.stringContaining("malformed") }]
+      });
+      expect(rendered.receiptContent).toBeUndefined();
+      expect(await readFile(`${repository.root}/.devcharter/managed-files.json`, "utf8")).toBe(
+        existingReceipt
+      );
+      await repository.cleanup();
+    }
+  );
+
+  it("rejects valid managed receipt drift before writing any target", async () => {
+    const originalReceipt =
+      JSON.stringify(
+        {
+          version: 1,
+          files: [
+            {
+              path: "old.md",
+              adapter: "codex",
+              baselineHash: "a".repeat(64),
+              managed: true
+            }
+          ]
+        },
+        null,
+        2
+      ) + "\n";
+    const { repository, proposal } = await plan({
+      ".devcharter/managed-files.json": originalReceipt
+    });
+    const managedProposal = {
+      ...proposal,
+      plannedChanges: proposal.plannedChanges.map((item) => ({
+        ...item,
+        ownership: "devcharter-managed" as const
+      })),
+      proposalFingerprint: "pending"
+    };
+    managedProposal.proposalFingerprint = computeProposalFingerprint(managedProposal);
+    const rendered = await renderProposal(
+      repository.root,
+      managedProposal,
+      {
+        stage: "abstract",
+        confirmed: true,
+        proposalRevision: managedProposal.revision,
+        proposalFingerprint: managedProposal.proposalFingerprint,
+        repositoryFingerprint: managedProposal.repositoryFingerprint
+      },
+      adapter
+    );
+    if (!rendered.ok) throw new Error(rendered.error.message);
+    expect(rendered.value).toMatchObject({
+      receiptExpected: "present",
+      receiptBaselineHash: expect.stringMatching(/^[a-f0-9]{64}$/)
+    });
+
+    const changedReceipt =
+      JSON.stringify(
+        {
+          version: 1,
+          files: [
+            ...JSON.parse(originalReceipt).files,
+            {
+              path: "concurrent.md",
+              adapter: "codex",
+              baselineHash: "b".repeat(64),
+              managed: true
+            }
+          ]
+        },
+        null,
+        2
+      ) + "\n";
+    await repository.write(".devcharter/managed-files.json", changedReceipt);
+
+    const result = await applyRenderedProposal(repository.root, rendered.value, {
+      stage: "write",
+      confirmed: true,
+      proposalRevision: rendered.value.revision,
+      renderedFingerprint: rendered.value.renderedFingerprint,
+      repositoryFingerprint: rendered.value.repositoryFingerprint
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        outcome: "failed",
+        changedPaths: [],
+        appliedChanges: [
+          { path: "AGENTS.md", outcome: "not-attempted" },
+          { path: ".devcharter/managed-files.json", outcome: "failed" }
+        ],
+        failures: [{ code: "STALE_PROPOSAL", path: ".devcharter/managed-files.json" }]
+      }
+    });
+    expect(await readFile(`${repository.root}/.devcharter/managed-files.json`, "utf8")).toBe(
+      changedReceipt
+    );
+    expect(await repository.snapshot()).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ path: "AGENTS.md" })])
+    );
+    await repository.cleanup();
+  });
+
+  it.each([
+    {
+      name: "appears after rendering",
+      initialFiles: {} as Record<string, string>,
+      expected: "absent" as const,
+      mutate: async (root: string) => {
+        const receipt = JSON.stringify({ version: 1, files: [] }, null, 2) + "\n";
+        await mkdir(`${root}/.devcharter`, { recursive: true });
+        await writeFile(`${root}/.devcharter/managed-files.json`, receipt, "utf8");
+      }
+    },
+    {
+      name: "disappears after rendering",
+      initialFiles: {
+        ".devcharter/managed-files.json": JSON.stringify({ version: 1, files: [] }, null, 2) + "\n"
+      } as Record<string, string>,
+      expected: "present" as const,
+      mutate: async (root: string) => unlink(`${root}/.devcharter/managed-files.json`)
+    }
+  ])("rejects a managed receipt that $name before any target write", async (scenario) => {
+    const { repository, rendered } = await renderManagedPlan(scenario.initialFiles);
+    expect(rendered.receiptExpected).toBe(scenario.expected);
+    await scenario.mutate(repository.root);
+
+    const result = await applyRenderedProposal(repository.root, rendered, {
+      stage: "write",
+      confirmed: true,
+      proposalRevision: rendered.revision,
+      renderedFingerprint: rendered.renderedFingerprint,
+      repositoryFingerprint: rendered.repositoryFingerprint
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        outcome: "failed",
+        changedPaths: [],
+        appliedChanges: [
+          { path: "AGENTS.md", outcome: "not-attempted" },
+          { path: ".devcharter/managed-files.json", outcome: "failed" }
+        ],
+        failures: [{ code: "STALE_PROPOSAL", path: ".devcharter/managed-files.json" }]
+      }
+    });
+    expect(await repository.snapshot()).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ path: "AGENTS.md" })])
+    );
+    await repository.cleanup();
+  });
+
+  it("rejects duplicate managed receipt paths without rewriting the receipt", async () => {
+    const existingReceipt =
+      JSON.stringify(
+        {
+          version: 1,
+          files: [
+            {
+              path: "old.md",
+              adapter: "codex",
+              baselineHash: "a".repeat(64),
+              managed: true
+            },
+            {
+              path: "old.md",
+              adapter: "codex",
+              baselineHash: "b".repeat(64),
+              managed: true
+            }
+          ]
+        },
+        null,
+        2
+      ) + "\n";
+    const { repository, rendered } = await renderManagedPlan({
+      ".devcharter/managed-files.json": existingReceipt
+    });
+
+    expect(rendered).toMatchObject({
+      changes: [{ action: "conflict", conflictDetail: expect.stringContaining("malformed") }]
+    });
+    expect(rendered.receiptContent).toBeUndefined();
+    expect(await readFile(`${repository.root}/.devcharter/managed-files.json`, "utf8")).toBe(
+      existingReceipt
+    );
+    await repository.cleanup();
+  });
+
+  it("rejects the managed receipt path as an ordinary proposal target", async () => {
+    const { repository, proposal } = await plan();
+    const invalidProposal = {
+      ...proposal,
+      plannedChanges: proposal.plannedChanges.map((change) => ({
+        ...change,
+        path: ".devcharter/managed-files.json"
+      })),
+      proposalFingerprint: "pending"
+    };
+    invalidProposal.proposalFingerprint = computeProposalFingerprint(invalidProposal);
+
+    const rendered = await renderProposal(
+      repository.root,
+      invalidProposal,
+      {
+        stage: "abstract",
+        confirmed: true,
+        proposalRevision: invalidProposal.revision,
+        proposalFingerprint: invalidProposal.proposalFingerprint,
+        repositoryFingerprint: invalidProposal.repositoryFingerprint
+      },
+      adapter
+    );
+
+    expect(rendered).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_ARGUMENT", path: ".devcharter/managed-files.json" }
+    });
+    await repository.cleanup();
+  });
+
+  it("preserves target content changed after application preflight", async () => {
+    const existingContent = "# Existing\n\nProject-owned content.\n";
+    const concurrentContent = "# Concurrent user change\n";
+    const { repository, proposal } = await plan({ "AGENTS.md": existingContent });
+    const updateProposal = {
+      ...proposal,
+      plannedChanges: proposal.plannedChanges.map((change) => ({
+        ...change,
+        action: "update" as const,
+        content: undefined
+      })),
+      proposalFingerprint: "pending"
+    };
+    updateProposal.proposalFingerprint = computeProposalFingerprint(updateProposal);
+    const rendered = await renderProposal(
+      repository.root,
+      updateProposal,
+      {
+        stage: "abstract",
+        confirmed: true,
+        proposalRevision: updateProposal.revision,
+        proposalFingerprint: updateProposal.proposalFingerprint,
+        repositoryFingerprint: updateProposal.repositoryFingerprint
+      },
+      adapter
+    );
+    if (!rendered.ok) throw new Error(rendered.error.message);
+
+    const result = await applyRenderedProposal(
+      repository.root,
+      rendered.value,
+      {
+        stage: "write",
+        confirmed: true,
+        proposalRevision: rendered.value.revision,
+        renderedFingerprint: rendered.value.renderedFingerprint,
+        repositoryFingerprint: rendered.value.repositoryFingerprint
+      },
+      {
+        writerHooks: {
+          beforeRename: async () =>
+            writeFile(`${repository.root}/AGENTS.md`, concurrentContent, "utf8")
+        }
+      }
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        outcome: "failed",
+        changedPaths: [],
+        appliedChanges: [{ path: "AGENTS.md", outcome: "failed" }],
+        failures: [{ code: "STALE_PROPOSAL", path: "AGENTS.md" }]
+      }
+    });
+    expect(await readFile(`${repository.root}/AGENTS.md`, "utf8")).toBe(concurrentContent);
+    await repository.cleanup();
+  });
+
+  it("preserves a managed receipt created after preflight and reports partial application", async () => {
+    const concurrentReceipt = JSON.stringify({ version: 1, files: [] }, null, 2) + "\n";
+    const { repository, rendered } = await renderManagedPlan();
+    let writes = 0;
+
+    const result = await applyRenderedProposal(
+      repository.root,
+      rendered,
+      {
+        stage: "write",
+        confirmed: true,
+        proposalRevision: rendered.revision,
+        renderedFingerprint: rendered.renderedFingerprint,
+        repositoryFingerprint: rendered.repositoryFingerprint
+      },
+      {
+        writerHooks: {
+          beforeRename: async () => {
+            writes += 1;
+            if (writes === 2) {
+              await mkdir(`${repository.root}/.devcharter`, { recursive: true });
+              await writeFile(
+                `${repository.root}/.devcharter/managed-files.json`,
+                concurrentReceipt,
+                "utf8"
+              );
+            }
+          }
+        }
+      }
+    );
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: {
+        outcome: "failed",
+        changedPaths: ["AGENTS.md"],
+        appliedChanges: [
+          { path: "AGENTS.md", outcome: "created" },
+          { path: ".devcharter/managed-files.json", outcome: "failed" }
+        ],
+        failures: [{ code: "STALE_PROPOSAL", path: ".devcharter/managed-files.json" }]
+      }
+    });
+    expect(await readFile(`${repository.root}/.devcharter/managed-files.json`, "utf8")).toBe(
+      concurrentReceipt
+    );
+    await repository.cleanup();
   });
 
   it("requires an explicit project-owned adoption baseline and rejects missing prior receipt data", async () => {

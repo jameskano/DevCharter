@@ -1,4 +1,5 @@
-import { readFile, readdir, symlink } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { readFile, readdir, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
@@ -7,6 +8,10 @@ import { createTemporaryRepository, type TemporaryRepository } from "./testing.j
 import { AtomicRepositoryWriter } from "./writer.js";
 
 const repositories: TemporaryRepository[] = [];
+
+function hashText(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
 
 afterEach(async () => {
   await Promise.all(repositories.splice(0).map((repository) => repository.cleanup()));
@@ -111,5 +116,45 @@ describe("AtomicRepositoryWriter", () => {
     expect(
       (await readdir(path.join(repository.root, "new"))).filter((name) => name.endsWith(".tmp"))
     ).toEqual([]);
+  });
+
+  it("preserves a target changed after preflight", async () => {
+    const original = "original";
+    const concurrent = "concurrent user change";
+    const repository = await temporaryRepository({ "target.txt": original });
+    const writerResult = await AtomicRepositoryWriter.create(repository.root, {
+      beforeRename: async () => writeFile(path.join(repository.root, "target.txt"), concurrent)
+    });
+    if (!writerResult.ok) throw new Error(writerResult.error.message);
+
+    const write = await writerResult.value.writeText("target.txt", "replacement", {
+      expected: "present",
+      baselineHash: hashText(original)
+    });
+
+    expect(write).toMatchObject({ ok: false, error: { code: "STALE_PROPOSAL" } });
+    await expect(readFile(path.join(repository.root, "target.txt"), "utf8")).resolves.toBe(
+      concurrent
+    );
+    expect((await readdir(repository.root)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
+  });
+
+  it("preserves a target created after preflight", async () => {
+    const concurrent = "concurrent user creation";
+    const repository = await temporaryRepository();
+    const writerResult = await AtomicRepositoryWriter.create(repository.root, {
+      beforeRename: async () => writeFile(path.join(repository.root, "target.txt"), concurrent)
+    });
+    if (!writerResult.ok) throw new Error(writerResult.error.message);
+
+    const write = await writerResult.value.writeText("target.txt", "replacement", {
+      expected: "absent"
+    });
+
+    expect(write).toMatchObject({ ok: false, error: { code: "STALE_PROPOSAL" } });
+    await expect(readFile(path.join(repository.root, "target.txt"), "utf8")).resolves.toBe(
+      concurrent
+    );
+    expect((await readdir(repository.root)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
   });
 });

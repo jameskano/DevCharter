@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { lstat, mkdir, open, rename, unlink } from "node:fs/promises";
+import { createHash, randomUUID } from "node:crypto";
+import { lstat, mkdir, open, readFile, rename, unlink } from "node:fs/promises";
 import path from "node:path";
 
 import { DevCharterError, failure, success, type Result } from "./results.js";
@@ -13,6 +13,13 @@ export interface AtomicWriteResult {
 
 export interface AtomicWriteHooks {
   beforeRename?: () => Promise<void>;
+}
+
+export type AtomicWritePrecondition =
+  { expected: "absent" } | { expected: "present"; baselineHash: string };
+
+function hashText(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex");
 }
 
 export class AtomicRepositoryWriter {
@@ -33,7 +40,11 @@ export class AtomicRepositoryWriter {
     return success(new AtomicRepositoryWriter(reader.value.root, hooks));
   }
 
-  async writeText(repositoryPath: string, content: string): Promise<Result<AtomicWriteResult>> {
+  async writeText(
+    repositoryPath: string,
+    content: string,
+    precondition?: AtomicWritePrecondition
+  ): Promise<Result<AtomicWriteResult>> {
     let stage = "resolve";
     let temporaryPath: string | undefined;
     let fileHandle: Awaited<ReturnType<typeof open>> | undefined;
@@ -74,6 +85,42 @@ export class AtomicRepositoryWriter {
 
       stage = "before-rename";
       await this.hooks.beforeRename?.();
+
+      if (precondition !== undefined) {
+        stage = "verify-precondition";
+        target = await resolveRepositoryPath(this.root, repositoryPath, { mustExist: false });
+        let exists = true;
+        try {
+          const status = await lstat(target);
+          if (!status.isFile()) {
+            throw new DevCharterError("STALE_PROPOSAL", "Write target is no longer a file", {
+              path: repositoryPath
+            });
+          }
+        } catch (cause) {
+          if (cause instanceof DevCharterError) throw cause;
+          if ((cause as NodeJS.ErrnoException).code === "ENOENT") exists = false;
+          else throw cause;
+        }
+        if (precondition.expected === "absent" && exists) {
+          throw new DevCharterError("STALE_PROPOSAL", "Expected target absence no longer holds", {
+            path: repositoryPath
+          });
+        }
+        if (precondition.expected === "present") {
+          if (!exists) {
+            throw new DevCharterError("STALE_PROPOSAL", "Expected target is missing", {
+              path: repositoryPath
+            });
+          }
+          const current = await readFile(target, "utf8");
+          if (hashText(current) !== precondition.baselineHash) {
+            throw new DevCharterError("STALE_PROPOSAL", "Target content changed before write", {
+              path: repositoryPath
+            });
+          }
+        }
+      }
 
       stage = "rename";
       await rename(temporaryPath, target);

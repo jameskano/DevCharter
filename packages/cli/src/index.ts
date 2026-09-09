@@ -5,6 +5,7 @@ import { codexAdapter } from "@devcharter/adapter-codex";
 
 import {
   RepositoryReader,
+  compareCanonicalText,
   inspectLegacyConfiguration,
   normalizeGeneratedText,
   readOptionalDevCharterConfig,
@@ -470,7 +471,7 @@ function emitLifecycle<T>(envelope: CliEnvelope<T>, format: "human" | "json", io
   if (result.renderedFingerprint !== undefined) {
     lines.push(`Rendered fingerprint: ${result.renderedFingerprint}`, "Targets:");
     for (const change of [...(result.changes ?? [])].sort((left, right) =>
-      left.path.localeCompare(right.path)
+      compareCanonicalText(left.path, right.path)
     )) {
       lines.push(
         `- ${change.action} ${change.path}`,
@@ -498,6 +499,16 @@ function emitLifecycle<T>(envelope: CliEnvelope<T>, format: "human" | "json", io
       } else if (change.conflictDetail !== undefined) {
         lines.push(`  Conflict detail: ${change.conflictDetail}`);
       }
+    }
+    const rendered = envelope.result as RenderedProposal;
+    if (rendered.receiptContent !== undefined) {
+      lines.push(
+        "Managed receipt:",
+        "- .devcharter/managed-files.json",
+        `  Expected state: ${rendered.receiptExpected}`,
+        `  Baseline hash: ${rendered.receiptBaselineHash ?? "none"}`,
+        `  Proposed content JSON: ${JSON.stringify(rendered.receiptContent)}`
+      );
     }
     lines.push("Review this complete plan and provide a write-stage approval before apply.");
   }

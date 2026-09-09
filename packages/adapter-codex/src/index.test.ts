@@ -37,6 +37,20 @@ describe("portable Codex assets", () => {
     });
   });
 
+  it("orders package scripts canonically rather than by the runtime locale", async () => {
+    const result = await codexAdapter.renderChange({
+      proposal: {
+        acceptedDecisions: [
+          { id: "project.packageScripts", value: { "ä-check": "accented", z: "last-ascii" } }
+        ]
+      } as never,
+      change: { path: "package.json" } as never
+    });
+    expect(result).toMatchObject({ ok: true });
+    if (!result.ok) return;
+    expect(result.value.indexOf('"z"')).toBeLessThan(result.value.indexOf('"ä-check"'));
+  });
+
   it("surgically updates package scripts while preserving existing order and fields", async () => {
     const result = await codexAdapter.renderChange({
       proposal: {

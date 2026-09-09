@@ -16,8 +16,9 @@ discover → understand → propose → approve → apply → verify
 
 ## Current implementation
 
-SPEC-0001A provides the deterministic core foundation. Completed SPEC-0001B adds the read-only
-Project Architect commands:
+SPEC-0001A provides the deterministic core foundation, completed SPEC-0001B adds the read-only
+Project Architect workflow, and completed SPEC-0001D adds rendering and application. The current
+CLI surface is:
 
 ```bash
 devcharter new [--scope full|governance|engineering|ai]
@@ -39,7 +40,7 @@ without a proposal, approval state, or planned changes. Human and JSON results e
 findings, assumptions, questions, critical journeys, considered components, planned changes,
 preserved paths, conflicts, risks, validation, deferred work, and zero applied changes. Approval is
 an in-memory library contract; unresolved required questions, audit-mode proposals, stale repository
-state, and material proposal mutations are rejected. Active SPEC-0001D adds read-only `render` and
+state, and material proposal mutations are rejected. Completed SPEC-0001D adds read-only `render` and
 writer-capable `apply` lifecycle commands with structurally separate approvals. When an engineering
 proposal needs to create or repair a `package.json` verification surface, DevCharter requires an
 explicit `project.packageScripts` decision before rendering. It creates only the accepted scripts in
@@ -141,10 +142,9 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
 2. Read the parent specification and completed `SPEC-0001A`, `SPEC-0001B`, and `SPEC-0001C`
    foundations.
 3. Preserve the clean-slate architecture and public contracts established by 0001A–C.
-4. Complete active `SPEC-0001D` without adding 0001E behavior.
-5. Move 0001D to `done` only after author verification, a fresh independent completion review,
-   and explicit user approval.
-6. Repeat for 0001E.
+4. Treat completed `SPEC-0001D` behavior as authoritative.
+5. Audit and plan ready `SPEC-0001E` before activating it.
+6. Complete 0001E without revisiting completed behavior unless evidence requires a compatible fix.
 7. Use Habit Compass as an external audit/retrofit pilot before a stable release.
 
 Use only these development statuses:

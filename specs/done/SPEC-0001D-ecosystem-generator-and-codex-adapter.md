@@ -6,7 +6,7 @@
 |---|---|
 | ID | SPEC-0001D |
 | Parent | SPEC-0001 |
-| Status | active |
+| Status | done |
 
 ## Purpose
 
@@ -277,8 +277,15 @@ Define a small adapter contract for future Claude Code or GitHub Copilot support
 
 ## Implementation and author verification
 
-Implementation corrected on 2026-09-07. This specification remains `active`; moving it to `done`
-requires a fresh independent completion review and explicit user approval.
+Implementation corrected through 2026-09-09. Completion review findings were resolved without
+expanding the v0 surface: rendered plans bind managed-receipt existence and baseline state; aggregate
+preflight and final per-write preconditions preserve target and receipt changes made after rendering
+or during application; strict receipt parsing rejects unknown fields and duplicate paths; the receipt
+path is reserved from ordinary proposal targets; and canonical text comparison replaces
+locale-dependent production ordering. Human render output now exposes the exact planned managed
+receipt alongside target content or diffs. The README command attribution was also corrected. This
+specification passed a fresh independent completion review on 2026-09-09, and the user explicitly
+approved completing it as `done`.
 
 | Criterion | Implementation evidence | Verification evidence | Result |
 | --- | --- | --- | --- |
@@ -291,27 +298,35 @@ requires a fresh independent completion review and explicit user approval.
 | AC7 | The generated Project Architect skill is concise and routes to deterministic CLI behavior. | Canonical/package asset parity tests. | Pass |
 | AC8 | No role-agent or prompt-library generation was added. | Diff review and full repository audit. | Pass |
 | AC9 | Existing third-party provenance behavior is unchanged and the adapter copies only project-authored canonical skills. | Full regression suite. | Pass |
-| AC10 | Rendered baselines, path containment, drift checks, and preflight protect existing files. | Conflict, drift, stale, and writer regression tests. | Pass |
+| AC10 | Rendered target and managed-receipt baselines, path containment, aggregate preflight, and final write preconditions protect existing files. | Conflict, drift-before-preflight, drift-during-write, reserved-path, and writer regression tests. | Pass |
 | AC11 | Project ownership remains the default; managed ownership must be explicit. | First-managed and adoption tests. | Pass |
-| AC12 | Receipts contain only version, path, adapter, baseline hash, and managed state. | Receipt schema and lifecycle tests. | Pass |
-| AC13 | Fingerprints, stable ordering, and a compact exact retry digest make repeated application a no-op. | Deterministic render, symlink-metadata, Git-state, excluded-file, and already-applied tests. | Pass |
+| AC12 | Strict receipt schemas accept only version, path, adapter, baseline hash, and managed state; unknown fields and duplicate path identities are rejected rather than carried forward. | Receipt privacy, duplicate-path, schema, and lifecycle tests. | Pass |
+| AC13 | Fingerprints, canonical text ordering, and a compact exact retry digest make repeated application a no-op. | Canonical non-ASCII ordering, deterministic render, symlink-metadata, Git-state, excluded-file, and already-applied tests. | Pass |
 | AC14 | Read-only/root/rendering imports do not reach the writer; only the parsed apply branch loads application. | Import-boundary test. | Pass |
-| AC15 | Every target and planned receipt receives a terminal result; failures retain exact changed paths and explicitly disclaim rollback. | Multi-conflict preflight, managed-receipt, and injected partial-write failure tests. | Pass |
-| AC16 | Generation, merge, layout, stale approval, conflict, drift, idempotency, and failure safety are covered. | Full verification suite. | Pass |
+| AC15 | Every target and planned receipt receives a terminal result; preflight and final-write failures retain exact changed paths and explicitly disclaim rollback. | Multi-conflict preflight, receipt content/existence drift, concurrent target/receipt mutation, and injected partial-write failure tests. | Pass |
+| AC16 | Generation, merge, layout, stale approval, conflict, target and receipt drift, idempotency, and failure safety are covered. | Full verification suite, including created/removed/changed receipt and post-preflight mutation regressions. | Pass |
 | AC17 | Package exports separate rendering/application subpaths and isolate writer-capable imports. | Import-boundary test plus package export inspection. | Pass |
-| AC18 | A versioned digest distinguishes exact already-applied state from partial application, Git/unrelated changes, uncertain captures, drift, and stale state without persistent history. | Rendering/application retry regressions. | Pass |
+| AC18 | A versioned digest plus explicit target and receipt baselines distinguish exact already-applied state from partial application, Git/unrelated changes, uncertain captures, drift, and stale state without persistent history. | Rendering/application retry and managed-receipt drift regressions. | Pass |
 | AC19 | Existing BOM, dominant line endings, terminal newline, and unrelated content are retained. | Focused BOM/CRLF/LF/content tests. | Pass |
 | AC20 | Build preparation copies canonical skills into package-local assets and runtime loading uses that path only. | Byte-parity and root-independent loader tests. | Pass |
 | AC21 | `project.packageScripts` is required when applicable, strictly validated, and rendered through minimal creation or surgical strict-JSON updates. | Decision, question, adapter, and CLI lifecycle tests. | Pass |
-| AC22 | Human render snapshots contain complete deterministic review material and human apply snapshots expose the same lifecycle facts and terminal outcomes as JSON. | CLI human/JSON lifecycle snapshots and core application result tests. | Pass |
+| AC22 | Human render output contains complete deterministic target and managed-receipt review material; human apply exposes the same terminal lifecycle facts as JSON. | Project-owned and managed human render tests, human/JSON lifecycle snapshots, and core application result tests. | Pass |
 
 Author verification results:
 
 - `pnpm format:check`: passed.
 - `pnpm lint`: passed.
 - `pnpm typecheck`: passed.
-- `pnpm test`: passed, 13 test files and 362 tests.
+- `pnpm test`: passed, 13 test files and 375 tests.
 - `pnpm devcharter validate --format json`: passed with no errors or warnings.
 - `pnpm devcharter audit --scope full --format json`: passed with zero findings and no repository writes.
 - Fresh-install/package qualification was intentionally not run because it remains SPEC-0001E scope;
   SPEC-0001D establishes and tests the portable package-local asset path.
+
+Completion review result: `PASS`. No blocking, important, or advisory findings remain for this
+specification. The review confirmed that the fixes stayed within SPEC-0001D and preserved completed
+SPEC-0001A–C behavior. `README.md`, `MANIFEST.md`, the system overview, and the Codex planning prompt
+were synchronized with the completed status. Product scope, quality guidance, the spec workflow, the
+parent specification, and the official Codex capability reference were reviewed and left unchanged
+because their current contracts remain accurate. Full fresh-install, packed-artifact, cross-platform,
+and external pilot qualification remain explicitly deferred to SPEC-0001E.

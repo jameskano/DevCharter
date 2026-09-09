@@ -205,6 +205,63 @@ describe("exact CLI surface", () => {
     `);
   });
 
+  it("includes complete managed receipt review material in human render output", async () => {
+    const target = await temporaryRepository();
+    const inputs = await temporaryRepository();
+    const analysis = await runProjectArchitect(target.root, {
+      mode: "new",
+      scope: "ai",
+      acceptedDecisions: [
+        { id: "project.outcome", value: "A managed test repository" },
+        { id: "project.aiTools", value: ["Codex"] }
+      ]
+    });
+    if (!analysis.ok || analysis.value.proposal === undefined) throw new Error("proposal failed");
+    const proposal = {
+      ...analysis.value.proposal,
+      plannedChanges: analysis.value.proposal.plannedChanges.map((change) => ({
+        ...change,
+        ownership: "devcharter-managed" as const
+      })),
+      proposalFingerprint: "pending"
+    };
+    proposal.proposalFingerprint = computeProposalFingerprint(proposal);
+    await inputs.write("proposal.json", JSON.stringify(proposal));
+    await inputs.write(
+      "approval.json",
+      JSON.stringify({
+        stage: "abstract",
+        confirmed: true,
+        proposalRevision: proposal.revision,
+        proposalFingerprint: proposal.proposalFingerprint,
+        repositoryFingerprint: proposal.repositoryFingerprint
+      })
+    );
+
+    const output = captureIo(target.root);
+    await expect(
+      runCli(
+        [
+          "render",
+          "--proposal",
+          `${inputs.root}/proposal.json`,
+          "--approval",
+          `${inputs.root}/approval.json`,
+          "--adapter",
+          "codex"
+        ],
+        output.io
+      )
+    ).resolves.toBe(0);
+
+    const human = output.stdout.join("");
+    expect(human).toContain("Managed receipt:\n- .devcharter/managed-files.json");
+    expect(human).toContain("Expected state: absent");
+    expect(human).toContain("Baseline hash: none");
+    expect(human).toContain('Proposed content JSON: "{\\n  \\"version\\"');
+    expect(human).toContain('\\"path\\": \\"AGENTS.md\\"');
+  });
+
   it("renders an approved engineering package.json without guessing commands", async () => {
     const target = await temporaryRepository();
     const inputs = await temporaryRepository();
