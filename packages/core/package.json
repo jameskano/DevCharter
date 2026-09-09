@@ -1,8 +1,13 @@
 {
   "name": "@devcharter/core",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -27,18 +32,14 @@
     "./writer": {
       "types": "./dist/writer.d.ts",
       "import": "./dist/writer.js"
-    },
-    "./testing": {
-      "types": "./dist/testing.d.ts",
-      "import": "./dist/testing.js"
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b tsconfig.build.json",
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
-    "yaml": "^2.8.0",
-    "zod": "^4.0.0"
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
   }
 }

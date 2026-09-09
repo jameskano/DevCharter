@@ -8,10 +8,10 @@ Its value is not the number of generated files. Its value is deciding what the r
 
 > Give a repository the smallest, safest, and most useful AI development system it actually needs.
 
-The target v0 flow is:
+The v0 flow is:
 
 ```text
-discover → understand → propose → approve → apply → verify
+discover → understand → answer → propose → approve → render → approve → apply → verify
 ```
 
 ## Current implementation
@@ -21,8 +21,8 @@ Project Architect workflow, and completed SPEC-0001D adds rendering and applicat
 CLI surface is:
 
 ```bash
-devcharter new [--scope full|governance|engineering|ai]
-devcharter retrofit [--scope full|governance|engineering|ai]
+devcharter new [--scope full|governance|engineering|ai] [--decisions <file>] [--previous-proposal <file>]
+devcharter retrofit [--scope full|governance|engineering|ai] [--decisions <file>] [--previous-proposal <file>]
 devcharter audit [--scope full|governance|engineering|ai]
 devcharter inspect
 devcharter validate
@@ -38,8 +38,10 @@ repository fingerprints. Fingerprint algorithm version 2 includes canonical appr
 exclusion metadata without hashing excluded contents. Audit returns the same stable analysis sections
 without a proposal, approval state, or planned changes. Human and JSON results expose facts,
 findings, assumptions, questions, critical journeys, considered components, planned changes,
-preserved paths, conflicts, risks, validation, deferred work, and zero applied changes. Approval is
-an in-memory library contract; unresolved required questions, audit-mode proposals, stale repository
+preserved paths, conflicts, risks, validation, deferred work, and zero applied changes. Canonical
+decision files let the CLI answer those questions without adding sessions or persisted interview
+state. Optional previous proposals continue the existing revision contract. Approval is a
+fingerprint-bound contract; unresolved required questions, audit-mode proposals, stale repository
 state, and material proposal mutations are rejected. Completed SPEC-0001D adds read-only `render` and
 writer-capable `apply` lifecycle commands with structurally separate approvals. When an engineering
 proposal needs to create or repair a `package.json` verification surface, DevCharter requires an
@@ -80,6 +82,88 @@ forces a fresh proposal and approval.
 
 From this workspace, run commands with `pnpm devcharter`, for example
 `pnpm devcharter audit --scope engineering --format json`.
+
+## Installation from qualified local tarballs
+
+DevCharter v0 targets Node.js 22 or later and pnpm 10. Pack and install all three packages together;
+the workspace root remains private and v0 does not publish to a registry.
+
+```bash
+mkdir release-artifacts
+pnpm --dir packages/core pack --pack-destination ../../release-artifacts
+pnpm --dir packages/adapter-codex pack --pack-destination ../../release-artifacts
+pnpm --dir packages/cli pack --pack-destination ../../release-artifacts
+
+cd ../target-repository
+pnpm add ../DevCharter/release-artifacts/devcharter-core-0.1.0.tgz \
+  ../DevCharter/release-artifacts/devcharter-adapter-codex-0.1.0.tgz \
+  ../DevCharter/release-artifacts/devcharter-cli-0.1.0.tgz
+pnpm exec devcharter --version
+```
+
+`pnpm package:qualify` performs the authoritative temporary tarball inspection, fresh installation,
+packaged-asset check, installed lifecycle, validation, and exact retry no-op check.
+
+## Complete installed-CLI lifecycle
+
+Create a canonical decision file using the question IDs returned by the first read-only proposal.
+For an AI-only new repository, for example:
+
+```json
+[
+  { "id": "project.outcome", "value": "Ship a dependable local tool" },
+  { "id": "project.aiTools", "value": ["Codex"] },
+  { "id": "project.constraints", "value": [] },
+  { "id": "project.risks", "value": [] }
+]
+```
+
+Run the lifecycle with JSON artifacts. The proposal and render commands accept the complete
+successful envelope from the preceding command, so no extraction script is needed.
+
+```bash
+pnpm exec devcharter inspect --format json
+pnpm exec devcharter new --scope ai --decisions decisions.json --format json > proposal.json
+```
+
+Review the proposal, then create the first approval from its proposal revision, proposal
+fingerprint, and repository fingerprint:
+
+```json
+{
+  "stage": "abstract",
+  "confirmed": true,
+  "proposalRevision": 1,
+  "proposalFingerprint": "<proposal fingerprint>",
+  "repositoryFingerprint": "<repository fingerprint>"
+}
+```
+
+```bash
+pnpm exec devcharter render --proposal proposal.json --approval abstract-approval.json --adapter codex --format json > plan.json
+```
+
+Review the complete rendered content or diff, then create the independent write approval using the
+rendered plan's revision and fingerprints:
+
+```json
+{
+  "stage": "write",
+  "confirmed": true,
+  "proposalRevision": 1,
+  "renderedFingerprint": "<rendered fingerprint>",
+  "repositoryFingerprint": "<repository fingerprint>"
+}
+```
+
+```bash
+pnpm exec devcharter apply --plan plan.json --approval write-approval.json --format json
+pnpm exec devcharter validate --format json
+```
+
+If answers change, pass the prior successful proposal envelope with `--previous-proposal` to receive
+the appropriate next proposal revision. Keep lifecycle input files outside the target repository so
+creating them does not stale its repository fingerprint.
 
 Each mode supports:
 
@@ -143,8 +227,8 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
    foundations.
 3. Preserve the clean-slate architecture and public contracts established by 0001A–C.
 4. Treat completed `SPEC-0001D` behavior as authoritative.
-5. Audit and plan ready `SPEC-0001E` before activating it.
-6. Complete 0001E without revisiting completed behavior unless evidence requires a compatible fix.
+5. Implement active `SPEC-0001E` using its approved release decisions.
+6. Complete 0001E without revisiting completed behavior unless failing release evidence requires a compatible fix.
 7. Use Habit Compass as an external audit/retrofit pilot before a stable release.
 
 Use only these development statuses:

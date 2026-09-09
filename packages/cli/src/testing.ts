@@ -3,8 +3,6 @@ import { lstat, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { compareCanonicalText } from "./serialization.js";
-
 export interface RepositorySnapshotEntry {
   path: string;
   type: "directory" | "file" | "symbolic-link" | "other";
@@ -33,10 +31,10 @@ export async function snapshotRepository(root: string): Promise<RepositorySnapsh
 
   const visit = async (directory: string, relativeDirectory: string): Promise<void> => {
     const entries = await readdir(directory, { withFileTypes: true });
-    entries.sort((left, right) => compareCanonicalText(left.name, right.name));
+    entries.sort((left, right) => left.name.localeCompare(right.name, "en"));
 
     for (const entry of entries) {
-      const repositoryPath = relativeDirectory ? relativeDirectory + "/" + entry.name : entry.name;
+      const repositoryPath = relativeDirectory ? `${relativeDirectory}/${entry.name}` : entry.name;
       const absolutePath = path.join(directory, entry.name);
       const details = await lstat(absolutePath);
       const type = details.isSymbolicLink()
@@ -69,7 +67,7 @@ export async function snapshotRepository(root: string): Promise<RepositorySnapsh
 export async function createTemporaryRepository(
   files: Readonly<Record<string, string>> = {}
 ): Promise<TemporaryRepository> {
-  const root = await mkdtemp(path.join(tmpdir(), "devcharter-test-"));
+  const root = await mkdtemp(path.join(tmpdir(), "devcharter-cli-test-"));
 
   const write = async (repositoryPath: string, content: string): Promise<void> => {
     const target = containedTestPath(root, repositoryPath);
@@ -77,9 +75,8 @@ export async function createTemporaryRepository(
     await writeFile(target, content, "utf8");
   };
 
-  for (const [repositoryPath, content] of Object.entries(files)) {
+  for (const [repositoryPath, content] of Object.entries(files))
     await write(repositoryPath, content);
-  }
 
   return {
     root,
@@ -90,7 +87,7 @@ export async function createTemporaryRepository(
       const resolvedRoot = path.resolve(root);
       if (
         path.dirname(resolvedRoot) !== expectedParent ||
-        !path.basename(resolvedRoot).startsWith("devcharter-test-")
+        !path.basename(resolvedRoot).startsWith("devcharter-cli-test-")
       ) {
         throw new Error("Refusing to remove an unverified temporary repository");
       }

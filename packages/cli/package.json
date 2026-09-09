@@ -1,8 +1,13 @@
 {
   "name": "@devcharter/cli",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "bin": {
     "devcharter": "./dist/cli.js"
   },
@@ -13,7 +18,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b tsconfig.build.json",
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {

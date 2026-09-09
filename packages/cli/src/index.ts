@@ -1,10 +1,11 @@
-import { readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { parseArgs } from "node:util";
 
 import { codexAdapter } from "@devcharter/adapter-codex";
 
 import {
   RepositoryReader,
+  DevCharterError,
   compareCanonicalText,
   inspectLegacyConfiguration,
   normalizeGeneratedText,
@@ -23,9 +24,12 @@ import {
 import type { Mode, Scope } from "@devcharter/core/read-only";
 import {
   abstractApprovalSchema,
+  managedReceiptSchema,
   renderProposal,
   type RenderedProposal
 } from "@devcharter/core/rendering";
+
+import { extractAcceptedDecisions, extractProposal, readJsonFile } from "./json-input.js";
 
 export const DEVCHARTER_VERSION = "0.1.0";
 
@@ -57,6 +61,8 @@ type ParsedInvocation =
       command: "inspect" | "validate" | Mode;
       format: "human" | "json";
       scope?: Scope;
+      decisions?: string;
+      previousProposal?: string;
     }
   | {
       kind: "render";
@@ -73,8 +79,8 @@ const HELP = normalizeGeneratedText(
     "DevCharter " + DEVCHARTER_VERSION,
     "",
     "Usage:",
-    "  devcharter new [--scope full|governance|engineering|ai] [--format human|json]",
-    "  devcharter retrofit [--scope full|governance|engineering|ai] [--format human|json]",
+    "  devcharter new [--scope full|governance|engineering|ai] [--decisions <file>] [--previous-proposal <file>] [--format human|json]",
+    "  devcharter retrofit [--scope full|governance|engineering|ai] [--decisions <file>] [--previous-proposal <file>] [--format human|json]",
     "  devcharter audit [--scope full|governance|engineering|ai] [--format human|json]",
     "  devcharter inspect [--format human|json]",
     "  devcharter validate [--format human|json]",
@@ -88,7 +94,7 @@ const HELP = normalizeGeneratedText(
     "  retrofit  Analyze an established project and return an unapproved proposal without writing",
     "  audit     Audit the selected scope without writing",
     "  inspect   Inventory the current working directory without writing",
-    "  validate  Validate DevCharter configuration and legacy YAML without writing",
+    "  validate  Validate configuration and deterministic repository integrity without writing",
     "  render    Produce a reviewable rendered plan without writing",
     "  apply     Apply an exactly approved rendered plan"
   ].join("\n")
@@ -107,6 +113,8 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
         approval: { type: "string" },
         adapter: { type: "string" },
         plan: { type: "string" },
+        decisions: { type: "string" },
+        "previous-proposal": { type: "string" },
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" }
       }
@@ -153,6 +161,14 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
     }
     if (command === "render") {
       if (
+        parsed.values.decisions !== undefined ||
+        parsed.values["previous-proposal"] !== undefined ||
+        parsed.values.scope !== undefined ||
+        parsed.values.plan !== undefined
+      ) {
+        return { kind: "error", message: "render received an option that does not apply" };
+      }
+      if (
         parsed.values.proposal === undefined ||
         parsed.values.approval === undefined ||
         parsed.values.adapter !== "codex"
@@ -170,9 +186,27 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
       };
     }
     if (command === "apply") {
+      if (
+        parsed.values.decisions !== undefined ||
+        parsed.values["previous-proposal"] !== undefined ||
+        parsed.values.scope !== undefined ||
+        parsed.values.proposal !== undefined ||
+        parsed.values.adapter !== undefined
+      ) {
+        return { kind: "error", message: "apply received an option that does not apply" };
+      }
       if (parsed.values.plan === undefined || parsed.values.approval === undefined)
         return { kind: "error", message: "apply requires --plan and --approval" };
       return { kind: "apply", format, plan: parsed.values.plan, approval: parsed.values.approval };
+    }
+    if (
+      (command === "inspect" || command === "validate" || command === "audit") &&
+      (parsed.values.decisions !== undefined || parsed.values["previous-proposal"] !== undefined)
+    ) {
+      return {
+        kind: "error",
+        message: "--decisions and --previous-proposal are supported only by new and retrofit"
+      };
     }
     if ((command === "inspect" || command === "validate") && parsed.values.scope !== undefined) {
       return { kind: "error", message: "--scope is supported only by new, retrofit, and audit" };
@@ -187,7 +221,16 @@ function parseInvocation(args: readonly string[]): ParsedInvocation {
     ) {
       return { kind: "error", message: "--scope must be full, governance, engineering, or ai" };
     }
-    return { kind: "command", command, format, ...(scope === undefined ? {} : { scope }) };
+    return {
+      kind: "command",
+      command,
+      format,
+      ...(scope === undefined ? {} : { scope }),
+      ...(parsed.values.decisions === undefined ? {} : { decisions: parsed.values.decisions }),
+      ...(parsed.values["previous-proposal"] === undefined
+        ? {}
+        : { previousProposal: parsed.values["previous-proposal"] })
+    };
   } catch (error) {
     return {
       kind: "error",
@@ -232,10 +275,86 @@ async function inspect(reader: RepositoryReader): Promise<CliEnvelope<InspectRes
   };
 }
 
+const VALIDATION_FAILURE_FINDINGS = new Set([
+  "BROKEN_REFERENCE",
+  "BROKEN_SPEC_RELATIONSHIP",
+  "CI_COMMAND_MISSING",
+  "COMMAND_AUTHORITY_AMBIGUOUS",
+  "DOCUMENTED_COMMAND_MISSING",
+  "DUPLICATE_SPEC_ID",
+  "INSTRUCTION_ROUTING_CONFLICT",
+  "INVALID_MANIFEST",
+  "SKILL_PROVENANCE_INVALID",
+  "SPEC_PRECEDENCE_CONFLICT",
+  "SPEC_STATUS_PATH_CONFLICT"
+]);
+
+const VALIDATION_WARNING_FINDINGS = new Set([
+  "COMMAND_VALIDATION_UNCERTAIN",
+  "UNKNOWN_GENERATED_OWNERSHIP"
+]);
+
+async function validateManagedOutput(
+  reader: RepositoryReader
+): Promise<{ outcome: "pass" | "fail"; detail: string; errors: DevCharterErrorRecord[] }> {
+  const receiptPath = ".devcharter/managed-files.json";
+  const exists = await reader.pathExists(receiptPath);
+  if (!exists.ok) return { outcome: "fail", detail: exists.error.message, errors: [exists.error] };
+  if (!exists.value)
+    return { outcome: "pass", detail: "No managed-output receipt present", errors: [] };
+  const content = await reader.readText(receiptPath);
+  if (!content.ok)
+    return { outcome: "fail", detail: content.error.message, errors: [content.error] };
+  let parsed: ReturnType<typeof managedReceiptSchema.safeParse>;
+  try {
+    parsed = managedReceiptSchema.safeParse(JSON.parse(content.value));
+  } catch {
+    parsed = managedReceiptSchema.safeParse(undefined);
+  }
+  if (!parsed.success) {
+    const error = new DevCharterError("INVALID_CONFIG", "Managed-output receipt is malformed", {
+      path: receiptPath
+    }).toRecord();
+    return { outcome: "fail", detail: error.message, errors: [error] };
+  }
+  const errors: DevCharterErrorRecord[] = [];
+  for (const entry of parsed.data.files) {
+    const managed = await reader.readText(entry.path);
+    if (!managed.ok) {
+      errors.push(
+        new DevCharterError("INVALID_CONFIG", "Managed output is missing or unreadable", {
+          path: entry.path,
+          details: { receipt: receiptPath }
+        }).toRecord()
+      );
+      continue;
+    }
+    const digest = createHash("sha256").update(managed.value, "utf8").digest("hex");
+    if (digest !== entry.baselineHash) {
+      errors.push(
+        new DevCharterError("INVALID_CONFIG", "Managed output has drifted from its receipt", {
+          path: entry.path,
+          details: { receipt: receiptPath }
+        }).toRecord()
+      );
+    }
+  }
+  return {
+    outcome: errors.length === 0 ? "pass" : "fail",
+    detail:
+      errors.length === 0
+        ? `Validated ${parsed.data.files.length} managed output(s)`
+        : `${errors.length} managed-output integrity failure(s)`,
+    errors
+  };
+}
+
 async function validate(reader: RepositoryReader): Promise<CliEnvelope<ValidationResult>> {
-  const [configuration, legacy] = await Promise.all([
+  const [configuration, legacy, analysis, managedOutput] = await Promise.all([
     readOptionalDevCharterConfig(reader),
-    inspectLegacyConfiguration(reader)
+    inspectLegacyConfiguration(reader),
+    runProjectArchitect(reader.root, { mode: "audit", scope: "full" }),
+    validateManagedOutput(reader)
   ]);
   const warnings: string[] = [];
   const errors: DevCharterErrorRecord[] = [];
@@ -278,6 +397,42 @@ async function validate(reader: RepositoryReader): Promise<CliEnvelope<Validatio
     });
     errors.push(legacy.error);
   }
+
+  if (!analysis.ok) {
+    checksRun.push({
+      name: "repository-integrity",
+      outcome: "fail",
+      detail: analysis.error.message
+    });
+    errors.push(analysis.error);
+  } else {
+    const failures = analysis.value.findings.filter((item) =>
+      VALIDATION_FAILURE_FINDINGS.has(item.code)
+    );
+    const nonBlocking = analysis.value.findings.filter((item) =>
+      VALIDATION_WARNING_FINDINGS.has(item.code)
+    );
+    for (const finding of failures) {
+      errors.push(
+        new DevCharterError("INVALID_CONFIG", `[${finding.code}] ${finding.summary}`, {
+          details: { findingCode: finding.code, evidence: finding.evidence }
+        }).toRecord()
+      );
+    }
+    for (const finding of nonBlocking) warnings.push(`[${finding.code}] ${finding.summary}`);
+    checksRun.push({
+      name: "repository-integrity",
+      outcome: failures.length > 0 ? "fail" : nonBlocking.length > 0 ? "warning" : "pass",
+      detail: `${failures.length} failure(s), ${nonBlocking.length} warning(s); subjective audit recommendations excluded`
+    });
+  }
+
+  checksRun.push({
+    name: "managed-output-integrity",
+    outcome: managedOutput.outcome,
+    detail: managedOutput.detail
+  });
+  errors.push(...managedOutput.errors);
 
   const outcome: ValidationResult["outcome"] =
     errors.length > 0 ? "fail" : warnings.length > 0 ? "warning" : "pass";
@@ -444,10 +599,6 @@ function emit<T>(envelope: CliEnvelope<T>, format: "human" | "json", io: CliIo):
   }
 }
 
-async function readJsonInput(path: string): Promise<unknown> {
-  return JSON.parse(await readFile(path, "utf8"));
-}
-
 function emitLifecycle<T>(envelope: CliEnvelope<T>, format: "human" | "json", io: CliIo): void {
   if (format === "json") {
     io.stdout(stableJson(envelope as unknown as JsonValue));
@@ -551,10 +702,33 @@ export async function runCli(args: readonly string[], io: CliIo): Promise<number
   }
 
   if (invocation.kind === "render") {
+    const proposalInput = await readJsonFile(invocation.proposal);
+    const approvalInput = await readJsonFile(invocation.approval);
+    const proposal = proposalInput.ok ? extractProposal(proposalInput.value) : proposalInput;
+    const approval = approvalInput.ok
+      ? abstractApprovalSchema.safeParse(approvalInput.value)
+      : undefined;
+    if (!proposal.ok || !approvalInput.ok || approval?.success !== true) {
+      const error = !proposal.ok
+        ? proposal.error
+        : !approvalInput.ok
+          ? approvalInput.error
+          : new DevCharterError(
+              "INVALID_ARGUMENT",
+              "Abstract approval input does not match the canonical contract"
+            ).toRecord();
+      const envelope: CliEnvelope<never> = {
+        formatVersion: 1,
+        command: "render",
+        ok: false,
+        warnings: [],
+        errors: [error]
+      };
+      emitLifecycle(envelope, invocation.format, io);
+      return 2;
+    }
     try {
-      const proposal = await readJsonInput(invocation.proposal);
-      const approval = abstractApprovalSchema.parse(await readJsonInput(invocation.approval));
-      const result = await renderProposal(io.cwd, proposal as never, approval, codexAdapter);
+      const result = await renderProposal(io.cwd, proposal.value, approval.data, codexAdapter);
       const envelope: CliEnvelope<RenderedProposal> = result.ok
         ? {
             formatVersion: 1,
@@ -567,9 +741,20 @@ export async function runCli(args: readonly string[], io: CliIo): Promise<number
         : { formatVersion: 1, command: "render", ok: false, warnings: [], errors: [result.error] };
       emitLifecycle(envelope, invocation.format, io);
       return envelope.ok ? 0 : 1;
-    } catch {
-      io.stderr(normalizeGeneratedText("DevCharter: render input JSON is invalid"));
-      return 2;
+    } catch (cause) {
+      const envelope: CliEnvelope<never> = {
+        formatVersion: 1,
+        command: "render",
+        ok: false,
+        warnings: [],
+        errors: [
+          new DevCharterError("INVALID_ARGUMENT", "Render input could not be processed", {
+            cause
+          }).toRecord()
+        ]
+      };
+      emitLifecycle(envelope, invocation.format, io);
+      return 1;
     }
   }
 
@@ -589,9 +774,46 @@ export async function runCli(args: readonly string[], io: CliIo): Promise<number
     invocation.command === "retrofit" ||
     invocation.command === "audit"
   ) {
+    const decisionsInput =
+      invocation.decisions === undefined ? undefined : await readJsonFile(invocation.decisions);
+    const decisions =
+      decisionsInput === undefined
+        ? undefined
+        : decisionsInput.ok
+          ? extractAcceptedDecisions(decisionsInput.value)
+          : decisionsInput;
+    const previousInput =
+      invocation.previousProposal === undefined
+        ? undefined
+        : await readJsonFile(invocation.previousProposal);
+    const previous =
+      previousInput === undefined
+        ? undefined
+        : previousInput.ok
+          ? extractProposal(previousInput.value)
+          : previousInput;
+    const inputError =
+      decisions !== undefined && !decisions.ok
+        ? decisions.error
+        : previous !== undefined && !previous.ok
+          ? previous.error
+          : undefined;
+    if (inputError !== undefined) {
+      const envelope: CliEnvelope<never> = {
+        formatVersion: 1,
+        command: invocation.command,
+        ok: false,
+        warnings: [],
+        errors: [inputError]
+      };
+      emit(envelope, invocation.format, io);
+      return 2;
+    }
     const result = await runProjectArchitect(io.cwd, {
       mode: invocation.command,
-      ...(invocation.scope === undefined ? {} : { scope: invocation.scope })
+      ...(invocation.scope === undefined ? {} : { scope: invocation.scope }),
+      ...(decisions?.ok === true ? { acceptedDecisions: decisions.value } : {}),
+      ...(previous?.ok === true ? { previousProposal: previous.value } : {})
     });
     const envelope: CliEnvelope<ProjectArchitectResult> = result.ok
       ? {

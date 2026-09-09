@@ -1,8 +1,13 @@
 {
   "name": "@devcharter/adapter-codex",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -11,11 +16,11 @@
   },
   "scripts": {
     "prepare-assets": "node scripts/prepare-assets.mjs",
-    "build": "pnpm prepare-assets && tsc -b",
+    "build": "tsc -b tsconfig.build.json && pnpm prepare-assets",
     "typecheck": "tsc -b --pretty false"
   },
   "dependencies": {
     "@devcharter/core": "workspace:*",
-    "jsonc-parser": "^3.3.1"
+    "jsonc-parser": "3.3.1"
   }
 }

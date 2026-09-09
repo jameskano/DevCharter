@@ -31,8 +31,9 @@ command validation, unapproved staged proposals, proposal/repository fingerprint
 approval, and the read-only `new`, `retrofit`, and `audit` commands. Completed SPEC-0001C implements
 the model-neutral Specification Architect workflow as one instruction-only Codex repository skill,
 without a parallel core API or CLI command. Completed SPEC-0001D adds a read-only rendering subpath, a
-separate writer-capable application subpath, and the Codex adapter; release qualification remains
-assigned to SPEC-0001E.
+separate writer-capable application subpath, and the Codex adapter. Active SPEC-0001E owns release
+qualification, composable installed-CLI journeys, deterministic validation composition, production
+tarballs, cross-platform CI evidence, and the separately approved Habit Compass pilot.
 
 The CLI depends on read-only core entry points except after `apply` has been parsed. Only that branch
 dynamically loads the application subpath that imports the separately exported atomic writer.

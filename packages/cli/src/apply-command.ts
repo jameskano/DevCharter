@@ -1,21 +1,42 @@
-import { readFile } from "node:fs/promises";
-
-import { stableJson, type JsonValue } from "@devcharter/core";
+import { DevCharterError, stableJson, type JsonValue } from "@devcharter/core";
 import { applyRenderedProposal } from "@devcharter/core/application";
-import { renderedProposalSchema, writeApprovalSchema } from "@devcharter/core/rendering";
+import { writeApprovalSchema } from "@devcharter/core/rendering";
 
 import type { CliIo } from "./index.js";
+import { extractRenderedPlan, readJsonFile } from "./json-input.js";
 
 export async function runApplyCommand(
   invocation: { format: "human" | "json"; plan: string; approval: string },
   io: CliIo
 ): Promise<number> {
+  const planInput = await readJsonFile(invocation.plan);
+  const approvalInput = await readJsonFile(invocation.approval);
+  const plan = planInput.ok ? extractRenderedPlan(planInput.value) : planInput;
+  const approval = approvalInput.ok
+    ? writeApprovalSchema.safeParse(approvalInput.value)
+    : undefined;
+  if (!plan.ok || !approvalInput.ok || approval?.success !== true) {
+    const error = !plan.ok
+      ? plan.error
+      : !approvalInput.ok
+        ? approvalInput.error
+        : new DevCharterError(
+            "INVALID_ARGUMENT",
+            "Write approval input does not match the canonical contract"
+          ).toRecord();
+    const envelope = {
+      formatVersion: 1,
+      command: "apply",
+      ok: false,
+      warnings: [],
+      errors: [error]
+    };
+    if (invocation.format === "json") io.stdout(stableJson(envelope as unknown as JsonValue));
+    else io.stdout(`DevCharter apply\nError ${error.code}: ${error.message}\n`);
+    return 2;
+  }
   try {
-    const plan = renderedProposalSchema.parse(JSON.parse(await readFile(invocation.plan, "utf8")));
-    const approval = writeApprovalSchema.parse(
-      JSON.parse(await readFile(invocation.approval, "utf8"))
-    );
-    const result = await applyRenderedProposal(io.cwd, plan, approval);
+    const result = await applyRenderedProposal(io.cwd, plan.value, approval.data);
     const envelope = result.ok
       ? {
           formatVersion: 1,
@@ -50,8 +71,19 @@ export async function runApplyCommand(
       io.stdout(lines.join("\n") + "\n");
     } else io.stdout(`DevCharter apply\nError ${result.error.code}: ${result.error.message}\n`);
     return envelope.ok ? 0 : 1;
-  } catch {
-    io.stderr("DevCharter: apply input JSON is invalid\n");
-    return 2;
+  } catch (cause) {
+    const error = new DevCharterError("INVALID_ARGUMENT", "Apply input could not be processed", {
+      cause
+    }).toRecord();
+    const envelope = {
+      formatVersion: 1,
+      command: "apply",
+      ok: false,
+      warnings: [],
+      errors: [error]
+    };
+    if (invocation.format === "json") io.stdout(stableJson(envelope as unknown as JsonValue));
+    else io.stdout(`DevCharter apply\nError ${error.code}: ${error.message}\n`);
+    return 1;
   }
 }

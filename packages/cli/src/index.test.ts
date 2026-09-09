@@ -3,7 +3,6 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
-import { createTemporaryRepository, type TemporaryRepository } from "@devcharter/core/testing";
 import {
   computeProposalFingerprint,
   runProjectArchitect
@@ -11,6 +10,7 @@ import {
 import { afterEach, describe, expect, it } from "vitest";
 
 import { DEVCHARTER_VERSION, runCli, type CliIo } from "./index.js";
+import { createTemporaryRepository, type TemporaryRepository } from "./testing.js";
 
 const execFileAsync = promisify(execFile);
 const repositories: TemporaryRepository[] = [];
@@ -68,6 +68,268 @@ describe("exact CLI surface", () => {
       expect(output.stderr.join("")).toContain("Unknown command");
     }
   );
+
+  it("feeds canonical decisions and a current previous proposal back into new", async () => {
+    const repository = await temporaryRepository();
+    const inputs = await temporaryRepository();
+    await inputs.write(
+      "decisions.json",
+      JSON.stringify([
+        { id: "project.outcome", value: "A qualified local package" },
+        { id: "project.aiTools", value: ["Codex"] }
+      ])
+    );
+    const first = captureIo(repository.root);
+    await expect(
+      runCli(
+        [
+          "new",
+          "--scope",
+          "ai",
+          "--decisions",
+          `${inputs.root}/decisions.json`,
+          "--format",
+          "json"
+        ],
+        first.io
+      )
+    ).resolves.toBe(0);
+    const firstEnvelope = JSON.parse(first.stdout.join("")) as {
+      result: { proposal: { revision: number } };
+    };
+    expect(firstEnvelope.result.proposal.revision).toBe(1);
+    await inputs.write("previous.json", first.stdout.join(""));
+
+    const second = captureIo(repository.root);
+    await expect(
+      runCli(
+        [
+          "new",
+          "--scope",
+          "ai",
+          "--decisions",
+          `${inputs.root}/decisions.json`,
+          "--previous-proposal",
+          `${inputs.root}/previous.json`,
+          "--format",
+          "json"
+        ],
+        second.io
+      )
+    ).resolves.toBe(0);
+    expect(JSON.parse(second.stdout.join(""))).toMatchObject({
+      ok: true,
+      result: { proposal: { revision: 1 } }
+    });
+
+    await repository.write("AGENTS.md", "# Changed after the proposal\n");
+    const stale = captureIo(repository.root);
+    await expect(
+      runCli(
+        [
+          "new",
+          "--scope",
+          "ai",
+          "--decisions",
+          `${inputs.root}/decisions.json`,
+          "--previous-proposal",
+          `${inputs.root}/previous.json`,
+          "--format",
+          "json"
+        ],
+        stale.io
+      )
+    ).resolves.toBe(1);
+    expect(JSON.parse(stale.stdout.join(""))).toMatchObject({
+      ok: false,
+      errors: [{ code: "STALE_PROPOSAL" }]
+    });
+  });
+
+  it("rejects malformed, duplicate, inapplicable, and audit decision inputs structurally", async () => {
+    const repository = await temporaryRepository();
+    await repository.write("malformed.json", "not-json");
+    await repository.write(
+      "duplicate.json",
+      JSON.stringify([
+        { id: "project.outcome", value: "one" },
+        { id: "project.outcome", value: "two" }
+      ])
+    );
+    await repository.write(
+      "inapplicable.json",
+      JSON.stringify([{ id: "project.technologies", value: ["TypeScript"] }])
+    );
+    await repository.write(
+      "conflicting.json",
+      JSON.stringify([
+        { id: "project.outcome", value: "Ship safely" },
+        { id: "project.mode", value: "retrofit" }
+      ])
+    );
+
+    for (const [name, scope, code] of [
+      ["malformed.json", "full", "INVALID_ARGUMENT"],
+      ["duplicate.json", "full", "INVALID_ARGUMENT"],
+      ["inapplicable.json", "ai", "INVALID_ARGUMENT"],
+      ["conflicting.json", "full", "INVALID_ARGUMENT"]
+    ] as const) {
+      const output = captureIo(repository.root);
+      await runCli(
+        ["new", "--scope", scope, "--decisions", `${repository.root}/${name}`, "--format", "json"],
+        output.io
+      );
+      expect(JSON.parse(output.stdout.join(""))).toMatchObject({ ok: false, errors: [{ code }] });
+    }
+
+    const audit = captureIo(repository.root);
+    await expect(
+      runCli(["audit", "--decisions", `${repository.root}/duplicate.json`], audit.io)
+    ).resolves.toBe(2);
+    expect(audit.stderr.join("")).toContain("supported only by new and retrofit");
+  });
+
+  it("composes successful new and render JSON envelopes through both approval gates", async () => {
+    const target = await temporaryRepository();
+    const inputs = await temporaryRepository();
+    await inputs.write(
+      "decisions.json",
+      JSON.stringify([
+        { id: "project.outcome", value: "A composable CLI repository" },
+        { id: "project.aiTools", value: ["Codex"] }
+      ])
+    );
+    const proposed = captureIo(target.root);
+    await runCli(
+      ["new", "--scope", "ai", "--decisions", `${inputs.root}/decisions.json`, "--format", "json"],
+      proposed.io
+    );
+    const proposalEnvelope = JSON.parse(proposed.stdout.join("")) as {
+      result: {
+        proposal: { revision: number; proposalFingerprint: string; repositoryFingerprint: string };
+      };
+    };
+    await inputs.write("proposal-envelope.json", proposed.stdout.join(""));
+    await inputs.write(
+      "abstract.json",
+      JSON.stringify({
+        stage: "abstract",
+        confirmed: true,
+        proposalRevision: proposalEnvelope.result.proposal.revision,
+        proposalFingerprint: proposalEnvelope.result.proposal.proposalFingerprint,
+        repositoryFingerprint: proposalEnvelope.result.proposal.repositoryFingerprint
+      })
+    );
+    for (const [name, input] of [
+      ["missing-proposal.json", { ok: true, command: "new", result: {} }],
+      ["unsuccessful-proposal.json", { ...proposalEnvelope, ok: false }],
+      [
+        "ambiguous-proposal.json",
+        { ...proposalEnvelope, proposal: proposalEnvelope.result.proposal }
+      ],
+      ["invalid-proposal.json", { ok: true, command: "new", result: { proposal: {} } }]
+    ] as const) {
+      await inputs.write(name, JSON.stringify(input));
+      const rejected = captureIo(target.root);
+      await expect(
+        runCli(
+          [
+            "render",
+            "--proposal",
+            `${inputs.root}/${name}`,
+            "--approval",
+            `${inputs.root}/abstract.json`,
+            "--adapter",
+            "codex",
+            "--format",
+            "json"
+          ],
+          rejected.io
+        )
+      ).resolves.toBe(2);
+      expect(JSON.parse(rejected.stdout.join(""))).toMatchObject({
+        ok: false,
+        errors: [{ code: "INVALID_ARGUMENT" }]
+      });
+    }
+    const rendered = captureIo(target.root);
+    await expect(
+      runCli(
+        [
+          "render",
+          "--proposal",
+          `${inputs.root}/proposal-envelope.json`,
+          "--approval",
+          `${inputs.root}/abstract.json`,
+          "--adapter",
+          "codex",
+          "--format",
+          "json"
+        ],
+        rendered.io
+      )
+    ).resolves.toBe(0);
+    const renderEnvelope = JSON.parse(rendered.stdout.join("")) as {
+      result: { revision: number; renderedFingerprint: string; repositoryFingerprint: string };
+    };
+    await inputs.write("render-envelope.json", rendered.stdout.join(""));
+    await inputs.write(
+      "write.json",
+      JSON.stringify({
+        stage: "write",
+        confirmed: true,
+        proposalRevision: renderEnvelope.result.revision,
+        renderedFingerprint: renderEnvelope.result.renderedFingerprint,
+        repositoryFingerprint: renderEnvelope.result.repositoryFingerprint
+      })
+    );
+    for (const [name, input] of [
+      ["missing-plan.json", { ok: true, command: "render", result: {} }],
+      ["unsuccessful-plan.json", { ...renderEnvelope, ok: false }],
+      ["ambiguous-plan.json", { ...renderEnvelope, plan: renderEnvelope.result }],
+      ["invalid-plan.json", { ok: true, command: "render", result: { plan: {} } }]
+    ] as const) {
+      await inputs.write(name, JSON.stringify(input));
+      const rejected = captureIo(target.root);
+      await expect(
+        runCli(
+          [
+            "apply",
+            "--plan",
+            `${inputs.root}/${name}`,
+            "--approval",
+            `${inputs.root}/write.json`,
+            "--format",
+            "json"
+          ],
+          rejected.io
+        )
+      ).resolves.toBe(2);
+      expect(JSON.parse(rejected.stdout.join(""))).toMatchObject({
+        ok: false,
+        errors: [{ code: "INVALID_ARGUMENT" }]
+      });
+    }
+    const applied = captureIo(target.root);
+    await expect(
+      runCli(
+        [
+          "apply",
+          "--plan",
+          `${inputs.root}/render-envelope.json`,
+          "--approval",
+          `${inputs.root}/write.json`,
+          "--format",
+          "json"
+        ],
+        applied.io
+      )
+    ).resolves.toBe(0);
+    expect(JSON.parse(applied.stdout.join(""))).toMatchObject({
+      ok: true,
+      result: { outcome: "applied", changedPaths: ["AGENTS.md"] }
+    });
+  });
 
   it("renders and applies through separate lifecycle commands", async () => {
     const target = await temporaryRepository();
@@ -662,6 +924,55 @@ describe("read-only CLI behavior", () => {
       }
     });
     expect(await repository.snapshot()).toEqual(before);
+  });
+
+  it("fails deterministic repository-integrity and managed-output drift without writing", async () => {
+    const repository = await temporaryRepository({
+      "README.md": "See [missing](docs/missing.md).\n",
+      "AGENTS.md": "# Instructions\n",
+      ".agents/skills/local/SKILL.md": "---\nname: local\ndescription: Local\n---\n",
+      ".agents/skills-lock.json": "{ invalid",
+      ".devcharter/managed-files.json": JSON.stringify({
+        version: 1,
+        files: [
+          {
+            path: "AGENTS.md",
+            adapter: "codex",
+            baselineHash: "0".repeat(64),
+            managed: true
+          }
+        ]
+      })
+    });
+    const before = await repository.snapshot();
+    const output = captureIo(repository.root);
+    await expect(runCli(["validate", "--format", "json"], output.io)).resolves.toBe(1);
+    const parsed = JSON.parse(output.stdout.join(""));
+    expect(parsed).toMatchObject({
+      ok: false,
+      result: { outcome: "fail", changedPaths: [] }
+    });
+    expect(parsed.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ message: expect.stringContaining("BROKEN_REFERENCE") }),
+        expect.objectContaining({ message: expect.stringContaining("SKILL_PROVENANCE_INVALID") }),
+        expect.objectContaining({ path: "AGENTS.md", message: expect.stringContaining("drifted") })
+      ])
+    );
+    expect(await repository.snapshot()).toEqual(before);
+  });
+
+  it("keeps subjective ecosystem recommendations out of deterministic validation", async () => {
+    const repository = await temporaryRepository({
+      "package.json": '{"scripts":{"build":"tsc"}}',
+      "src/index.ts": "export const established = true;"
+    });
+    const output = captureIo(repository.root);
+    await expect(runCli(["validate", "--format", "json"], output.io)).resolves.toBe(0);
+    expect(JSON.parse(output.stdout.join(""))).toMatchObject({
+      ok: true,
+      result: { outcome: "pass" }
+    });
   });
 
   it("reports valid legacy YAML as a warning without writing", async () => {

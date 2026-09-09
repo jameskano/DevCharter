@@ -806,7 +806,7 @@ describe("scoped fingerprint boundaries and classification", () => {
     const repository = await temporaryRepository({
       "package.json": '{"scripts":{"test":"vitest"}}',
       "README.md":
-        "Run `pnpm install`, `pnpm audit`, `pnpm exec eslint .`, and `pnpm why zod` when needed."
+        "Run `pnpm install`, `pnpm audit`, `pnpm exec eslint .`, `pnpm why zod`, and `pnpm --dir packages/core pack` when needed."
     });
     const result = await runProjectArchitect(repository.root, {
       mode: "audit",

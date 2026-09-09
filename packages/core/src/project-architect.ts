@@ -1215,7 +1215,7 @@ const COMMAND_RUNNER_PATTERN = "(?:pnpm|npm|yarn|bun|cargo|go|mvnw?|pytest|ruff|
 
 function parseCommandReference(source: string): CommandReference | undefined {
   const js = source.match(
-    /\b(pnpm|npm|yarn|bun)\s+(?:(?:--filter|--workspace|-w)\s+([^\s`"']+)\s+|workspace\s+([^\s`"']+)\s+)?(?:run\s+)?([A-Za-z0-9:_-]+)/i
+    /\b(pnpm|npm|yarn|bun)\s+(?:(?:--dir|--prefix|-C)(?:=|\s+)[^\s`"']+\s+)*(?:(?:--filter|--workspace|-w)\s+([^\s`"']+)\s+|workspace\s+([^\s`"']+)\s+)?(?:run\s+)?([A-Za-z0-9:_-]+)/i
   );
   if (js !== null) {
     const runner = js[1]?.toLowerCase();
@@ -1978,12 +1978,25 @@ function safeDecisionPath(value: string): boolean {
   );
 }
 
-function validateDecisionSet(decisions: readonly AcceptedDecision[]): string | undefined {
+function validateDecisionSet(
+  decisions: readonly AcceptedDecision[],
+  scope: Scope
+): string | undefined {
   const seen = new Set<string>();
   for (const decision of decisions) {
     if (!DECISION_IDS.has(decision.id)) return `Unknown accepted decision: ${decision.id}`;
     if (seen.has(decision.id)) return `Accepted decision is duplicated: ${decision.id}`;
     seen.add(decision.id);
+    if (
+      scope !== "full" &&
+      ((decision.id === "project.aiTools" && scope !== "ai") ||
+        (["project.technologies", "project.manifestPath", "project.packageScripts"].includes(
+          decision.id
+        ) &&
+          scope !== "engineering"))
+    ) {
+      return `Accepted decision is not applicable to ${scope} scope: ${decision.id}`;
+    }
     if (decision.id === "project.outcome") {
       if (typeof decision.value !== "string" || decision.value.trim() === "") {
         return "project.outcome must be a non-empty string";
@@ -2833,7 +2846,7 @@ export async function runProjectArchitect(
     .filter((decision): decision is { success: true; data: AcceptedDecision } => decision.success)
     .map((decision) => decision.data)
     .sort((left, right) => compareCanonicalText(left.id, right.id));
-  const decisionError = validateDecisionSet(acceptedDecisions);
+  const decisionError = validateDecisionSet(acceptedDecisions, parsedScope.data);
   if (decisionError !== undefined) {
     return failure(new DevCharterError("INVALID_ARGUMENT", decisionError));
   }
@@ -2867,6 +2880,17 @@ export async function runProjectArchitect(
     options.gitRunner ?? executeSafeGit
   );
   if (!fingerprint.ok) return fingerprint;
+  if (
+    parsedPrevious?.success === true &&
+    parsedPrevious.data.repositoryFingerprint !== fingerprint.value.repositoryFingerprint
+  ) {
+    return failure(
+      new DevCharterError(
+        "STALE_PROPOSAL",
+        "Previous proposal no longer matches the current repository state"
+      )
+    );
+  }
 
   const recommendation = recommendMode(
     fingerprint.value.artifacts,
@@ -2888,6 +2912,21 @@ export async function runProjectArchitect(
     detectedContext,
     criticalJourneys
   );
+  for (const uncertainty of scope === "full" || scope === "ai"
+    ? fingerprint.value.skillProvenanceUncertainties
+    : []) {
+    findings.push(
+      finding(
+        "SKILL_PROVENANCE_INVALID",
+        uncertainty.detail ?? "Skill provenance is invalid or ambiguous",
+        [uncertainty],
+        "ai",
+        "Repair the provenance record before treating the skill as third-party",
+        "high",
+        "high"
+      )
+    );
+  }
   fingerprint.value.semanticallyInspectedPaths = collectSemanticallyAnalyzedPaths(
     fingerprint.value,
     scope,
