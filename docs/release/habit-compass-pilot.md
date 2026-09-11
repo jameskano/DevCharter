@@ -80,7 +80,7 @@ skills, prompts, hooks, MCP integration, CI, infrastructure, runtime AI, or prod
 - The candidate provenance and parser corrections require a new proposal after explicit ownership
   decisions. They are not authorized by SPEC-0001E implementation approval.
 
-## Approved changes and write phase
+## Approved preservation outcome
 
 On 2026-09-11, the user authorized an isolated local worktree and non-protected
 `devcharter/pilot-v0` branch from clean `main` revision
@@ -99,7 +99,7 @@ The corrected CLI completed a second read-only audit and retrofit run on that is
   `4cc1fcd708ca5de333b16c164a60ec7d5544a6de31ba014ba73088816025500c`, zero questions,
   zero creates, six updates, three skips, and zero conflicts.
 
-The remaining proposed update targets are:
+The six proposed update targets were:
 
 - `.agents/skills/caveman/README.md` for a reported `../../README.md` reference;
 - `.agents/skills/shadcn/SKILL.md` and `.agents/skills/shadcn/cli.md` for reported shadcn CLI
@@ -109,23 +109,41 @@ The remaining proposed update targets are:
 - `skills-lock.json` because the locked `ui-skills-root` identity has no matching local skill
   directory.
 
-Because the corrected proposal still contains actual modifications, the pilot stopped before render
-or apply as required. No content or diff exists at the abstract proposal stage, no approval artifact
-was created, and no Habit Compass file was modified. The six exact targets and proposal fingerprints
-must receive separate human review before any further pilot action; third-party documentation and
-the external installer lock must not be rewritten merely to satisfy DevCharter.
+Because the corrected proposal contained modifications, the pilot stopped before render or apply as
+required. No content or diff exists at the abstract proposal stage, no approval artifact was created,
+and no Habit Compass file was modified.
 
-Manual inspection found no proposal action suitable for DevCharter application:
+On 2026-09-11, the user explicitly rejected all six updates and approved an unchanged preservation
+outcome. Each rejection was reviewed independently:
 
-- the caveman reference is broken after installation, but the generic Markdown renderer cannot
-  produce the specific link repair and should not rewrite imported skill documentation;
-- the shadcn findings interpret portable package-runner examples as Habit Compass commands;
-- the Vercel AGENTS findings combine generated relative-link issues with an example application path,
-  while its README findings describe upstream skill-maintenance commands rather than Habit Compass
-  commands;
-- the `ui-skills-root` entry is valid installer metadata for a directory that is not installed, and
-  rewriting it merely to silence DevCharter is explicitly outside authorization.
+- `.agents/skills/caveman/README.md`: the reference is broken after installation, but this is imported
+  skill documentation and the generic Markdown renderer cannot produce the specific safe link repair.
+  Applying its generic output would leave the finding unresolved and risk divergence from the skill's
+  external source.
+- `.agents/skills/shadcn/SKILL.md`: the reported command-authority gap is a false positive caused by
+  portable package-runner examples in external skill instructions, not a Habit Compass command.
+- `.agents/skills/shadcn/cli.md`: the same external runner examples are explanatory usage guidance;
+  rewriting them would neither repair Habit Compass nor preserve upstream content faithfully.
+- `.agents/skills/vercel-react-best-practices/AGENTS.md`: three reported references point to rules that
+  exist beneath the skill's `rules` directory and the fourth is an example application path. This is
+  generated or external skill material, and generic rendering would not make a justified repair.
+- `.agents/skills/vercel-react-best-practices/README.md`: the reported command names document upstream
+  skill-maintenance procedures rather than commands provided by Habit Compass, so both findings are
+  false positives in the pilot repository context.
+- `skills-lock.json`: the `ui-skills-root` record has valid installer provenance syntax but no matching
+  installed directory. Rewriting external installer metadata merely to accommodate DevCharter was
+  explicitly prohibited and would make an unsupported ownership or integrity claim.
 
-The recommended pilot disposition is therefore to reject all six updates and record the identical
-starting/resulting revision as a preservation outcome. This recommendation is not yet an approval or
-a completed no-op; explicit human acceptance remains required.
+The approval authorized no Habit Compass file modification, render, apply, commit, push, merge,
+lockfile rewrite, or default-branch change. The completed preservation outcome is therefore:
+
+- Starting revision: `e3424c23488929be8902aa089b2575ba8397792b`.
+- Resulting revision: `e3424c23488929be8902aa089b2575ba8397792b`.
+- Starting and resulting tree: `a13e4c45faf44c177c32f0b51ecde01b0e0ac352`.
+- Resulting branch: local non-protected `devcharter/pilot-v0`.
+- Resulting Git status: clean and unchanged.
+- Applied changes: none; no empty commit was created.
+
+No write phase was necessary because every proposed update was rejected as unsafe, external,
+contextually false-positive, or otherwise unjustified. Preserving the repository exactly is the
+approved pilot result.
