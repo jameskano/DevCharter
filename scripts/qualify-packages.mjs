@@ -1,4 +1,13 @@
-import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  writeFile
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -147,6 +156,7 @@ try {
     Number(process.versions.node.split(".")[0]) >= 22
       ? "--permission"
       : "--experimental-permission";
+  const installationRoot = await realpath(installation);
   const assetCheckSource = [
     "import { readFile } from 'node:fs/promises';",
     "import { loadPackagedSkill } from '@devcharter/adapter-codex';",
@@ -164,7 +174,7 @@ try {
   const resolvedAdapter = runNode(
     [
       permissionFlag,
-      `--allow-fs-read=${installation}`,
+      `--allow-fs-read=${installationRoot}`,
       "--input-type=module",
       "--eval",
       assetCheckSource
@@ -174,7 +184,7 @@ try {
     { DEVCHARTER_SOURCE_SENTINEL: sourceSentinel }
   );
   const resolvedAdapterPath = fileURLToPath(resolvedAdapter.trim());
-  const adapterRelativePath = path.relative(installation, resolvedAdapterPath);
+  const adapterRelativePath = path.relative(installationRoot, resolvedAdapterPath);
   if (
     adapterRelativePath === ".." ||
     adapterRelativePath.startsWith(`..${path.sep}`) ||
