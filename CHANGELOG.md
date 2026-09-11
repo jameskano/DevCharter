@@ -25,6 +25,8 @@
   development-only material from production package output.
 - Made package qualification failures for unavailable commands, non-zero exits, and timeouts
   explicit and testable, and restricted installed skill-asset checks from reading the source checkout.
+- Normalized text checkout to LF across platforms and allowed only the raw and canonical spellings
+  of the bounded temporary installation during Node permission-model package checks.
 
 ### Deferred
 

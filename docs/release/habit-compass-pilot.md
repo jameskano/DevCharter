@@ -2,9 +2,10 @@
 
 ## Authorization boundary
 
-SPEC-0001E authorizes only a read-only audit and retrofit proposal in the first phase. It does not
-authorize a branch or any Habit Compass write. After this report records the read-only evidence and
-expected changes, DevCharter must stop for separate explicit approval.
+The initial SPEC-0001E approval authorized only a read-only audit and retrofit proposal. The later
+2026-09-11 amendment authorized the isolated local pilot branch described below, but no presently
+unknown Habit Compass write. DevCharter must stop for separate explicit approval after presenting
+any concrete proposal.
 
 ## Read-only phase
 
@@ -113,3 +114,18 @@ or apply as required. No content or diff exists at the abstract proposal stage, 
 was created, and no Habit Compass file was modified. The six exact targets and proposal fingerprints
 must receive separate human review before any further pilot action; third-party documentation and
 the external installer lock must not be rewritten merely to satisfy DevCharter.
+
+Manual inspection found no proposal action suitable for DevCharter application:
+
+- the caveman reference is broken after installation, but the generic Markdown renderer cannot
+  produce the specific link repair and should not rewrite imported skill documentation;
+- the shadcn findings interpret portable package-runner examples as Habit Compass commands;
+- the Vercel AGENTS findings combine generated relative-link issues with an example application path,
+  while its README findings describe upstream skill-maintenance commands rather than Habit Compass
+  commands;
+- the `ui-skills-root` entry is valid installer metadata for a directory that is not installed, and
+  rewriting it merely to silence DevCharter is explicitly outside authorization.
+
+The recommended pilot disposition is therefore to reject all six updates and record the identical
+starting/resulting revision as a preservation outcome. This recommendation is not yet an approval or
+a completed no-op; explicit human acceptance remains required.
