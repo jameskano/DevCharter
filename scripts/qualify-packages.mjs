@@ -157,6 +157,17 @@ try {
       ? "--permission"
       : "--experimental-permission";
   const installationRoot = await realpath(installation);
+  const adapterPackageRoot = await realpath(
+    path.join(installation, "node_modules", "@devcharter", "adapter-codex")
+  );
+  let packageStoreRoot = adapterPackageRoot;
+  while (path.basename(packageStoreRoot) !== ".pnpm") {
+    const parent = path.dirname(packageStoreRoot);
+    if (parent === packageStoreRoot) break;
+    packageStoreRoot = parent;
+  }
+  const readableRoots = new Set([installationRoot, adapterPackageRoot]);
+  if (path.basename(packageStoreRoot) === ".pnpm") readableRoots.add(packageStoreRoot);
   const assetCheckSource = [
     "import { readFile } from 'node:fs/promises';",
     "import { loadPackagedSkill } from '@devcharter/adapter-codex';",
@@ -174,7 +185,7 @@ try {
   const resolvedAdapter = runNode(
     [
       permissionFlag,
-      `--allow-fs-read=${installationRoot}`,
+      ...[...readableRoots].map((root) => `--allow-fs-read=${root}`),
       "--input-type=module",
       "--eval",
       assetCheckSource
@@ -184,7 +195,7 @@ try {
     { DEVCHARTER_SOURCE_SENTINEL: sourceSentinel }
   );
   const resolvedAdapterPath = fileURLToPath(resolvedAdapter.trim());
-  const adapterRelativePath = path.relative(installationRoot, resolvedAdapterPath);
+  const adapterRelativePath = path.relative(adapterPackageRoot, resolvedAdapterPath);
   if (
     adapterRelativePath === ".." ||
     adapterRelativePath.startsWith(`..${path.sep}`) ||
