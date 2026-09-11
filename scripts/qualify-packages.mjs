@@ -21,14 +21,14 @@ if (packageManager === undefined) {
   throw new Error("package qualification must be launched through pnpm");
 }
 
-function runPnpm(arguments_, cwd, timeout = 120_000) {
+function runPnpm(arguments_, cwd, timeout = 120_000, additions = {}) {
   return runFixedCommand({
     executable: process.execPath,
     args: [packageManager, ...arguments_],
     cwd,
     timeout,
     label: `pnpm ${arguments_.join(" ")}`,
-    env: releaseEnvironment({ CI: "true" })
+    env: releaseEnvironment({ CI: "true", ...additions })
   });
 }
 
@@ -197,6 +197,10 @@ try {
     throw new Error("installed adapter resolved outside the temporary installation");
   }
 
+  runPnpm(["exec", "vitest", "run", "tests/release/e2e.test.ts"], repositoryRoot, 120_000, {
+    DEVCHARTER_E2E_CLI_PATH: cliPath
+  });
+
   const lockfile = await readFile(path.join(installation, "pnpm-lock.yaml"), "utf8");
   if (lockfile.includes("workspace:"))
     throw new Error("fresh installation retained workspace links");
@@ -304,6 +308,8 @@ try {
           validationOutcome: validated.result.outcome,
           retryOutcome: retried.result.outcome
         },
+        installedCliJourneys: [1, 2, 3, 4, 5, 7],
+        repositoryLifecycleJourney: 6,
         packagedAssets: ["project-architect", "specification-architect"],
         sourceCheckoutRead: "denied"
       },

@@ -21,7 +21,9 @@ import { afterEach, describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
-const cliPath = path.join(repositoryRoot, "packages", "cli", "dist", "cli.js");
+const cliPath =
+  process.env.DEVCHARTER_E2E_CLI_PATH ??
+  path.join(repositoryRoot, "packages", "cli", "dist", "cli.js");
 const temporaryRoots: string[] = [];
 
 interface CliEnvelope {
@@ -277,7 +279,7 @@ const aiDecisions = [
   { id: "project.risks", value: [] }
 ];
 
-describe("SPEC-0001E release journeys through the built CLI", () => {
+describe("SPEC-0001E release journeys through the selected CLI", () => {
   it("1. completes new with full scope", async () => {
     const journey = await completeLifecycle("new", "full", {}, fullDecisions);
     expect(record(journey.applied.result).outcome).toBe("applied");

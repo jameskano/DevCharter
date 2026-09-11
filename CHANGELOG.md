@@ -27,10 +27,14 @@
   explicit and testable, and restricted installed skill-asset checks from reading the source checkout.
 - Normalized text checkout to LF across platforms and allowed only the raw and canonical spellings
   of the bounded temporary installation during Node permission-model package checks.
+- Classified TypeScript incremental-build state as generated material and qualified every applicable
+  release journey against the fresh-installed CLI.
+- Completed the Habit Compass pilot as the explicitly approved unchanged preservation outcome after
+  rejecting all six unsafe, external, false-positive, or unjustified updates.
 
 ### Deferred
 
 - Registry publication, namespace reservation, publishing automation, and the legal license choice
   remain external release-administration decisions.
-- Release readiness remains unclaimed until supported CI, independent specification review, and the
-  separately approved Habit Compass write phase are complete.
+- Release readiness remains unclaimed until independent specification review passes and the user
+  explicitly approves the final status transition.

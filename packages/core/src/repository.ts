@@ -31,6 +31,7 @@ const GENERATED_DIRECTORY_NAMES = new Set([
   ".next",
   ".nuxt",
   ".output",
+  ".typecheck",
   "build",
   "coverage",
   "dist",
@@ -142,6 +143,9 @@ export async function resolveRepositoryPath(
 function classifyFile(repositoryPath: string): Pick<ArtifactRecord, "kind" | "origin"> {
   const name = path.posix.basename(repositoryPath);
   const lowerPath = repositoryPath.toLowerCase();
+  if (/\.tsbuildinfo$/i.test(name)) {
+    return { kind: "generated-file", origin: "generated-vendor" };
+  }
   if (
     /\.(test|spec)\.[cm]?[jt]sx?$/.test(name) ||
     /(^|\/)(test|tests|e2e)\//.test(lowerPath) ||

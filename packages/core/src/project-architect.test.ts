@@ -499,6 +499,54 @@ describe("scoped fingerprint boundaries and classification", () => {
     expect(result.value.semanticallyInspectedPaths).not.toContain("asset.bin");
   });
 
+  it("excludes TypeScript build state from project ownership and fingerprints", async () => {
+    const repository = await temporaryRepository({
+      "src/index.ts": establishedSource,
+      ".typecheck/build.tsbuildinfo": "generated state one",
+      "root.tsbuildinfo": "generated state two"
+    });
+    const first = await runProjectArchitect(repository.root, {
+      mode: "audit",
+      scope: "engineering"
+    });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.value.artifacts).toEqual(
+      expect.arrayContaining([
+        {
+          path: ".typecheck",
+          kind: "generated-directory",
+          origin: "generated-vendor"
+        },
+        {
+          path: "root.tsbuildinfo",
+          kind: "generated-file",
+          origin: "generated-vendor"
+        }
+      ])
+    );
+    expect(first.value.fingerprintInputs.excludedPaths).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: ".typecheck", reason: "generated-vendor" }),
+        expect.objectContaining({ path: "root.tsbuildinfo", reason: "generated-vendor" })
+      ])
+    );
+    expect(first.value.preservedPaths).not.toEqual(
+      expect.arrayContaining([".typecheck", "root.tsbuildinfo"])
+    );
+    expect(first.value.semanticallyInspectedPaths).not.toEqual(
+      expect.arrayContaining([".typecheck/build.tsbuildinfo", "root.tsbuildinfo"])
+    );
+
+    await repository.write(".typecheck/build.tsbuildinfo", "changed generated state");
+    await repository.write("root.tsbuildinfo", "changed root generated state");
+    const second = await runProjectArchitect(repository.root, {
+      mode: "audit",
+      scope: "engineering"
+    });
+    expect(second.ok && second.value.repositoryFingerprint).toBe(first.value.repositoryFingerprint);
+  });
+
   it("distinguishes project and explicitly third-party Codex skills", async () => {
     const repository = await temporaryRepository({
       ".agents/skills/project/SKILL.md": "# Project procedure",
