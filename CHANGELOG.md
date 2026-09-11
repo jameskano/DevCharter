@@ -13,6 +13,8 @@
   an exact retry no-op test.
 - A four-job GitHub Actions matrix for Ubuntu/Node 22, Ubuntu/Node 24, Windows/Node 24, and
   macOS/Node 24.
+- Compatible per-entry provenance recognition for canonical and installer-style version-1 skill
+  locks without claiming unverified installer hashes as content-integrity evidence.
 
 ### Changed
 
@@ -21,6 +23,8 @@
   pilot decisions.
 - Excluded tests, test support, build information, repository prompts, specifications, and other
   development-only material from production package output.
+- Made package qualification failures for unavailable commands, non-zero exits, and timeouts
+  explicit and testable, and restricted installed skill-asset checks from reading the source checkout.
 
 ### Deferred
 

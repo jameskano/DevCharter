@@ -81,6 +81,35 @@ skills, prompts, hooks, MCP integration, CI, infrastructure, runtime AI, or prod
 
 ## Approved changes and write phase
 
-None. The next step requires separate explicit approval. If approved, writes must occur only on a
-new dedicated non-protected pilot branch created from an explicitly selected clean base; the current
-dirty feature branch and the default branch are not valid write targets.
+On 2026-09-11, the user authorized an isolated local worktree and non-protected
+`devcharter/pilot-v0` branch from clean `main` revision
+`e3424c23488929be8902aa089b2575ba8397792b`. The authorization permitted a genuine no-op after the
+corrected provenance analysis, but no presently unknown file modification, push, merge, default
+branch change, or edit to make `skills-lock.json` fit DevCharter.
+
+The corrected CLI completed a second read-only audit and retrofit run on that isolated branch:
+
+- Starting and resulting revision: `e3424c23488929be8902aa089b2575ba8397792b`.
+- Starting and resulting tree: `a13e4c45faf44c177c32f0b51ecde01b0e0ac352`.
+- Git status: unchanged and clean.
+- Repository fingerprint: `4e499cb7624835a95802464938dae9f00d6e1130dea3b948532ee35fd740359e`.
+- Audit: success with 10 findings, reduced from 20 after valid installer provenance was recognized.
+- Retrofit: successful unapproved proposal revision 1 with fingerprint
+  `4cc1fcd708ca5de333b16c164a60ec7d5544a6de31ba014ba73088816025500c`, zero questions,
+  zero creates, six updates, three skips, and zero conflicts.
+
+The remaining proposed update targets are:
+
+- `.agents/skills/caveman/README.md` for a reported `../../README.md` reference;
+- `.agents/skills/shadcn/SKILL.md` and `.agents/skills/shadcn/cli.md` for reported shadcn CLI
+  command-authority gaps;
+- `.agents/skills/vercel-react-best-practices/AGENTS.md` and
+  `.agents/skills/vercel-react-best-practices/README.md` for reported references and commands;
+- `skills-lock.json` because the locked `ui-skills-root` identity has no matching local skill
+  directory.
+
+Because the corrected proposal still contains actual modifications, the pilot stopped before render
+or apply as required. No content or diff exists at the abstract proposal stage, no approval artifact
+was created, and no Habit Compass file was modified. The six exact targets and proposal fingerprints
+must receive separate human review before any further pilot action; third-party documentation and
+the external installer lock must not be rewritten merely to satisfy DevCharter.

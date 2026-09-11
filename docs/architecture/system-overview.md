@@ -100,9 +100,12 @@ unless their repository position or stronger provenance establishes a dependency
 manifest before it is excluded.
 Skill provenance is resolved before semantic inspection and fingerprinting. A project-local skill
 is project-authored unless an explicit local marker or an unambiguous version-1 `skills-lock.json`
-entry maps it to a specific `.agents/skills/<name>` directory; invalid or ambiguous lock data is
-reported conservatively. Explicitly third-party skills remain inventoried but cannot contribute
-project truth or fingerprint content.
+entry maps it to a specific `.agents/skills/<name>` directory. DevCharter accepts its canonical
+`path`/`source` entries and installer-style `source`/`sourceType`/`computedHash` entries with an
+optional safe `skillPath`. Entries are validated independently, so invalid or ambiguous entries stay
+project-owned without invalidating unrelated provenance. Installer hashes are treated as provenance
+metadata rather than independently verified content integrity. Explicitly third-party skills remain
+inventoried but cannot contribute project truth or fingerprint content.
 
 Relevant content is then inspected to build:
 

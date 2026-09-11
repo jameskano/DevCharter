@@ -1,9 +1,10 @@
-import { spawnSync } from "node:child_process";
 import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath, URL } from "node:url";
+
+import { releaseEnvironment, runFixedCommand } from "./release-process.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const packageManager = process.env.npm_execpath;
@@ -12,68 +13,35 @@ if (packageManager === undefined) {
 }
 
 function runPnpm(arguments_, cwd, timeout = 120_000) {
-  const result = spawnSync(process.execPath, [packageManager, ...arguments_], {
+  return runFixedCommand({
+    executable: process.execPath,
+    args: [packageManager, ...arguments_],
     cwd,
-    encoding: "utf8",
-    env: {
-      PATH: process.env.PATH ?? "",
-      SystemRoot: process.env.SystemRoot ?? "",
-      TEMP: process.env.TEMP ?? os.tmpdir(),
-      TMP: process.env.TMP ?? os.tmpdir(),
-      CI: "true",
-      NO_COLOR: "1"
-    },
     timeout,
-    windowsHide: true
+    label: `pnpm ${arguments_.join(" ")}`,
+    env: releaseEnvironment({ CI: "true" })
   });
-  if (result.error !== undefined || result.status !== 0) {
-    throw new Error(
-      `pnpm ${arguments_.join(" ")} failed\n${result.stdout ?? ""}${result.stderr ?? ""}`,
-      { cause: result.error }
-    );
-  }
-  return result.stdout;
 }
 
 function runTar(arguments_, cwd) {
-  const result = spawnSync("tar", arguments_, {
+  return runFixedCommand({
+    executable: "tar",
+    args: arguments_,
     cwd,
-    encoding: "utf8",
     timeout: 30_000,
-    windowsHide: true
+    label: `tar ${arguments_.join(" ")}`
   });
-  if (result.error !== undefined || result.status !== 0) {
-    throw new Error(
-      `tar ${arguments_.join(" ")} failed\n${result.stdout ?? ""}${result.stderr ?? ""}`,
-      {
-        cause: result.error
-      }
-    );
-  }
-  return result.stdout;
 }
 
-function runNode(arguments_, cwd, timeout = 30_000) {
-  const result = spawnSync(process.execPath, arguments_, {
+function runNode(arguments_, cwd, timeout = 30_000, additions = {}) {
+  return runFixedCommand({
+    executable: process.execPath,
+    args: arguments_,
     cwd,
-    encoding: "utf8",
-    env: {
-      PATH: process.env.PATH ?? "",
-      SystemRoot: process.env.SystemRoot ?? "",
-      TEMP: process.env.TEMP ?? os.tmpdir(),
-      TMP: process.env.TMP ?? os.tmpdir(),
-      NO_COLOR: "1"
-    },
     timeout,
-    windowsHide: true
+    label: `node ${arguments_.join(" ")}`,
+    env: releaseEnvironment(additions)
   });
-  if (result.error !== undefined || result.status !== 0) {
-    throw new Error(
-      `node ${arguments_.join(" ")} failed\n${result.stdout ?? ""}${result.stderr ?? ""}`,
-      { cause: result.error }
-    );
-  }
-  return result.stdout;
 }
 
 function parseSuccessfulEnvelope(source, command) {
@@ -168,24 +136,51 @@ try {
     throw new Error(`installed CLI failed: ${installedVersion}`);
   }
 
-  const assetCheck = spawnSync(
-    process.execPath,
+  const sourceSentinel = path.join(
+    repositoryRoot,
+    ".agents",
+    "skills",
+    "project-architect",
+    "SKILL.md"
+  );
+  const permissionFlag =
+    Number(process.versions.node.split(".")[0]) >= 22
+      ? "--permission"
+      : "--experimental-permission";
+  const assetCheckSource = [
+    "import { readFile } from 'node:fs/promises';",
+    "import { loadPackagedSkill } from '@devcharter/adapter-codex';",
+    "let sourceDenied = false;",
+    "try { await readFile(process.env.DEVCHARTER_SOURCE_SENTINEL, 'utf8'); }",
+    "catch (error) { sourceDenied = error?.code === 'ERR_ACCESS_DENIED'; }",
+    "if (!sourceDenied) throw new Error('source checkout remained readable');",
+    "const names = ['project-architect', 'specification-architect'];",
+    "for (const name of names) {",
+    "  const result = await loadPackagedSkill(name);",
+    "  if (!result.ok || !result.value.includes(`name: ${name}`)) throw new Error(`missing packaged ${name}`);",
+    "}",
+    "process.stdout.write(import.meta.resolve('@devcharter/adapter-codex'));"
+  ].join("\n");
+  const resolvedAdapter = runNode(
     [
+      permissionFlag,
+      `--allow-fs-read=${installation}`,
       "--input-type=module",
       "--eval",
-      "import { loadPackagedSkill } from '@devcharter/adapter-codex'; const result = await loadPackagedSkill('project-architect'); if (!result.ok || !result.value.includes('name: project-architect')) process.exit(1);"
+      assetCheckSource
     ],
-    {
-      cwd: installation,
-      encoding: "utf8",
-      timeout: 30_000,
-      windowsHide: true
-    }
+    installation,
+    30_000,
+    { DEVCHARTER_SOURCE_SENTINEL: sourceSentinel }
   );
-  if (assetCheck.status !== 0) {
-    throw new Error(
-      `installed adapter asset check failed: ${assetCheck.stdout}${assetCheck.stderr}`
-    );
+  const resolvedAdapterPath = fileURLToPath(resolvedAdapter.trim());
+  const adapterRelativePath = path.relative(installation, resolvedAdapterPath);
+  if (
+    adapterRelativePath === ".." ||
+    adapterRelativePath.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(adapterRelativePath)
+  ) {
+    throw new Error("installed adapter resolved outside the temporary installation");
   }
 
   const lockfile = await readFile(path.join(installation, "pnpm-lock.yaml"), "utf8");
@@ -295,7 +290,8 @@ try {
           validationOutcome: validated.result.outcome,
           retryOutcome: retried.result.outcome
         },
-        packagedAsset: "project-architect"
+        packagedAssets: ["project-architect", "specification-architect"],
+        sourceCheckoutRead: "denied"
       },
       null,
       2

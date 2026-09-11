@@ -62,8 +62,11 @@ Python declarations and common Python verification tools; and standard Cargo, Go
 verification commands. Unfamiliar or dynamic commands are reported as uncertainty. Explicitly
 third-party skills identified by an explicit package marker or an unambiguous version-1
 `skills-lock.json` entry remain inventoried but are excluded from project facts, findings,
-references, recommendations, and fingerprints. Runtime-AI facts use bounded declared-dependency and explicit
-source-import evidence across the supported ecosystems; dependency-only evidence remains
+references, recommendations, and fingerprints. Version-1 locks may use DevCharter `path`/`source`
+entries or installer-style `source`/`sourceType`/`computedHash` entries with an optional safe relative
+`skillPath`; entries are validated independently and installer hashes are not presented as verified
+content integrity. Runtime-AI facts use bounded declared-dependency and explicit source-import
+evidence across the supported ecosystems; dependency-only evidence remains
 unconfirmed. Semantic-inspection reporting includes only paths interpreted by a defined analyzer,
 not every enumerated, loaded, or fingerprinted source. Developer journeys prefer an authoritative
 root aggregate, CI, or root verification workflow over redundant package builds; user journeys

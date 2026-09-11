@@ -7,7 +7,7 @@
 | ID | SPEC-0001E |
 | Parent | SPEC-0001 |
 | Status | active |
-| Approval | The user approved the revised scope and implementation start on 2026-09-09 |
+| Approval | The user approved the revised scope on 2026-09-09 and completion amendments on 2026-09-11 |
 
 ## Purpose
 
@@ -63,6 +63,13 @@ The release harness may execute only a fixed allowlist of DevCharter's own verif
 argument array without shell interpolation, using bounded working directories, explicit timeouts,
 controlled environment values, and recorded exits. It never executes commands discovered in a
 fixture or external repository.
+
+Version-1 skill provenance accepts DevCharter `{ path, source }` entries and installer-style entries
+with nonblank `source` and `sourceType`, a syntactically valid `computedHash`, and an optional safe
+relative `skillPath`. Each entry maps only to `.agents/skills/<identity>` and is validated
+independently. Invalid, missing, colliding, escaping, or identity-mismatched entries remain
+project-owned without invalidating unrelated entries. Installer hashes establish provenance metadata
+only; DevCharter does not claim installed-file integrity without a reproducible upstream algorithm.
 
 ## Composable CLI lifecycle
 
@@ -220,4 +227,3 @@ has traceable evidence, all supported CI jobs pass, installed tarballs work with
 the real CLI lifecycle passes both approval gates, audit no-write behavior is proven, the manual
 specification journey has independent-review evidence, the separately approved Habit Compass pilot
 is complete, and all failures, skips, and limitations are recorded accurately.
-

@@ -1808,6 +1808,220 @@ describe("SPEC-0001B correction pass", () => {
     ).toBe(true);
   });
 
+  it("supports installer provenance with optional or explicit skill paths", async () => {
+    const repository = await temporaryRepository({
+      ".agents/skills/direct/SKILL.md": "# Direct installed skill",
+      ".agents/skills/nested/SKILL.md": "# Nested installed skill",
+      "skills-lock.json": JSON.stringify({
+        version: 1,
+        skills: {
+          direct: {
+            source: "example/direct",
+            sourceType: "github",
+            computedHash: "a".repeat(64)
+          },
+          nested: {
+            source: "example/nested",
+            sourceType: "github",
+            skillPath: "skills/nested/SKILL.md",
+            computedHash: "b".repeat(64)
+          }
+        }
+      })
+    });
+
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(
+      result.value.artifacts
+        .filter((item) => item.path.endsWith("/SKILL.md"))
+        .map((item) => [item.path, item.origin])
+    ).toEqual([
+      [".agents/skills/direct/SKILL.md", "third-party"],
+      [".agents/skills/nested/SKILL.md", "third-party"]
+    ]);
+    expect(result.value.findings.map((item) => item.code)).not.toContain(
+      "SKILL_PROVENANCE_INVALID"
+    );
+
+    const fingerprint = result.value.repositoryFingerprint;
+    await repository.write(
+      ".agents/skills/direct/SKILL.md",
+      "# Changed content whose installer hash is not interpreted"
+    );
+    const changed = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(changed.ok && changed.value.repositoryFingerprint).toBe(fingerprint);
+  });
+
+  it("keeps valid installer entries when another entry is malformed", async () => {
+    const repository = await temporaryRepository({
+      ".agents/skills/good/SKILL.md": "# Good installed skill",
+      ".agents/skills/bad/SKILL.md": "# Untrusted local skill",
+      "skills-lock.json": JSON.stringify({
+        version: 1,
+        skills: {
+          good: {
+            source: "example/good",
+            sourceType: "github",
+            computedHash: "c".repeat(64)
+          },
+          bad: {
+            source: "example/bad",
+            sourceType: "github",
+            computedHash: "not-a-hash"
+          }
+        }
+      })
+    });
+
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.artifacts.find((item) => item.path.includes("/good/"))).toMatchObject({
+      origin: "third-party"
+    });
+    expect(result.value.artifacts.find((item) => item.path.includes("/bad/"))).toMatchObject({
+      origin: "project"
+    });
+    expect(
+      result.value.findings.filter((item) => item.code === "SKILL_PROVENANCE_INVALID")
+    ).toHaveLength(1);
+  });
+
+  it.each([
+    ["identity mismatch", "skills/other/SKILL.md"],
+    ["parent traversal", "skills/../local/SKILL.md"],
+    ["absolute path", "C:/skills/local/SKILL.md"],
+    ["file URL", "file:/skills/local/SKILL.md"]
+  ])("rejects installer provenance with %s", async (_case, skillPath) => {
+    const repository = await temporaryRepository({
+      ".agents/skills/local/SKILL.md": "# Local skill",
+      "skills-lock.json": JSON.stringify({
+        version: 1,
+        skills: {
+          local: {
+            source: "example/local",
+            sourceType: "github",
+            skillPath,
+            computedHash: "d".repeat(64)
+          }
+        }
+      })
+    });
+
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(
+      result.value.artifacts.find((item) => item.path.endsWith("local/SKILL.md"))
+    ).toMatchObject({ origin: "project" });
+    expect(result.value.findings.map((item) => item.code)).toContain("SKILL_PROVENANCE_INVALID");
+  });
+
+  it("rejects an escaping installer identity", async () => {
+    const repository = await temporaryRepository({
+      ".agents/skills/local/SKILL.md": "# Local skill",
+      "skills-lock.json": JSON.stringify({
+        version: 1,
+        skills: {
+          "../local": {
+            source: "example/local",
+            sourceType: "github",
+            computedHash: "d".repeat(64)
+          }
+        }
+      })
+    });
+
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(
+      result.value.artifacts.find((item) => item.path.endsWith("local/SKILL.md"))
+    ).toMatchObject({ origin: "project" });
+    expect(result.value.findings.map((item) => item.code)).toContain("SKILL_PROVENANCE_INVALID");
+  });
+
+  it("rejects case-colliding targets and independently reports a missing directory", async () => {
+    const repository = await temporaryRepository({
+      ".agents/skills/Tool/SKILL.md": "# Tool skill",
+      "skills-lock.json": JSON.stringify({
+        version: 1,
+        skills: {
+          Tool: {
+            source: "example/tool-upper",
+            sourceType: "github",
+            computedHash: "e".repeat(64)
+          },
+          tool: {
+            source: "example/tool-lower",
+            sourceType: "github",
+            computedHash: "f".repeat(64)
+          },
+          absent: {
+            source: "example/absent",
+            sourceType: "github",
+            computedHash: "0".repeat(64)
+          }
+        }
+      })
+    });
+
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(
+      result.value.artifacts.find((item) => item.path.endsWith("Tool/SKILL.md"))
+    ).toMatchObject({ origin: "project" });
+    expect(
+      result.value.findings.filter((item) => item.code === "SKILL_PROVENANCE_INVALID")
+    ).toHaveLength(2);
+  });
+
+  it("accepts the Habit Compass installer lock shape without verifying its hashes", async () => {
+    const identities = [
+      "fixing-accessibility",
+      "impeccable",
+      "playwright-cli",
+      "ui-skills-root",
+      "vite",
+      "vitest"
+    ];
+    const skills = Object.fromEntries(
+      identities.map((identity, index) => [
+        identity,
+        {
+          source: index < 2 ? "ibelick/ui-skills" : "example/skills",
+          sourceType: "github",
+          skillPath:
+            identity === "impeccable"
+              ? ".agents/skills/impeccable/SKILL.md"
+              : `skills/${identity}/SKILL.md`,
+          computedHash: String(index).repeat(64)
+        }
+      ])
+    );
+    const repository = await temporaryRepository({
+      ...Object.fromEntries(
+        identities.map((identity) => [`.agents/skills/${identity}/SKILL.md`, `# ${identity}`])
+      ),
+      "skills-lock.json": JSON.stringify({ version: 1, skills })
+    });
+
+    const result = await runProjectArchitect(repository.root, { mode: "audit", scope: "ai" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(
+      result.value.artifacts
+        .filter((item) => item.path.endsWith("/SKILL.md"))
+        .every((item) => item.origin === "third-party")
+    ).toBe(true);
+    expect(result.value.findings.map((item) => item.code)).not.toContain(
+      "SKILL_PROVENANCE_INVALID"
+    );
+  });
+
   it("changes the AI fingerprint when a relevant project-authored skill changes", async () => {
     const repository = await temporaryRepository({
       ".agents/skills/local/SKILL.md": "# Local procedure\nRun tests before completion."

@@ -5,7 +5,7 @@ export default defineWorkspace([
   defineProject({
     test: {
       name: "release",
-      include: ["tests/release/**/*.test.ts"],
+      include: ["tests/release/**/*.test.{ts,mjs}"],
       testTimeout: 30_000,
       hookTimeout: 30_000
     }
