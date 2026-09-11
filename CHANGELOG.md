@@ -36,5 +36,5 @@
 
 - Registry publication, namespace reservation, publishing automation, and the legal license choice
   remain external release-administration decisions.
-- Release readiness remains unclaimed until independent specification review passes and the user
-  explicitly approves the final status transition.
+- Release readiness remains unclaimed until the user explicitly approves the final status
+  transition; the independent specification review passed without findings.

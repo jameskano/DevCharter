@@ -6,7 +6,8 @@ SPEC-0001E is active. The implementation, built-CLI journeys, deterministic vali
 build, tarball inspection, supported Node matrix, fresh-install qualification, and corrected
 read-only Habit Compass preservation pilot are exercised, but release readiness is not claimed. The
 initial independent completion review found one blocking and three important issues; all four are
-corrected, and an independent re-review remains the completion gate.
+corrected, and the independent re-review passed with no findings. The only remaining completion gate
+is explicit human approval of the `active` to `done` transition.
 
 ## Release procedure
 
@@ -95,7 +96,7 @@ test records a qualified capability skip and still exercises an unsafe parent-re
 
 | AC  | Current evidence                                                                                                                                                                                                               | State       |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
-| 1   | Unit/integration suites, fixture catalog, release journeys, packaging harness, CI workflow, safety assertions, and manual gates are separated; the independent manual gate remains pending.                                    | partial     |
+| 1   | Unit/integration suites, fixture catalog, release journeys, packaging harness, CI workflow, safety assertions, and independent manual review are separated and complete.                                                       | implemented |
 | 2   | Existing package tests cover every mode and scope; release journeys cover representative full and AI paths without a Cartesian matrix.                                                                                         | implemented |
 | 3   | Seven workspace journeys pass; applicable journeys 1, 2, 3, 4, 5, and 7 also pass through the fresh-installed tarball CLI on every supported CI platform, while journey 6 remains a repository invariant.                      | implemented |
 | 4   | Final-state and static negative assertions cover prohibited artifacts and behavior.                                                                                                                                            | implemented |
@@ -109,7 +110,7 @@ test records a qualified capability skip and still exercises an unsafe parent-re
 | 12  | All three tarballs pass allowlists and fresh installation; the installed adapter resolves inside the bounded installation, loads both packaged skills, and cannot read the source-checkout sentinel.                           | implemented |
 | 13  | Exactly four supported CI jobs are configured and all pass on correction candidate `562be42876a1cbc0d8f9be32386f726375b337d6`.                                                                                                 | implemented |
 | 14  | The Codex adapter packages and loads the current `AGENTS.md` and `.agents/skills` assets from a fresh installation without source-checkout access.                                                                             | implemented |
-| 15  | Automated specification invariants pass. A genuine independent fresh-context completion review is pending.                                                                                                                     | partial     |
+| 15  | Automated specification invariants pass, and a genuine fresh-context task completed a read-only independent review with no findings.                                                                                           | implemented |
 | 16  | The corrected audit/proposal ran in the authorized clean isolated branch; all six updates were explicitly rejected with path-level reasons, and the approved preservation outcome records identical revisions and zero writes. | implemented |
 | 17  | README, changelog, qualification, pilot, architecture, manifest, and active specification are synchronized for the current implementation phase.                                                                               | implemented |
 | 18  | This document records actual commands, environment, contents, skip/blocker, limitations, and deferrals without claiming missing evidence.                                                                                      | implemented |
@@ -127,20 +128,28 @@ A genuinely fresh Codex task that did not implement SPEC-0001E reviewed revision
 - two evidence-important findings: the qualification record did not name the reviewed candidate and
   CI run, and the changelog still described a pending Habit Compass write phase.
 
-Revision `562be42876a1cbc0d8f9be32386f726375b337d6` resolves all four findings without changing the
+Revision `562be42876a1cbc0d8f9be32386f726375b337d6` resolved all four findings without changing the
 public command surface: the package harness reuses the release journeys with the installed CLI,
 generated TypeScript state is excluded with a fingerprint-stability regression, and the changelog
 records the approved no-write pilot. Run `34621930415` proves the implementation corrections on all
-four supported jobs. The same independent task must now re-review the synchronized evidence
-candidate; no independent pass is claimed yet.
+four supported jobs.
+
+The same independent task then re-reviewed exact revision
+`fc713c5f07ed0bc4517d77a35679205606ef9596` after its four jobs passed in run
+[`34622276731`](https://github.com/jameskano/DevCharter/actions/runs/34622276731). It ran the required
+local checks, independently verified both CI runs, mapped every acceptance criterion, and left HEAD,
+the index, and the worktree unchanged. Its final verdict was `PASS`, with no blocking, important, or
+advisory findings. All 18 acceptance criteria passed. This review is the independent manual gate;
+the implementing task did not review itself.
 
 ## Known limitations and deferrals
 
 - This workstation cannot qualify Node.js 22+ because its active runtime is Node 20.19.0.
 - Fresh dependency metadata access is blocked by the workstation certificate chain. The harness does
   not weaken TLS to turn that failure into a pass.
-- The automated specification tests do not constitute independent review. The fresh reviewer has
-  recorded its initial findings, but its post-correction verdict remains pending.
+- The passing independent review applies to revision
+  `fc713c5f07ed0bc4517d77a35679205606ef9596`; this evidence-only synchronization is subject to the
+  same four-job CI qualification before final handoff.
 - Habit Compass's six-update proposal was rejected after path-level review. The approved preservation
   outcome contains no render, apply, repository modification, commit, push, merge, lockfile rewrite,
   or default-branch change.
