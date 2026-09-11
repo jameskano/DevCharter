@@ -157,17 +157,7 @@ try {
       ? "--permission"
       : "--experimental-permission";
   const installationRoot = await realpath(installation);
-  const adapterPackageRoot = await realpath(
-    path.join(installation, "node_modules", "@devcharter", "adapter-codex")
-  );
-  let packageStoreRoot = adapterPackageRoot;
-  while (path.basename(packageStoreRoot) !== ".pnpm") {
-    const parent = path.dirname(packageStoreRoot);
-    if (parent === packageStoreRoot) break;
-    packageStoreRoot = parent;
-  }
-  const readableRoots = new Set([installationRoot, adapterPackageRoot]);
-  if (path.basename(packageStoreRoot) === ".pnpm") readableRoots.add(packageStoreRoot);
+  const readableRoots = new Set([installation, installationRoot]);
   const assetCheckSource = [
     "import { readFile } from 'node:fs/promises';",
     "import { loadPackagedSkill } from '@devcharter/adapter-codex';",
@@ -195,12 +185,15 @@ try {
     { DEVCHARTER_SOURCE_SENTINEL: sourceSentinel }
   );
   const resolvedAdapterPath = fileURLToPath(resolvedAdapter.trim());
-  const adapterRelativePath = path.relative(adapterPackageRoot, resolvedAdapterPath);
-  if (
-    adapterRelativePath === ".." ||
-    adapterRelativePath.startsWith(`..${path.sep}`) ||
-    path.isAbsolute(adapterRelativePath)
-  ) {
+  const resolvesInsideInstallation = [...readableRoots].some((root) => {
+    const relativePath = path.relative(root, resolvedAdapterPath);
+    return (
+      relativePath !== ".." &&
+      !relativePath.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relativePath)
+    );
+  });
+  if (!resolvesInsideInstallation) {
     throw new Error("installed adapter resolved outside the temporary installation");
   }
 
