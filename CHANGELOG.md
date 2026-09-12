@@ -31,10 +31,11 @@
   release journey against the fresh-installed CLI.
 - Completed the Habit Compass pilot as the explicitly approved unchanged preservation outcome after
   rejecting all six unsafe, external, false-positive, or unjustified updates.
+- Completed SPEC-0001E after all 18 acceptance criteria, four supported CI jobs, installed-tarball
+  qualification, and the independent completion review passed.
 
 ### Deferred
 
 - Registry publication, namespace reservation, publishing automation, and the legal license choice
-  remain external release-administration decisions.
-- Release readiness remains unclaimed until the user explicitly approves the final status
-  transition; the independent specification review passed without findings.
+  remain external release-administration decisions separate from the completed technical
+  qualification.

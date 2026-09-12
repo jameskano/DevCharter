@@ -230,9 +230,9 @@ Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional
    foundations.
 3. Preserve the clean-slate architecture and public contracts established by 0001A–C.
 4. Treat completed `SPEC-0001D` behavior as authoritative.
-5. Implement active `SPEC-0001E` using its approved release decisions.
-6. Complete 0001E without revisiting completed behavior unless failing release evidence requires a compatible fix.
-7. Use Habit Compass as an external audit/retrofit pilot before a stable release.
+5. Treat completed `SPEC-0001E` qualification and release decisions as authoritative.
+6. Preserve completed behavior unless new approved work requires a compatible change.
+7. Use the recorded Habit Compass preservation outcome as external pilot evidence.
 
 Use only these development statuses:
 

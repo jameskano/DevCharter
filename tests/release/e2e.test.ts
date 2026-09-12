@@ -391,7 +391,7 @@ describe("SPEC-0001E release journeys through the selected CLI", () => {
         path.join(
           repositoryRoot,
           "specs",
-          "active",
+          "done",
           "SPEC-0001E-validation-and-release-readiness.md"
         ),
         "utf8"
@@ -401,9 +401,10 @@ describe("SPEC-0001E release journeys through the selected CLI", () => {
         "utf8"
       )
     ]);
-    expect(manifest).toContain("specs/active/SPEC-0001E-validation-and-release-readiness.md");
-    expect(specification).toContain("| Status | active |");
+    expect(manifest).toContain("specs/done/SPEC-0001E-validation-and-release-readiness.md");
+    expect(specification).toContain("| Status | done |");
     expect(specification).toContain("Do not move this specification to `done`");
+    expect(specification).toContain("genuinely fresh Codex task independently reviewed candidate");
     expect(skill).toContain("Only explicit human approval permits `draft -> ready`");
     expect(skill).toContain("Implementation begins with `ready -> active`");
     expect(skill).toContain("does not treat author verification as independent evidence");

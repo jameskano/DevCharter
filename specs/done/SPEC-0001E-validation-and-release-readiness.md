@@ -6,8 +6,8 @@
 |---|---|
 | ID | SPEC-0001E |
 | Parent | SPEC-0001 |
-| Status | active |
-| Approval | The user approved the revised scope on 2026-09-09 and completion amendments on 2026-09-11 |
+| Status | done |
+| Approval | The user approved the revised scope on 2026-09-09, completion amendments on 2026-09-11, and the final `active` to `done` transition on 2026-09-12 |
 
 ## Purpose
 
@@ -168,8 +168,9 @@ qualified skip with the closest safe boundary case, never a silent pass.
 ## Habit Compass pilot
 
 The first phase is read-only: audit Habit Compass, prepare a retrofit proposal, record expected
-changes, and stop for separate explicit approval. The later write phase must use a dedicated
-non-protected pilot branch and never the default branch.
+changes, and stop for separate explicit approval. The separately approved disposition uses a
+dedicated non-protected pilot branch and never the default branch; an approved no-op requires no
+render, apply, modification, or empty commit.
 
 The sanitized report contains exact starting/resulting Git revisions, repository-relative paths,
 finding/evidence categories, proposal summary, preserved components, approved changes, usability
@@ -214,7 +215,7 @@ results, environments, tarball contents, qualified skips, known limitations, and
 15. Automated specification invariants and a genuine independent manual Codex journey provide
     separate, accurately described lifecycle evidence.
 16. The read-only Habit Compass phase records its audit and proposal without modifying the external
-    repository, and the separately approved write phase records exact revisions and outcomes.
+    repository, and the separately approved disposition records exact revisions and outcomes.
 17. README, changelog, qualification, pilot, current architecture, manifest routing, and this
     specification remain synchronized.
 18. Release evidence records actual commands, results, environments, tarball contents, skips,
@@ -227,3 +228,23 @@ has traceable evidence, all supported CI jobs pass, installed tarballs work with
 the real CLI lifecycle passes both approval gates, audit no-write behavior is proven, the manual
 specification journey has independent-review evidence, the separately approved Habit Compass pilot
 is complete, and all failures, skips, and limitations are recorded accurately.
+
+## Completion evidence
+
+- Final pre-approval candidate `6f23df670a77131d8332ea7bd9e4d37f03bc0ead` passed all four
+  supported CI jobs in run `34629735748`, including fresh-tarball qualification.
+- Local formatting, linting, type checking, production build, 415 tests, 25 release tests,
+  deterministic validation, full audit, and whitespace validation passed. Local Node 20 evidence is
+  developmental; Node 22/24 qualification comes from CI.
+- All three versioned tarballs passed content allowlists and fresh installation without workspace
+  links. Applicable journeys 1 through 5 and 7 ran through the installed CLI; journey 6 remained the
+  repository-level specification lifecycle invariant.
+- A genuinely fresh Codex task independently reviewed candidate
+  `fc713c5f07ed0bc4517d77a35679205606ef9596` after its four-job CI run passed. Its final verdict was
+  `PASS` with no blocking, important, or advisory findings, and it made no files changes.
+- The Habit Compass pilot recorded the approved unchanged preservation outcome at identical starting
+  and resulting revision `e3424c23488929be8902aa089b2575ba8397792b`. All six proposed updates were
+  rejected with path-level reasons, and no external write or empty commit occurred.
+- `docs/release/v0-qualification.md` contains the acceptance mapping, commands, CI links, review
+  corrections, package evidence, limitations, and external release-administration deferrals.
+- The user explicitly approved the `active` to `done` transition on 2026-09-12.
