@@ -1,0 +1,28 @@
+{
+  "name": "@devcharter/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "devcharter": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@devcharter/adapter-codex": "workspace:*",
+    "@devcharter/core": "workspace:*"
+  }
+}

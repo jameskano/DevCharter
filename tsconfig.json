@@ -1,8 +1,8 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/schemas" },
     { "path": "./packages/core" },
+    { "path": "./packages/adapter-codex" },
     { "path": "./packages/cli" }
   ]
 }

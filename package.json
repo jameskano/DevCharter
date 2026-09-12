@@ -3,16 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.18.3",
   "engines": {
-    "node": ">=20.11"
+    "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "node scripts/build-production.mjs",
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "test": "pnpm build && vitest run",
-    "devcharter": "node packages/cli/dist/index.js"
+    "test:release": "pnpm build && vitest run --project release",
+    "test:audit-no-write": "vitest run --project release -t \"hostile audit\"",
+    "package:qualify": "node scripts/qualify-packages.mjs",
+    "devcharter": "node packages/cli/dist/cli.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
