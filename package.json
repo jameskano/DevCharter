@@ -12,6 +12,7 @@
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint .",
     "format:check": "prettier --check .",
+    "format": "prettier . --write",
     "test": "pnpm build && vitest run",
     "test:release": "pnpm build && vitest run --project release",
     "test:audit-no-write": "vitest run --project release -t \"hostile audit\"",

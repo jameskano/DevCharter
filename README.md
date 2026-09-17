@@ -126,11 +126,11 @@ Registry publication is separate from the qualified v0 implementation. See
 
 ## Choose a mode
 
-| Mode | Use it when | Writes during analysis? | Proposal produced? |
-| --- | --- | --- | --- |
-| `new` | The repository is empty or lightly initialized | No | Yes |
-| `retrofit` | The repository is established and useful content must be preserved | No | Yes |
-| `audit` | You want findings and recommendations only | No | No |
+| Mode       | Use it when                                                        | Writes during analysis? | Proposal produced? |
+| ---------- | ------------------------------------------------------------------ | ----------------------- | ------------------ |
+| `new`      | The repository is empty or lightly initialized                     | No                      | Yes                |
+| `retrofit` | The repository is established and useful content must be preserved | No                      | Yes                |
+| `audit`    | You want findings and recommendations only                         | No                      | No                 |
 
 ### New project
 
@@ -161,12 +161,12 @@ recommended actions, but no proposal or planned changes.
 
 ## Choose a scope
 
-| Scope | Covers |
-| --- | --- |
-| `full` | Governance, engineering, and AI-development concerns |
-| `governance` | Project truth, documentation, specifications, decisions, and synchronization |
-| `engineering` | Manifests, commands, tests, CI, safety, and verification foundations |
-| `ai` | Repository instructions, skills, and justified AI-tool configuration |
+| Scope         | Covers                                                                       |
+| ------------- | ---------------------------------------------------------------------------- |
+| `full`        | Governance, engineering, and AI-development concerns                         |
+| `governance`  | Project truth, documentation, specifications, decisions, and synchronization |
+| `engineering` | Manifests, commands, tests, CI, safety, and verification foundations         |
+| `ai`          | Repository instructions, skills, and justified AI-tool configuration         |
 
 The default is `full`. Choose the narrowest scope that matches the desired outcome. Security,
 privacy, accessibility, reliability, maintainability, performance, cost, and operations are
@@ -289,15 +289,15 @@ devcharter --help
 devcharter --version
 ```
 
-| Command | Purpose | Writes? |
-| --- | --- | --- |
-| `inspect` | Inventory paths, kinds, and origins | No |
-| `audit` | Return a scoped evidence-backed assessment | No |
-| `new` | Produce a foundation proposal for a new project | No |
-| `retrofit` | Produce a preservation-aware proposal for an existing project | No |
-| `render` | Turn an approved proposal into exact content and diffs | No |
-| `apply` | Apply an exactly approved rendered plan | Yes |
-| `validate` | Check configuration, repository integrity, and managed output | No |
+| Command    | Purpose                                                       | Writes? |
+| ---------- | ------------------------------------------------------------- | ------- |
+| `inspect`  | Inventory paths, kinds, and origins                           | No      |
+| `audit`    | Return a scoped evidence-backed assessment                    | No      |
+| `new`      | Produce a foundation proposal for a new project               | No      |
+| `retrofit` | Produce a preservation-aware proposal for an existing project | No      |
+| `render`   | Turn an approved proposal into exact content and diffs        | No      |
+| `apply`    | Apply an exactly approved rendered plan                       | Yes     |
+| `validate` | Check configuration, repository integrity, and managed output | No      |
 
 Exit codes are `0` for success, `1` for a repository/lifecycle/validation failure, and `2` for
 invalid arguments or malformed input.

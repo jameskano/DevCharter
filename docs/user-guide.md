@@ -13,7 +13,7 @@ DevCharter's defining promise is:
 
 > Give a repository the smallest, safest, and most useful AI development system it actually needs.
 
-The important word is *proposes*. Discovery, audits, proposals, and rendering are read-only. A change
+The important word is _proposes_. Discovery, audits, proposals, and rendering are read-only. A change
 is written only after two distinct, fingerprint-bound approvals: one for the abstract proposal and
 another for the exact rendered content.
 
@@ -215,11 +215,11 @@ This is a release check, not a normal prerequisite for using the CLI.
 
 ## 6. Choosing a mode
 
-| Mode | Use it when | Writes? | Produces a proposal? |
-| --- | --- | --- | --- |
-| `new` | The repository is empty or lightly initialized and needs a foundation | No | Yes |
-| `retrofit` | The repository is established and existing material must be preserved | No | Yes |
-| `audit` | You want findings and recommendations only | No | No |
+| Mode       | Use it when                                                           | Writes? | Produces a proposal? |
+| ---------- | --------------------------------------------------------------------- | ------- | -------------------- |
+| `new`      | The repository is empty or lightly initialized and needs a foundation | No      | Yes                  |
+| `retrofit` | The repository is established and existing material must be preserved | No      | Yes                  |
+| `audit`    | You want findings and recommendations only                            | No      | No                   |
 
 ### `new`
 
@@ -249,12 +249,12 @@ evidence is ambiguous, DevCharter may ask for the `project.mode` decision.
 
 Every proposal or audit mode supports one of four scopes. The default is `full`.
 
-| Scope | What it covers |
-| --- | --- |
-| `full` | Governance, engineering, and AI-development concerns |
-| `governance` | Current project truth, documentation, specifications, decisions, and synchronization |
-| `engineering` | Manifests, verification commands, tests, CI, safety, and development foundations |
-| `ai` | `AGENTS.md`, skills, native tool configuration, and justified AI components |
+| Scope         | What it covers                                                                       |
+| ------------- | ------------------------------------------------------------------------------------ |
+| `full`        | Governance, engineering, and AI-development concerns                                 |
+| `governance`  | Current project truth, documentation, specifications, decisions, and synchronization |
+| `engineering` | Manifests, verification commands, tests, CI, safety, and development foundations     |
+| `ai`          | `AGENTS.md`, skills, native tool configuration, and justified AI components          |
 
 Architecture, security, privacy, accessibility, reliability, maintainability, performance, cost,
 and operations are considerations inside applicable scopes. They are not additional CLI scopes.
@@ -289,7 +289,7 @@ developer-AI configuration without evaluating all engineering or governance conc
 
 ### C. Complete lifecycle for a new AI-only repository
 
-Keep lifecycle files in a directory *outside* the target repository:
+Keep lifecycle files in a directory _outside_ the target repository:
 
 ```text
 workspace/
@@ -473,11 +473,11 @@ automatically fail validation. Validation itself is read-only.
 
 ### Exit codes
 
-| Code | Meaning |
-| --- | --- |
-| `0` | Successful command; for `validate`, no failing outcome |
-| `1` | Runtime, repository-state, approval, rendering, application, or validation failure |
-| `2` | Invalid CLI arguments or malformed lifecycle input |
+| Code | Meaning                                                                            |
+| ---- | ---------------------------------------------------------------------------------- |
+| `0`  | Successful command; for `validate`, no failing outcome                             |
+| `1`  | Runtime, repository-state, approval, rendering, application, or validation failure |
+| `2`  | Invalid CLI arguments or malformed lifecycle input                                 |
 
 Automation should check both the process exit code and, for JSON output, the envelope's `ok` field.
 
@@ -498,15 +498,15 @@ A decision file is a strict JSON array. Every item has an `id`, a JSON `value`, 
 Unknown IDs, duplicate IDs, invalid value types, and decisions irrelevant to a narrowed scope are
 rejected.
 
-| Decision ID | Required value | Purpose and applicability |
-| --- | --- | --- |
-| `project.outcome` | Non-empty string | Desired product/repository outcome; may be used in any proposal scope |
-| `project.technologies` | Non-empty string array | Technology selection; `full` or `engineering` |
-| `project.aiTools` | Non-empty string array | Developer AI tools to support; `full` or `ai` |
-| `project.constraints` | String array; may be empty | Constraints that can affect architecture or preservation |
-| `project.risks` | String array; may be empty | Risks that can affect safety or verification |
-| `project.mode` | `"new"` or `"retrofit"` | Resolves an ambiguous maturity recommendation; must match the invoked mode |
-| `project.manifestPath` | Safe forward-slash repository-relative path | Selects an otherwise ambiguous engineering manifest; `full` or `engineering` |
+| Decision ID              | Required value                                         | Purpose and applicability                                                                      |
+| ------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `project.outcome`        | Non-empty string                                       | Desired product/repository outcome; may be used in any proposal scope                          |
+| `project.technologies`   | Non-empty string array                                 | Technology selection; `full` or `engineering`                                                  |
+| `project.aiTools`        | Non-empty string array                                 | Developer AI tools to support; `full` or `ai`                                                  |
+| `project.constraints`    | String array; may be empty                             | Constraints that can affect architecture or preservation                                       |
+| `project.risks`          | String array; may be empty                             | Risks that can affect safety or verification                                                   |
+| `project.mode`           | `"new"` or `"retrofit"`                                | Resolves an ambiguous maturity recommendation; must match the invoked mode                     |
+| `project.manifestPath`   | Safe forward-slash repository-relative path            | Selects an otherwise ambiguous engineering manifest; `full` or `engineering`                   |
 | `project.packageScripts` | Non-empty object of script name to single-line command | Supplies exact verification scripts when DevCharter cannot infer them; `full` or `engineering` |
 
 Example package-script decision:
@@ -734,12 +734,12 @@ optional uncertainty or question.
 
 Current finding codes include:
 
-| Area | Finding codes |
-| --- | --- |
-| References/specifications | `BROKEN_REFERENCE`, `BROKEN_SPEC_RELATIONSHIP`, `DUPLICATE_SPEC_ID`, `SPEC_PRECEDENCE_CONFLICT`, `SPEC_STATUS_PATH_CONFLICT` |
-| Commands/manifests | `INVALID_MANIFEST`, `COMMAND_AUTHORITY_AMBIGUOUS`, `COMMAND_VALIDATION_UNCERTAIN`, `DOCUMENTED_COMMAND_MISSING`, `CI_COMMAND_MISSING`, `MISSING_VERIFICATION` |
-| AI configuration | `DUPLICATE_AI_MATERIAL`, `INSTRUCTION_ROUTING_CONFLICT`, `UNJUSTIFIED_AI_COMPLEXITY`, `SKILL_PROVENANCE_INVALID` |
-| Ownership/journeys | `UNKNOWN_GENERATED_OWNERSHIP`, `MISSING_CRITICAL_JOURNEY_EVIDENCE` |
+| Area                      | Finding codes                                                                                                                                                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| References/specifications | `BROKEN_REFERENCE`, `BROKEN_SPEC_RELATIONSHIP`, `DUPLICATE_SPEC_ID`, `SPEC_PRECEDENCE_CONFLICT`, `SPEC_STATUS_PATH_CONFLICT`                                  |
+| Commands/manifests        | `INVALID_MANIFEST`, `COMMAND_AUTHORITY_AMBIGUOUS`, `COMMAND_VALIDATION_UNCERTAIN`, `DOCUMENTED_COMMAND_MISSING`, `CI_COMMAND_MISSING`, `MISSING_VERIFICATION` |
+| AI configuration          | `DUPLICATE_AI_MATERIAL`, `INSTRUCTION_ROUTING_CONFLICT`, `UNJUSTIFIED_AI_COMPLEXITY`, `SKILL_PROVENANCE_INVALID`                                              |
+| Ownership/journeys        | `UNKNOWN_GENERATED_OWNERSHIP`, `MISSING_CRITICAL_JOURNEY_EVIDENCE`                                                                                            |
 
 Not every finding is a validation failure. Some are recommendations or intentionally low-confidence
 uncertainties.
@@ -999,9 +999,7 @@ accepted decisions, and an optional previous proposal.
 All core operations return a discriminated result:
 
 ```ts
-type Result<T> =
-  | { ok: true; value: T }
-  | { ok: false; error: DevCharterErrorRecord };
+type Result<T> = { ok: true; value: T } | { ok: false; error: DevCharterErrorRecord };
 ```
 
 ### `@devcharter/adapter-codex`
@@ -1079,18 +1077,18 @@ Registry publication is deferred.
 
 ### Common structured error codes
 
-| Code | Typical meaning |
-| --- | --- |
-| `INVALID_ARGUMENT` | Unsupported CLI option, malformed JSON contract, or invalid lifecycle combination |
-| `INVALID_CONFIG` | Invalid configuration, receipt, managed output, or deterministic integrity state |
-| `UNSAFE_YAML` | YAML uses invalid or intentionally disallowed constructs |
-| `PATH_OUTSIDE_ROOT` | A path is absolute, malformed, or escapes the repository |
-| `SYMLINK_ESCAPE` | A path crosses a symbolic-link segment |
-| `READ_FAILED` | A required file or root cannot be read |
-| `INVENTORY_FAILED` | Recursive repository inventory could not complete |
-| `APPROVAL_REQUIRED` | Approval is missing, invalid, or blocked by unresolved questions/no action |
-| `STALE_PROPOSAL` | Proposal, plan, target baseline, receipt, or repository state has changed |
-| `ATOMIC_WRITE_FAILED` | Temporary write, flush, precondition check, rename, or cleanup failed |
+| Code                  | Typical meaning                                                                   |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `INVALID_ARGUMENT`    | Unsupported CLI option, malformed JSON contract, or invalid lifecycle combination |
+| `INVALID_CONFIG`      | Invalid configuration, receipt, managed output, or deterministic integrity state  |
+| `UNSAFE_YAML`         | YAML uses invalid or intentionally disallowed constructs                          |
+| `PATH_OUTSIDE_ROOT`   | A path is absolute, malformed, or escapes the repository                          |
+| `SYMLINK_ESCAPE`      | A path crosses a symbolic-link segment                                            |
+| `READ_FAILED`         | A required file or root cannot be read                                            |
+| `INVENTORY_FAILED`    | Recursive repository inventory could not complete                                 |
+| `APPROVAL_REQUIRED`   | Approval is missing, invalid, or blocked by unresolved questions/no action        |
+| `STALE_PROPOSAL`      | Proposal, plan, target baseline, receipt, or repository state has changed         |
+| `ATOMIC_WRITE_FAILED` | Temporary write, flush, precondition check, rename, or cleanup failed             |
 
 ## 21. Limits and caveats
 
