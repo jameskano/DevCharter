@@ -1,102 +1,113 @@
 # DevCharter
 
-DevCharter is a local, model-neutral package that creates or improves the AI-assisted development ecosystem of a software repository.
+[![CI](https://github.com/jameskano/DevCharter/actions/workflows/ci.yml/badge.svg)](https://github.com/jameskano/DevCharter/actions/workflows/ci.yml)
+[![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Version 0.1.0](https://img.shields.io/badge/version-0.1.0-4f46e5)](./CHANGELOG.md)
 
-Its value is not the number of generated files. Its value is deciding what the repository needs, what it already has, what should be preserved, and how the resulting setup can be verified.
+**Build the smallest AI-assisted development system your repository actually needs.**
 
-## Product promise
-
-> Give a repository the smallest, safest, and most useful AI development system it actually needs.
-
-The v0 flow is:
+DevCharter is a local, model-neutral CLI that examines a software repository, understands what is
+already there, and proposes a focused development foundation for humans and AI coding tools. It
+preserves useful conventions, exposes uncertainty, and requires review before it writes anything.
 
 ```text
-discover → understand → answer → propose → approve → render → approve → apply → verify
+discover -> understand -> answer -> propose -> approve -> render -> approve -> apply -> verify
 ```
 
-## Current implementation
+DevCharter is for developers and small teams who want dependable repository instructions,
+specifications, commands, tests, and AI-tool configuration without accumulating unnecessary agents,
+prompts, hooks, or process.
 
-SPEC-0001A provides the deterministic core foundation, completed SPEC-0001B adds the read-only
-Project Architect workflow, and completed SPEC-0001D adds rendering and application. The current
-CLI surface is:
+## Why DevCharter
+
+AI coding tools perform better when a repository clearly states what it does, how changes should be
+made, and how those changes are verified. Building that system by hand is easy to overdo and hard to
+keep consistent.
+
+DevCharter takes a minimum-sufficient approach:
+
+- inspects before asking questions or proposing files;
+- distinguishes project-owned, third-party, generated, and unknown material;
+- separates confirmed facts, inferences, assumptions, decisions, and open questions;
+- maps documentation, specification, command, CI, instruction, and skill authority;
+- preserves adequate existing files instead of replacing them;
+- proposes one explicit `create`, `update`, `skip`, or `conflict` decision per target;
+- shows complete content or diffs before application;
+- binds both approvals to the current repository state;
+- validates managed output and supports exact no-op retries.
+
+A successful DevCharter run may create several useful foundations, improve one file, or preserve the
+repository exactly as it is. More generated files are not considered a better result.
+
+## What it can help establish
+
+Depending on the repository and selected scope, DevCharter may propose or improve:
+
+- a concise root `AGENTS.md`;
+- current product and engineering documentation;
+- an authoritative specification workflow;
+- stable, repeatable Codex skills;
+- repository-native verification commands;
+- appropriate tests or CI foundations;
+- a small amount of managed metadata for safe drift detection.
+
+It does not generate role-agent fleets, prompt libraries, hooks, MCP integrations, CI, or new
+tooling by default. Every component needs repository evidence or an accepted user decision.
+
+## Quick start: inspect without writing
+
+After installing the CLI, change into the repository you want to examine:
 
 ```bash
-devcharter new [--scope full|governance|engineering|ai] [--decisions <file>] [--previous-proposal <file>]
-devcharter retrofit [--scope full|governance|engineering|ai] [--decisions <file>] [--previous-proposal <file>]
-devcharter audit [--scope full|governance|engineering|ai]
-devcharter inspect
-devcharter validate
-devcharter render --proposal <file> --approval <file> --adapter codex
-devcharter apply --plan <file> --approval <file>
+cd path/to/your-repository
+pnpm exec devcharter inspect
+pnpm exec devcharter audit --scope full
+pnpm exec devcharter validate
 ```
 
-All commands operate on the current working directory and support `--format human|json`. The three
-Project Architect modes are deterministically read-only. New and retrofit infer strong repository
-evidence, infer a documented current outcome when confidence is adequate, ask only unresolved
-material questions, and return actionable unapproved proposals bound to complete proposal and
-repository fingerprints. Fingerprint algorithm version 2 includes canonical approval-relevant
-exclusion metadata without hashing excluded contents. Audit returns the same stable analysis sections
-without a proposal, approval state, or planned changes. Human and JSON results expose facts,
-findings, assumptions, questions, critical journeys, considered components, planned changes,
-preserved paths, conflicts, risks, validation, deferred work, and zero applied changes. Canonical
-decision files let the CLI answer those questions without adding sessions or persisted interview
-state. Optional previous proposals continue the existing revision contract. Approval is a
-fingerprint-bound contract; unresolved required questions, audit-mode proposals, stale repository
-state, and material proposal mutations are rejected. Completed SPEC-0001D adds read-only `render` and
-writer-capable `apply` lifecycle commands with structurally separate approvals. When an engineering
-proposal needs to create or repair a `package.json` verification surface, DevCharter requires an
-explicit `project.packageScripts` decision before rendering. It creates only the accepted scripts in
-a new manifest, or surgically updates the `scripts` object of a strict JSON manifest while preserving
-unrelated fields and existing script order. Render output exposes the complete content or diff in
-both human and JSON formats. Apply output reports a terminal result for every target and, when
-applicable, the managed receipt: `created`, `updated`, `skipped`, `conflict`, `failed`, or
-`not-attempted`. Completed SPEC-0001C adds the v0 Specification Architect as one
-instruction-only repository skill at `.agents/skills/specification-architect/SKILL.md`; it adds no
-CLI command, runtime API, session, persistence, adapter, or generator.
+These commands are read-only:
 
-Discovery classifies JavaScript/TypeScript, Python, Rust, Go, Java, and Kotlin source and tests.
-Root and manifest-backed `vendor` directories are dependency boundaries; unproven nested `vendor`
-directories remain project content and participate in preservation and approval fingerprints.
-Command checks are intentionally bounded to package scripts for npm, pnpm, yarn, and bun; static
-Python declarations and common Python verification tools; and standard Cargo, Go, and Maven
-verification commands. Unfamiliar or dynamic commands are reported as uncertainty. Explicitly
-third-party skills identified by an explicit package marker or an unambiguous version-1
-`skills-lock.json` entry remain inventoried but are excluded from project facts, findings,
-references, recommendations, and fingerprints. Version-1 locks may use DevCharter `path`/`source`
-entries or installer-style `source`/`sourceType`/`computedHash` entries with an optional safe relative
-`skillPath`; entries are validated independently and installer hashes are not presented as verified
-content integrity. Runtime-AI facts use bounded declared-dependency and explicit source-import
-evidence across the supported ecosystems; dependency-only evidence remains
-unconfirmed. Semantic-inspection reporting includes only paths interpreted by a defined analyzer,
-not every enumerated, loaded, or fingerprinted source. Developer journeys prefer an authoritative
-root aggregate, CI, or root verification workflow over redundant package builds; user journeys
-require explicit current documentation or E2E evidence. Human output previews at most 20 preserved
-paths while JSON retains the complete list.
+- `inspect` inventories the current directory;
+- `audit` produces an evidence-backed assessment;
+- `validate` checks configuration, deterministic repository integrity, and managed output.
 
-AI-scoped fingerprints bind canonical imports that match declared supported AI dependencies, so
-runtime-AI fact changes invalidate approval while unrelated source-body edits remain stable.
-Constraint and risk questions require contextual requirements or concrete failure evidence; generic
-product-domain vocabulary continues to use the explicit non-blocking empty defaults.
+Use JSON output for complete evidence or automation:
 
-Rendered plans carry a compact versioned retry digest over bounded repository evidence and explicit
-Git state. An already-applied retry is accepted only when that capture is exact and every planned
-output already matches; unreadable, unsupported, binary, oversized, or otherwise uncertain evidence
-forces a fresh proposal and approval.
+```bash
+pnpm exec devcharter audit --scope engineering --format json
+```
 
-From this workspace, run commands with `pnpm devcharter`, for example
-`pnpm devcharter audit --scope engineering --format json`.
+## Installation
 
-## Installation from qualified local tarballs
+DevCharter 0.1.0 supports Node.js 22 and later and uses pnpm 10. The current qualified distribution
+is installed from three local tarballs: the deterministic core, Codex adapter, and CLI.
 
-DevCharter v0 targets Node.js 22 or later and pnpm 10. Pack and install all three packages together;
-the workspace root remains private and v0 does not publish to a registry.
+### 1. Build DevCharter
+
+```bash
+git clone https://github.com/jameskano/DevCharter.git
+cd DevCharter
+corepack enable
+pnpm install --frozen-lockfile
+pnpm build
+```
+
+### 2. Pack the runtime packages
+
+Run from the DevCharter repository root:
 
 ```bash
 mkdir release-artifacts
 pnpm --dir packages/core pack --pack-destination ../../release-artifacts
 pnpm --dir packages/adapter-codex pack --pack-destination ../../release-artifacts
 pnpm --dir packages/cli pack --pack-destination ../../release-artifacts
+```
 
+### 3. Install them in the target repository
+
+Adjust the paths to match your checkout:
+
+```bash
 cd ../target-repository
 pnpm add ../DevCharter/release-artifacts/devcharter-core-0.1.0.tgz \
   ../DevCharter/release-artifacts/devcharter-adapter-codex-0.1.0.tgz \
@@ -104,13 +115,84 @@ pnpm add ../DevCharter/release-artifacts/devcharter-core-0.1.0.tgz \
 pnpm exec devcharter --version
 ```
 
-`pnpm package:qualify` performs the authoritative temporary tarball inspection, fresh installation,
-packaged-asset check, installed lifecycle, validation, and exact retry no-op check.
+Expected output:
 
-## Complete installed-CLI lifecycle
+```text
+devcharter 0.1.0
+```
 
-Create a canonical decision file using the question IDs returned by the first read-only proposal.
-For an AI-only new repository, for example:
+Registry publication is separate from the qualified v0 implementation. See
+[Release status](#release-status) and the [release qualification record](docs/release/v0-qualification.md).
+
+## Choose a mode
+
+| Mode | Use it when | Writes during analysis? | Proposal produced? |
+| --- | --- | --- | --- |
+| `new` | The repository is empty or lightly initialized | No | Yes |
+| `retrofit` | The repository is established and useful content must be preserved | No | Yes |
+| `audit` | You want findings and recommendations only | No | No |
+
+### New project
+
+```bash
+pnpm exec devcharter new --scope full --format json
+```
+
+`new` gathers or infers the intended outcome, technologies, constraints, risks, and selected AI
+tools before proposing a lightweight foundation.
+
+### Existing project
+
+```bash
+pnpm exec devcharter retrofit --scope full --format json
+```
+
+`retrofit` analyzes current code, documentation, specifications, commands, tests, CI, and AI
+configuration, then proposes targeted improvements without blindly replacing conventions.
+
+### Read-only assessment
+
+```bash
+pnpm exec devcharter audit --scope full --format json
+```
+
+`audit` returns facts, findings, conflicts, risks, critical journeys, preservation information, and
+recommended actions, but no proposal or planned changes.
+
+## Choose a scope
+
+| Scope | Covers |
+| --- | --- |
+| `full` | Governance, engineering, and AI-development concerns |
+| `governance` | Project truth, documentation, specifications, decisions, and synchronization |
+| `engineering` | Manifests, commands, tests, CI, safety, and verification foundations |
+| `ai` | Repository instructions, skills, and justified AI-tool configuration |
+
+The default is `full`. Choose the narrowest scope that matches the desired outcome. Security,
+privacy, accessibility, reliability, maintainability, performance, cost, and operations are
+considered inside applicable scopes rather than exposed as additional scopes.
+
+## Complete lifecycle
+
+`new` and `retrofit` never write directly. They produce an unapproved abstract proposal. Applying a
+change requires two independent approvals.
+
+```text
+1. Analyze repository       read-only
+2. Answer material questions
+3. Review abstract proposal
+4. Approve proposal         fingerprint-bound
+5. Render exact content     read-only
+6. Review content and diffs
+7. Approve rendered plan    independently fingerprint-bound
+8. Apply                    the only writing stage
+9. Validate and review diff
+```
+
+### 1. Supply accepted decisions
+
+Create a JSON decision file using the question IDs returned by the first proposal. For an AI-only
+new repository:
 
 ```json
 [
@@ -121,16 +203,19 @@ For an AI-only new repository, for example:
 ]
 ```
 
-Run the lifecycle with JSON artifacts. The proposal and render commands accept the complete
-successful envelope from the preceding command, so no extraction script is needed.
+Keep lifecycle files outside the target repository so creating them does not change the repository
+fingerprint.
 
 ```bash
-pnpm exec devcharter inspect --format json
-pnpm exec devcharter new --scope ai --decisions decisions.json --format json > proposal.json
+pnpm exec devcharter new \
+  --scope ai \
+  --decisions ../devcharter-inputs/decisions.json \
+  --format json > ../devcharter-inputs/proposal.json
 ```
 
-Review the proposal, then create the first approval from its proposal revision, proposal
-fingerprint, and repository fingerprint:
+### 2. Approve the abstract proposal
+
+Copy the revision and fingerprints from `result.proposal` into a separate approval file:
 
 ```json
 {
@@ -142,12 +227,22 @@ fingerprint, and repository fingerprint:
 }
 ```
 
+### 3. Render the exact plan
+
 ```bash
-pnpm exec devcharter render --proposal proposal.json --approval abstract-approval.json --adapter codex --format json > plan.json
+pnpm exec devcharter render \
+  --proposal ../devcharter-inputs/proposal.json \
+  --approval ../devcharter-inputs/abstract-approval.json \
+  --adapter codex \
+  --format json > ../devcharter-inputs/plan.json
 ```
 
-Review the complete rendered content or diff, then create the independent write approval using the
-rendered plan's revision and fingerprints:
+Rendering remains read-only. Review every target, action, proposed content, full-file diff, baseline
+hash, and conflict.
+
+### 4. Approve the rendered plan
+
+Copy the rendered values into a new write approval:
 
 ```json
 {
@@ -159,87 +254,249 @@ rendered plan's revision and fingerprints:
 }
 ```
 
+### 5. Apply and verify
+
 ```bash
-pnpm exec devcharter apply --plan plan.json --approval write-approval.json --format json
+pnpm exec devcharter apply \
+  --plan ../devcharter-inputs/plan.json \
+  --approval ../devcharter-inputs/write-approval.json \
+  --format json
+
 pnpm exec devcharter validate --format json
+git diff --check
+git diff
 ```
 
-If answers change, pass the prior successful proposal envelope with `--previous-proposal` to receive
-the appropriate next proposal revision. Keep lifecycle input files outside the target repository so
-creating them does not stale its repository fingerprint.
+If the repository, proposal, plan, target baseline, or managed receipt changes between stages,
+DevCharter rejects the stale operation and requires a fresh review.
 
-Each mode supports:
+For the complete decision schema, approval contracts, examples, and troubleshooting, read the
+[complete user guide](docs/user-guide.md).
+
+## Command reference
+
+All commands operate on the current working directory and support `--format human|json`.
 
 ```text
-full
-governance
-engineering
-ai
+devcharter new [--scope full|governance|engineering|ai] [--decisions <file>] [--previous-proposal <file>] [--format human|json]
+devcharter retrofit [--scope full|governance|engineering|ai] [--decisions <file>] [--previous-proposal <file>] [--format human|json]
+devcharter audit [--scope full|governance|engineering|ai] [--format human|json]
+devcharter inspect [--format human|json]
+devcharter validate [--format human|json]
+devcharter render --proposal <file> --approval <file> --adapter codex [--format human|json]
+devcharter apply --plan <file> --approval <file> [--format human|json]
+devcharter --help
+devcharter --version
 ```
 
-## Modes
+| Command | Purpose | Writes? |
+| --- | --- | --- |
+| `inspect` | Inventory paths, kinds, and origins | No |
+| `audit` | Return a scoped evidence-backed assessment | No |
+| `new` | Produce a foundation proposal for a new project | No |
+| `retrofit` | Produce a preservation-aware proposal for an existing project | No |
+| `render` | Turn an approved proposal into exact content and diffs | No |
+| `apply` | Apply an exactly approved rendered plan | Yes |
+| `validate` | Check configuration, repository integrity, and managed output | No |
 
-### `new`
+Exit codes are `0` for success, `1` for a repository/lifecycle/validation failure, and `2` for
+invalid arguments or malformed input.
 
-Proposes a lightweight foundation for a new or lightly initialized repository from its intended product, technology, risks, and development needs.
+## Safe by design
 
-### `retrofit`
+DevCharter treats repository modification as a reviewed operation, not a side effect of analysis.
 
-Analyzes an existing repository and proposes targeted improvements without replacing useful conventions or files blindly.
+- **Read-only first.** `inspect`, `audit`, `new`, `retrofit`, `render`, and `validate` do not write.
+- **Two approvals.** Abstract intent and exact rendered content are approved separately.
+- **Scoped fingerprints.** Approvals are bound to relevant repository content and Git state.
+- **No silent overwrite.** Target presence and baseline hashes are checked before replacement.
+- **Contained paths.** Absolute paths, parent traversal, and symbolic-link path segments are rejected.
+- **Atomic file replacement.** Content is staged, flushed, rechecked, and renamed into place.
+- **Conservative exclusions.** Secret-like, binary, oversized, unsupported, and unsafe material is not
+  interpreted as ordinary project text.
+- **No arbitrary command execution.** Discovered and configured commands are analyzed, not run.
+- **No telemetry requirement.** Core runtime behavior works locally without a hosted service.
+- **Explicit partial failure.** Successful earlier writes and later unattempted targets are reported;
+  DevCharter never claims a rollback it did not perform.
+- **Managed drift detection.** Explicitly managed output is tracked by path, adapter, and baseline hash.
 
-### `audit`
+An exact repeated apply returns `already-applied` with no changed paths only when the entire bounded
+retry state can be proven unchanged.
 
-Performs a read-only review of the selected scope. It reports missing, conflicting, obsolete, overlapping, broken, or unjustified elements and recommends follow-up work.
+## What DevCharter understands
 
-## Scopes
+### Repository ecosystems
 
-- `full`: governance, engineering, and AI.
-- `governance`: project truth, specifications, decisions, and documentation synchronization.
-- `engineering`: commands, tests, CI, safety, and development foundations needed for reliable AI work.
-- `ai`: repository instructions, skills, selected adapters, and other AI configuration only when justified.
+Source and test discovery covers:
 
-Architecture, security, privacy, accessibility, reliability, maintainability, performance, cost, and operations are evaluated inside the applicable scope rather than exposed as more scopes.
+- JavaScript and TypeScript;
+- Python;
+- Rust;
+- Go;
+- Java;
+- Kotlin.
 
-## Minimum output
+### Command authority
 
-DevCharter may recommend only a concise `AGENTS.md`, an existing verification command, and a specification convention. A complex repository may justify more.
+Static command validation covers:
 
-Possible outputs include:
+- npm, pnpm, yarn, and bun scripts;
+- supported Python project/tool declarations and common verification tools;
+- standard Cargo, Go, and Maven verification commands.
 
-- concise repository instructions;
-- compact project context and definitive specifications;
-- stable repeatable skills;
-- appropriate engineering and verification foundations;
-- a Codex adapter generated from shared project knowledge.
+Dynamic, plugin-provided, unfamiliar, or ambiguous commands are reported as uncertainty rather than
+interpreted through guessed shell behavior.
 
-Role-agent fleets, prompt libraries, hooks, MCP integrations, CI, and additional tools are never default requirements.
+### AI configuration
 
-## Specification set
+DevCharter distinguishes:
 
-1. `SPEC-0001` — DevCharter v0
-2. `SPEC-0001A` — Core foundation and canonical model
-3. `SPEC-0001B` — Project Architect workflow
-4. `SPEC-0001C` — Specification Architect
-5. `SPEC-0001D` — Ecosystem generator and Codex adapter
-6. `SPEC-0001E` — Validation and release readiness
+- developer-AI instructions and workflows;
+- runtime/product AI implementation;
+- declared but unconfirmed AI dependencies;
+- future AI ideas recorded only in specifications;
+- project-authored and explicitly third-party skills.
 
-## Codex implementation order
+An AI dependency alone is not enough to claim runtime AI. DevCharter requires supported dependency
+authority and active production-source evidence.
 
-1. Read `AGENTS.md` and `MANIFEST.md`.
-2. Read the parent specification and completed `SPEC-0001A`, `SPEC-0001B`, and `SPEC-0001C`
-   foundations.
-3. Preserve the clean-slate architecture and public contracts established by 0001A–C.
-4. Treat completed `SPEC-0001D` behavior as authoritative.
-5. Treat completed `SPEC-0001E` qualification and release decisions as authoritative.
-6. Preserve completed behavior unless new approved work requires a compatible change.
-7. Use the recorded Habit Compass preservation outcome as external pilot evidence.
+### Native Codex behavior
 
-Use only these development statuses:
+The v0 Codex adapter can deterministically render:
+
+- root and nested `AGENTS.md` files;
+- strict-JSON `package.json` verification scripts from an explicit decision;
+- the packaged Project Architect and Specification Architect skills;
+- small Markdown foundations when the target justifies the generic recipe.
+
+Unrenderable or ownership-ambiguous targets become conflicts instead of receiving guessed content.
+
+## Built-in skills
+
+DevCharter packages two Codex skills as production assets:
+
+- **Project Architect** routes repository ecosystem work through `new`, `retrofit`, or `audit`, asks
+  only material unresolved questions, and preserves both approval gates.
+- **Specification Architect** helps create, refine, and review one authoritative specification for
+  non-trivial behavior, with observable acceptance criteria and explicit readiness/completion gates.
+
+The Specification Architect uses this lifecycle:
 
 ```text
-draft → ready → active → done
-          ↘       ↘
-           cancelled
+draft -> ready -> active -> done
+draft|ready|active -> cancelled
 ```
 
-Temporary blockers are recorded separately.
+Only explicit human approval moves a draft to ready. Blocking and validation results are metadata,
+not additional statuses.
+
+## Documentation
+
+- [Complete user guide](docs/user-guide.md) — installation, workflows, contracts, safety, output,
+  configuration, APIs, and troubleshooting
+- [Product purpose and scope](docs/product/purpose-and-scope.md)
+- [System architecture](docs/architecture/system-overview.md)
+- [Quality and decision model](docs/engineering/quality-and-decision-model.md)
+- [Specification-driven workflow](docs/engineering/spec-driven-workflow.md)
+- [v0 release qualification](docs/release/v0-qualification.md)
+- [Habit Compass preservation pilot](docs/release/habit-compass-pilot.md)
+- [Specification index](MANIFEST.md)
+- [Changelog](CHANGELOG.md)
+
+## Architecture
+
+```text
+User or AI coding tool
+        |
+        v
+Project Architect / Specification Architect
+        |
+        v
+Deterministic core and CLI
+        |-- repository discovery
+        |-- authority and reference analysis
+        |-- proposal and approval contracts
+        |-- safe rendering and application
+        |-- validation and reporting
+        v
+Target repository
+```
+
+The workspace contains three runtime packages:
+
+```text
+packages/
+|-- core/           model-neutral discovery, contracts, rendering, and safe application
+|-- adapter-codex/  Codex-native rendering and packaged skill assets
+`-- cli/            command parsing and human/JSON presentation
+```
+
+The CLI imports only read-only core surfaces until a validated `apply` command dynamically loads the
+writer-capable application path.
+
+## Development
+
+Requirements:
+
+- Node.js 22 or 24;
+- pnpm 10.18.3 through Corepack.
+
+Install and run the full local verification surface:
+
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm build
+pnpm test
+pnpm test:release
+pnpm package:qualify
+pnpm devcharter validate --format json
+pnpm test:audit-no-write
+git diff --check
+```
+
+The CI matrix qualifies Ubuntu on Node 22 and 24, Windows on Node 24, and macOS on Node 24. It covers
+formatting, linting, type checking, production builds, unit/integration tests, release journeys,
+fresh tarball installation, deterministic self-validation, hostile audit no-write behavior, and
+whitespace checks.
+
+Non-trivial product changes are specification-driven. Read [AGENTS.md](AGENTS.md) and
+[MANIFEST.md](MANIFEST.md) before implementation.
+
+## Product boundaries
+
+DevCharter is deliberately not:
+
+- an AI agent runtime or orchestrator;
+- a hosted service;
+- a task board, issue tracker, or project-management platform;
+- a session, memory, or vector database;
+- a worktree, terminal, or sandbox manager;
+- a prompt, plugin, or skill marketplace;
+- an automatic pull-request or protected-branch writer;
+- a provider router or universal policy server;
+- a continuous semantic repository monitor.
+
+These boundaries keep the product local, inspectable, model-neutral, and focused on repository
+quality rather than infrastructure around the coding agent.
+
+## Release status
+
+DevCharter `0.1.0` is technically qualified for local installation through its three production
+tarballs. The qualification includes fresh-installed CLI journeys, two approval gates, successful
+application and validation, an exact retry no-op, cross-platform CI, and an independent completion
+review.
+
+Registry publication, package-namespace reservation, publishing automation, and legal license
+selection remain release-administration decisions. They do not change the implemented v0 command or
+safety contracts.
+
+See [docs/release/v0-qualification.md](docs/release/v0-qualification.md) for the complete evidence.
+
+## License
+
+A legal license has not yet been selected. Until one is added, the repository does not grant the
+standard permissions normally provided by an open-source license.
