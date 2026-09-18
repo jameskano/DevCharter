@@ -14,32 +14,46 @@ Imported repositories and local example folders informed this revision, but thei
 4. `docs/engineering/quality-and-decision-model.md`
 5. `docs/engineering/spec-driven-workflow.md`
 6. `specs/README.md`
-7. `specs/approved/SPEC-0001-devcharter-v0.md`
-8. `specs/done/SPEC-0001A-core-foundation-and-canonical-model.md`
-9. `specs/done/SPEC-0001B-project-architect-workflow.md`
-10. `specs/done/SPEC-0001C-specification-architect.md`
-11. `specs/done/SPEC-0001D-ecosystem-generator-and-codex-adapter.md`
-12. `specs/done/SPEC-0001E-validation-and-release-readiness.md`
-13. `references/official-codex-capabilities.md`
-14. the appropriate prompt under `prompts/codex/`
+7. `specs/approved/SPEC-0002-companion-driven-devcharter.md`
+8. the current active SPEC-0002 implementation specification and its ready dependencies
+9. `specs/ready/SPEC-0002A-repository-transformation-and-shared-foundation.md`
+10. `specs/ready/SPEC-0002B-project-architect-methodology-and-knowledge.md`
+11. `specs/ready/SPEC-0002C-native-companion-integrations.md`
+12. `specs/ready/SPEC-0002D-qualification-documentation-and-release-transition.md`
+13. `specs/approved/SPEC-0001-devcharter-v0.md` only for historical v0 context
+14. `specs/done/SPEC-0001A-core-foundation-and-canonical-model.md`
+15. `specs/done/SPEC-0001B-project-architect-workflow.md`
+16. `specs/done/SPEC-0001C-specification-architect.md`
+17. `specs/done/SPEC-0001D-ecosystem-generator-and-codex-adapter.md`
+18. `specs/done/SPEC-0001E-validation-and-release-readiness.md`
+19. applicable current capability references
 
-## Clean-slate implementation
+## Historical v0 context
 
-The repository and its recoverable Git history contain no donor implementation. DevCharter v0 therefore uses the product architecture and public contracts defined by this specification pack, with a clean-slate implementation.
+The repository and its recoverable Git history contained no donor implementation when SPEC-0001
+was approved. The TypeScript v0 runtime was therefore a clean-slate implementation of that now
+superseded architecture. Its completed specifications and Git history remain evidence, not current
+product contracts or compatibility requirements.
 
-No earlier public API or compatibility guarantee applies. If old code is recovered separately, assess it read-only before reuse. Recovery does not change the approved architecture or authorize transplantation automatically.
-
-## Revised design decisions
+## Current design decisions
 
 - Modes remain `new`, `retrofit`, and `audit`.
 - Scopes remain `full`, `governance`, `engineering`, and `ai`.
 - Statuses remain `draft`, `ready`, `active`, `done`, and `cancelled`.
-- There is no `check` command or persisted session system.
-- One compact configuration is preferred over a collection of policy files.
-- Artifacts are generated only when justified.
-- Root instructions stay concise; repeatable procedures belong in skills.
-- Codex-native paths and capabilities take precedence over conventions copied from other tools.
-- Validation includes reference integrity, provenance, duplication, source-of-truth conflicts, idempotency, and end-to-end journeys.
+- The selected AI coding companion is the interface; there is no DevCharter CLI, product runtime,
+  JSON lifecycle, persisted session system, or target-local DevCharter dependency.
+- Each run begins with mode, scope, DevCharter location, target location, and initial input.
+- New and retrofit require proposal approval, followed by one or more Markdown SDD specifications
+  and separate plan approval before implementation.
+- Audit is read-only.
+- Artifacts are created only when project evidence or an accepted user decision justifies them;
+  complete does not mean unconditional generation.
+- DevCharter source remains separate from and read-only during work on the target.
+- Codex, Claude Code, and GitHub Copilot receive native integrations backed by one shared
+  methodology.
+- Validation covers reference integrity, provenance, authority, preservation, scope, safety,
+  companion routing, and representative end-to-end journeys without claiming deterministic model
+  output.
 
 ## Status transitions
 
@@ -49,3 +63,13 @@ draft|ready|active → cancelled
 ```
 
 Blocking is metadata and does not create another lifecycle state.
+
+## Current product evolution
+
+`SPEC-0002` makes the AI coding companion the DevCharter interface while retaining the three modes,
+four scopes, explicit proposal and specification approvals, minimum-sufficient generation, and
+read-only audit. It removes the CLI, three v0 runtime packages, JSON lifecycle, and deterministic
+renderer/writer. SPEC-0002 is approved product authority; SPEC-0001 and SPEC-0001A–E are historical.
+
+SPEC-0002A–D are approved and ready in dependency order. Approval does not activate implementation;
+one child must be explicitly moved to `active` before its implementation begins.

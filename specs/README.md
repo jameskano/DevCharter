@@ -24,6 +24,7 @@ Temporary blocking, review severity, and validation outcome are separate metadat
 
 ```text
 specs/
+├── draft/      # unapproved behavior; implementation must not start
 ├── approved/   # stable parent/product specifications; files still use the five statuses
 ├── ready/
 ├── active/
@@ -32,6 +33,25 @@ specs/
 ```
 
 Keep one implementation specification active unless independent workstreams are explicitly approved.
+
+## Current specifications
+
+- `approved/SPEC-0002-companion-driven-devcharter.md` — current approved product and architecture
+  authority.
+- `ready/SPEC-0002A-repository-transformation-and-shared-foundation.md` — first implementation
+  specification; removes the v0 runtime and establishes the shared static foundation.
+- `ready/SPEC-0002B-project-architect-methodology-and-knowledge.md` — shared conversational
+  methodology, knowledge, templates, and harness guidance.
+- `ready/SPEC-0002C-native-companion-integrations.md` — first-class Codex, Claude Code, and GitHub
+  Copilot integrations.
+- `ready/SPEC-0002D-qualification-documentation-and-release-transition.md` — end-to-end
+  qualification, current documentation, and release transition.
+- `approved/SPEC-0001-devcharter-v0.md` and `done/SPEC-0001A` through `SPEC-0001E` — superseded
+  historical v0 authority and implementation evidence.
+
+SPEC-0002A through SPEC-0002D are ordered implementation specifications. They are approved and
+ready, but none is active. Activate and implement only the earliest incomplete dependency unless an
+independent workstream is explicitly approved.
 
 ## Authority and supersession
 

@@ -7,7 +7,8 @@
 | ID | SPEC-0001 |
 | Title | DevCharter v0 |
 | Type | Parent product and architecture specification |
-| Status | ready |
+| Status | done |
+| Superseded by | SPEC-0002 on 2026-09-18; retained as historical v0 evidence |
 | Implementation | TypeScript, Node.js, pnpm |
 | Complete v0 adapter | Codex |
 
