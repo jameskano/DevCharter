@@ -32,7 +32,8 @@ lifecycle, deterministic renderer or writer, hosted service, or target-local ins
 - Shared knowledge records implementation-neutral discovery, authority, preservation, approval,
   safety, and verification rules.
 - Templates are optional guidance and cannot justify output by themselves.
-- Companion entrypoints translate routing without duplicating shared authority.
+- The companion integration contract and native entrypoints translate routing without duplicating
+  shared authority; provider capability records contain refreshable host facts.
 - Scenario fixtures and the validator are contributor-only assets; they never enter a target.
 
 ## Target isolation
@@ -59,8 +60,9 @@ target write, installation, mutating command, or state creation.
 
 The [manifest](../../MANIFEST.md) maps current authority. The static foundation deliberately contains
 only consumed paths. SPEC-0002B supplies the detailed shared methodology, component and stack
-selection knowledge, harness guidance, adaptable recipes, and methodology scenarios. Provider-native
-assets belong to SPEC-0002C and complete journey/release qualification to SPEC-0002D.
+selection knowledge, harness guidance, adaptable recipes, and methodology scenarios. SPEC-0002C
+adds thin Codex, Claude Code, and GitHub Copilot discovery surfaces over those shared sources;
+complete journey and release qualification remains SPEC-0002D.
 
 ## Historical architecture
 

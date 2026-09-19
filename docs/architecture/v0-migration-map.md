@@ -20,13 +20,13 @@ under a classified package inherits that package's disposition.
 | `packages/core/src/rendering.ts`, `application.ts`, `writer.ts`, `retry-state.ts`, and their tests | Migrate safety rules, then remove | Proposal/specification approval separation, path containment, preservation, accurate partial results, and sensitive-action confirmation are retained in `AGENTS.md`, `knowledge/shared-foundation.md`, and SPEC-0002. Deterministic rendering, receipts, hashes, retries, and managed writes are obsolete. |
 | `packages/core/src/config.ts`, `config.test.ts`, and `import-boundary.test.ts` | Remove | `.devcharter.yaml`, runtime import boundaries, and configured JSON-era command transport have no current consumer. Repository-native verification authority remains a shared principle. |
 | `packages/core/src/specification-architect-skill.test.ts` and `testing.ts` | Adapt/remove | Skill metadata validation moves to `scripts/validate-assets.mjs`; reusable specification guidance remains in the skill and `templates/specifications/implementation-spec.md`. Runtime test helpers are obsolete. |
-| `packages/adapter-codex/**` | Migrate knowledge, then remove | The project-authored skills remain at `.agents/skills/`. Package asset copying, adapter APIs, deterministic rendering, and JSONC mutation are obsolete. Native Codex integration is deliberately deferred to SPEC-0002C. |
+| `packages/adapter-codex/**` | Migrate knowledge, then remove | The project-authored skills remain at `.agents/skills/`. Package asset copying, adapter APIs, deterministic rendering, and JSONC mutation are obsolete. SPEC-0002C uses those static skills directly instead of restoring an adapter package. |
 | `packages/cli/**` | Remove | Argument parsing, JSON input, envelopes, executable wiring, command presentation, and CLI test helpers implement a prohibited product surface. No user-facing command remains. |
 | `packages/**/dist/**`, `packages/**/.typecheck/**`, `*.tsbuildinfo`, and package-local installed dependencies | Generated removal | Build output and caches contain no independent authority; source history preserves them if needed. |
 | `tests/release/e2e.test.ts`, `fixtures.ts`, `fixtures.test.ts`, and `release-process.test.mjs` | Adapt/remove | Runtime/package journeys are obsolete. Location isolation and no-target-install behavior are adapted into `tests/fixtures/separate-locations.json` and `tests/scenarios/separate-locations.md`; full companion journeys belong to SPEC-0002D. |
 | `scripts/build-production.mjs`, `qualify-packages.mjs`, and `release-process.mjs` | Remove | Production compilation, tarball qualification, installed CLI execution, and fixed release-command helpers existed only for removed packages. |
 | `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `tsconfig.base.json`, `tsconfig.build.json`, `tsconfig.json`, `vitest.workspace.ts`, `eslint.config.js`, `prettier.config.js`, `.prettierignore` | Remove | Workspace, compiler, test, lint, formatting, and dependency state existed for the TypeScript runtime. The dependency-free static validator replaces only currently justified checks. |
-| `prompts/codex/01-audit-and-plan.md`, `02-implement-active-spec.md`, and `03-review-completion.md` | Migrate knowledge, then remove | The prompts were SPEC-0001E-era operational wrappers. Their durable inspect/plan/verify/completion rules already live in `AGENTS.md`, the two shared skills, and current engineering documentation. Provider-native prompting belongs to SPEC-0002C. |
+| `prompts/codex/01-audit-and-plan.md`, `02-implement-active-spec.md`, and `03-review-completion.md` | Migrate knowledge, then remove | The prompts were SPEC-0001E-era operational wrappers. Their durable inspect/plan/verify/completion rules live in `AGENTS.md`, the two shared skills, and current engineering documentation. SPEC-0002C adds only thin native routing over those sources. |
 
 ## Retained or updated paths
 
@@ -39,14 +39,17 @@ under a classified package inherits that package's disposition.
 | `docs/engineering/quality-and-decision-model.md`, `docs/engineering/spec-driven-workflow.md` | Retain | Already implementation-independent current guidance; reviewed without substantive change. |
 | `docs/release/v0-qualification.md`, `docs/release/habit-compass-pilot.md` | Retain as historical evidence | Historical banners prevent these records from being read as current instructions. |
 | `specs/approved/SPEC-0001-devcharter-v0.md`, `specs/done/SPEC-0001A` through `SPEC-0001E` | Retain as historical evidence | Exact prior contracts and completion evidence. They do not govern current behavior. |
-| `specs/approved/SPEC-0002-companion-driven-devcharter.md`, `specs/done/SPEC-0002A*` through `SPEC-0002B*`, `specs/ready/SPEC-0002C*` through `SPEC-0002D*`, status README files | Retain/update routing | Current product authority and ordered implementation work. |
-| `references/official-codex-capabilities.md` | Retain | Dated capability evidence consumed by later native-integration work; it is not product authority. |
+| `specs/approved/SPEC-0002-companion-driven-devcharter.md`, `specs/done/SPEC-0002A*` through `SPEC-0002C*`, `specs/ready/SPEC-0002D*`, status README files | Retain/update routing | Current product authority and ordered implementation work. |
+| `references/official-*-capabilities.md` | Retain/update | Dated Codex, Claude Code, and GitHub Copilot capability evidence; it is not product authority. |
 | `.github/workflows/ci.yml`, `.gitattributes`, `.gitignore`, `package.json` | Simplify and retain | Cross-platform contributor-only static verification and repository hygiene. There are no dependencies, package exports, or product binaries. |
 
 ## Added current destinations
 
-- `companions/*/README.md` provides honest interim routing without claiming completed native
-  integrations.
+- `companions/*/README.md`, the minimal Claude local plugin under `companions/claude-code/plugin/`,
+  and `.github/prompts/devcharter.prompt.md` provide thin native routing without duplicating the
+  shared lifecycle.
+- `knowledge/companion-integration-contract.md` makes adapter conformance testable while the Project
+  Architect skill remains canonical.
 - `knowledge/shared-foundation.md` holds implementation-independent rules extracted from runtime
   behavior.
 - `templates/specifications/implementation-spec.md` is optional guidance consumed by the
@@ -59,4 +62,5 @@ under a classified package inherits that package's disposition.
 
 Every tracked pre-transformation path and ignored build-output category matches a row above. Exact
 runtime mechanics remain recoverable from Git and historical specifications; no TypeScript schema
-was copied into Markdown merely to preserve its shape. Later-spec work is named but not implemented.
+was copied into Markdown merely to preserve its shape. Subsequent specifications add static assets
+without restoring the removed runtime boundary.

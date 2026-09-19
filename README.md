@@ -8,8 +8,8 @@ implementation behind explicit human approval. DevCharter has no product CLI, ru
 hosted service, or target-project dependency.
 
 SPEC-0002A establishes the shared static foundation. SPEC-0002B provides the shared Project
-Architect methodology, decision knowledge, adaptable recipes, and scenario checks. Native Codex,
-Claude Code, and GitHub Copilot integrations remain SPEC-0002C work.
+Architect methodology, decision knowledge, adaptable recipes, and scenario checks. SPEC-0002C
+provides qualified native Codex, Claude Code, and GitHub Copilot routes on top of that methodology.
 
 ## Start a DevCharter run
 
@@ -35,12 +35,29 @@ Initial context: Preserve the existing stack and improve only foundations justif
 The DevCharter and target locations may be anywhere the companion can read. Do not copy DevCharter
 into the target or add it to the target's dependencies.
 
+## Native setup
+
+| Companion | Native route | Separate-location setup |
+|---|---|---|
+| Codex | Root `AGENTS.md` and `.agents/skills` | Make DevCharter the primary folder and add or attach the target |
+| Claude Code | `/devcharter:project-architect` from a local plugin | Start in the target with `--add-dir <devcharter-location>` and `--plugin-dir <devcharter-location>/companions/claude-code/plugin` |
+| GitHub Copilot CLI | `/project-architect` from `.agents/skills` | Add `<devcharter-location>/.agents/skills` to `COPILOT_SKILLS_DIRS` |
+| Copilot IDEs | `/devcharter` prompt file | Preview-only in VS Code, Visual Studio, and JetBrains with both locations readable |
+
+Read the selected companion entrypoint for exact setup and limitations. Host permission never
+replaces proposal approval, specification approval, or immediate confirmation for sensitive
+actions. Use a strong reasoning model for discovery, proposal synthesis, architecture, and detailed
+planning. A faster or cheaper model can implement a precise low-risk approved plan when verification
+is strong; this advice is provider-neutral.
+
 ## Next instruction source
 
-1. Read the entrypoint for the selected companion:
+1. Read the native entrypoint for the selected companion:
    [Codex](companions/codex/README.md), [Claude Code](companions/claude-code/README.md), or
    [GitHub Copilot](companions/github-copilot/README.md). Other capable companions may follow the
-   [generic shared foundation](knowledge/shared-foundation.md) on a best-effort basis.
+   [generic shared foundation](knowledge/shared-foundation.md) and the
+   [Project Architect skill](.agents/skills/project-architect/SKILL.md) directly on a best-effort
+   basis, with no support or output-quality guarantee.
 2. Use the [Project Architect skill](.agents/skills/project-architect/SKILL.md) for `new`, `retrofit`,
    or `audit`.
 3. After a new/retrofit proposal is explicitly approved, use the
@@ -56,13 +73,13 @@ remote writes, and hard-to-reverse operations always require immediate confirmat
 
 - `AGENTS.md` — repository-wide authority and contributor rules.
 - `.agents/skills/` — shared Project Architect and Specification Architect procedures.
-- `companions/` — companion entrypoints; native integrations are completed by SPEC-0002C.
+- `companions/` — native companion entrypoints and host-specific setup.
 - `knowledge/` — shared principles plus component, technology, command, and harness guidance.
 - `templates/` — optional, source-aware recipes used only when evidence justifies an artifact.
 - `tests/fixtures/` and `tests/scenarios/` — development-only methodology scenario evidence.
 - `docs/` — current product, architecture, engineering, and historical release documentation.
 - `specs/` — current authority and retained historical specifications.
-- `references/` — dated external-capability evidence.
+- `references/` — dated official capability evidence for each supported companion.
 
 The [manifest](MANIFEST.md) defines reading order and authority. The
 [user guide](docs/user-guide.md) describes the current interaction model.
@@ -78,9 +95,10 @@ git diff --check
 ```
 
 `npm run verify` checks skill metadata, specification identity and status placement, relative
-Markdown references, current-documentation runtime drift, companion routing, the separate-location
-scenario fixture and clean temporary walkthrough, whitespace, secret signatures, and generated-output
-absence. It uses only Node.js built-ins and has no install step or dependency lockfile.
+Markdown references, current-documentation runtime drift, native companion placement and semantic
+routing, capability records, integration failure scenarios, the separate-location fixture and clean
+temporary walkthrough, whitespace, secret signatures, and generated-output absence. It uses only
+Node.js built-ins and has no install step or dependency lockfile.
 
 ## Product boundaries
 

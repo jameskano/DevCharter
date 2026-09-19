@@ -20,8 +20,8 @@ There is no DevCharter product runtime or target-local installation.
 10. `.agents/skills/project-architect/SKILL.md` for repository ecosystem work
 11. `.agents/skills/specification-architect/SKILL.md` for approved detailed planning
 12. `knowledge/shared-foundation.md`
-13. the selected entrypoint under `companions/`
-14. applicable templates, scenarios, and current capability references
+13. `knowledge/companion-integration-contract.md` and the selected entrypoint under `companions/`
+14. applicable templates, scenarios, and dated capability references
 
 Historical v0 context is consulted only when migration history or prior evidence is relevant:
 
@@ -46,8 +46,8 @@ specification may explain a decision but cannot restore superseded runtime behav
 
 - `AGENTS.md` owns repository-wide implementation constraints.
 - `.agents/skills/` owns shared repeatable procedures.
-- `companions/` routes supported companions to the shared sources; SPEC-0002C owns completed native
-  integrations.
+- `companions/` routes supported companions to the shared sources and contains the minimal Claude
+  local plugin; native adapters remain thin and the integration contract makes them testable.
 - `knowledge/` owns implementation-neutral shared rules.
 - `templates/` provides optional guidance, never unconditional output.
 - `tests/fixtures/` and `tests/scenarios/` provide development-only static validation inputs.
@@ -58,9 +58,9 @@ specification may explain a decision but cannot restore superseded runtime behav
 
 ## Current implementation sequence
 
-SPEC-0002A through SPEC-0002D are ordered. SPEC-0002A and SPEC-0002B are done; SPEC-0002C and
-SPEC-0002D remain ready, and no implementation specification is active. Later work must not be
-implemented before explicit activation.
+SPEC-0002A through SPEC-0002D are ordered. SPEC-0002A through SPEC-0002C are done, SPEC-0002D
+remains ready, and no implementation specification is active. Later work must not be implemented
+before explicit activation.
 
 The stable public vocabulary is:
 

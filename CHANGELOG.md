@@ -14,6 +14,8 @@
 - Completed the shared Project Architect workflow, component and common-stack selection knowledge,
   harness guidance, adaptable recipes, recovery behavior, and methodology scenario evidence for
   SPEC-0002B.
+- Added native Codex, Claude Code, and GitHub Copilot routes, a shared conformance contract, dated
+  official capability records, and companion integration scenario checks for SPEC-0002C.
 
 ### Removed
 
@@ -30,5 +32,4 @@
 
 ### Deferred
 
-- Qualified native Codex, Claude Code, and GitHub Copilot integrations to SPEC-0002C.
 - Full lifecycle qualification, documentation completion, and release transition to SPEC-0002D.

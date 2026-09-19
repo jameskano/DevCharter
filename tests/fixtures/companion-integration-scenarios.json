@@ -1,0 +1,152 @@
+{
+  "companions": [
+    {
+      "id": "codex",
+      "entrypoint": "companions/codex/README.md",
+      "capabilityRecord": "references/official-codex-capabilities.md",
+      "nativeAssets": ["AGENTS.md", ".agents/skills/project-architect/SKILL.md"]
+    },
+    {
+      "id": "claude-code",
+      "entrypoint": "companions/claude-code/README.md",
+      "capabilityRecord": "references/official-claude-code-capabilities.md",
+      "nativeAssets": [
+        "companions/claude-code/plugin/.claude-plugin/plugin.json",
+        "companions/claude-code/plugin/skills/project-architect/SKILL.md"
+      ]
+    },
+    {
+      "id": "github-copilot",
+      "entrypoint": "companions/github-copilot/README.md",
+      "capabilityRecord": "references/official-github-copilot-capabilities.md",
+      "nativeAssets": [".agents/skills/project-architect/SKILL.md", ".github/prompts/devcharter.prompt.md"]
+    }
+  ],
+  "requiredContract": [
+    "mode",
+    "scope",
+    "DevCharter location",
+    "target location",
+    "initial context",
+    "proposal approval",
+    "specification approval",
+    "read-only",
+    "strong reasoning"
+  ],
+  "representativeJourneys": [
+    {
+      "id": "codex-local-route",
+      "companion": "codex",
+      "startingState": "DevCharter is the primary local folder and the separate target is attached.",
+      "expected": "Codex discovers the canonical skill, verifies five inputs, and stops at the proposal gate.",
+      "prohibited": "Writing to DevCharter or treating proposal approval as implementation approval.",
+      "evidence": [
+        { "path": "companions/codex/README.md", "contains": "all five inputs before analysis" },
+        { "path": "companions/codex/README.md", "contains": "specification approval is required before implementation" },
+        { "path": "companions/codex/README.md", "contains": "do not write to DevCharter" }
+      ],
+      "resultEvidence": [
+        { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "07CF994190BF1989B8591EC5316E83BFD664709C280719C9203B39BA03643C6F" }
+      ]
+    },
+    {
+      "id": "claude-added-directory-route",
+      "companion": "claude-code",
+      "startingState": "Claude Code starts in the target with DevCharter passed through --add-dir and its local plugin through --plugin-dir.",
+      "expected": "The native devcharter skill routes to the canonical methodology and keeps locations distinct.",
+      "prohibited": "Assuming Codex paths are natively discovered or copying DevCharter into the target.",
+      "evidence": [
+        { "path": "companions/claude-code/plugin/skills/project-architect/SKILL.md", "contains": "canonical" },
+        { "path": "companions/claude-code/plugin/skills/project-architect/SKILL.md", "contains": "target is a different explicit location" },
+        { "path": "companions/claude-code/README.md", "contains": "--add-dir` alone does not discover" }
+      ],
+      "resultEvidence": [
+        { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "devcharter:project-architect" }
+      ]
+    },
+    {
+      "id": "copilot-cli-skill-route",
+      "companion": "github-copilot",
+      "startingState": "Copilot CLI starts in the target with the canonical skill directory configured.",
+      "expected": "The project-architect skill verifies five inputs and uses the shared approval gates.",
+      "prohibited": "Applying DevCharter contributor instructions to the target or assuming IDE-only prompts.",
+      "evidence": [
+        { "path": "companions/github-copilot/README.md", "contains": "provide or ask for all five inputs" },
+        { "path": "companions/github-copilot/README.md", "contains": "approval remain separate gates" },
+        { "path": "companions/github-copilot/README.md", "contains": "Do not add the DevCharter root" }
+      ],
+      "resultEvidence": [
+        { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "GitHub Copilot CLI 1.0.86" }
+      ]
+    }
+  ],
+  "negativeScenarios": [
+    {
+      "id": "missing-input",
+      "startingState": "The scope is absent.",
+      "expected": "Request the scope before analysis.",
+      "evidence": [
+        { "path": "knowledge/companion-integration-contract.md", "contains": "A missing or unusable input is requested explicitly" }
+      ],
+      "resultEvidence": [
+        { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "### missing-input" }
+      ]
+    },
+    {
+      "id": "inaccessible-source",
+      "startingState": "The named DevCharter location cannot be read.",
+      "expected": "Stop the lifecycle and report the required access.",
+      "evidence": [
+        { "path": "knowledge/companion-integration-contract.md", "contains": "An inaccessible DevCharter source blocks the lifecycle" }
+      ],
+      "resultEvidence": [
+        { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "### inaccessible-source" }
+      ]
+    },
+    {
+      "id": "unwritable-target",
+      "startingState": "Discovery succeeded but approved target writes are denied.",
+      "expected": "Preserve analysis and stop the write-dependent stage.",
+      "evidence": [
+        { "path": "knowledge/companion-integration-contract.md", "contains": "writes but not safe analysis" }
+      ],
+      "resultEvidence": [
+        { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "### unwritable-target" }
+      ]
+    },
+    {
+      "id": "unavailable-tool",
+      "startingState": "An optional browser is unavailable and a required installer is denied.",
+      "expected": "Continue browser-independent work and stop installer-dependent work.",
+      "evidence": [
+        { "path": "knowledge/companion-integration-contract.md", "contains": "A missing optional tool is recorded and unaffected work continues" },
+        { "path": "knowledge/companion-integration-contract.md", "contains": "stops the affected stage" }
+      ],
+      "resultEvidence": [
+        { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "### unavailable-tool" }
+      ]
+    },
+    {
+      "id": "sensitive-action",
+      "startingState": "An approved specification includes a migration and remote write.",
+      "expected": "Reconfirm each sensitive action immediately before execution.",
+      "evidence": [
+        { "path": "knowledge/companion-integration-contract.md", "contains": "require immediate explicit confirmation" }
+      ],
+      "resultEvidence": [
+        { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "### sensitive-action" }
+      ]
+    },
+    {
+      "id": "source-write",
+      "startingState": "A proposed command would write inside the DevCharter checkout.",
+      "expected": "Do not run it; report the source-boundary violation.",
+      "evidence": [
+        { "path": "knowledge/companion-integration-contract.md", "contains": "Attempted writes to the DevCharter source stop and are reported" }
+      ],
+      "resultEvidence": [
+        { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "### source-write" }
+      ]
+    }
+  ]
+}

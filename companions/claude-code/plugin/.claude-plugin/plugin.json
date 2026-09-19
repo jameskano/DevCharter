@@ -1,0 +1,8 @@
+{
+  "name": "devcharter",
+  "description": "Use DevCharter from a separate checkout to inspect a target through the governed Project Architect workflow.",
+  "version": "0.1.0",
+  "author": {
+    "name": "DevCharter contributors"
+  }
+}

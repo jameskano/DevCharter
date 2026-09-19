@@ -134,6 +134,30 @@ for (const required of ["project-architect", "specification-architect"]) {
   if (!skillNames.has(required)) fail(`missing required skill ${required}`);
 }
 
+const claudePluginManifest = path.join(
+  root,
+  "companions/claude-code/plugin/.claude-plugin/plugin.json"
+);
+try {
+  const manifest = JSON.parse(sources.get(claudePluginManifest) ?? "");
+  if (manifest.name !== "devcharter" || typeof manifest.description !== "string" || manifest.description.trim() === "") {
+    fail("companions/claude-code/plugin/.claude-plugin/plugin.json: invalid minimal plugin metadata");
+  }
+} catch (error) {
+  fail(`companions/claude-code/plugin/.claude-plugin/plugin.json: invalid JSON: ${error.message}`);
+}
+const claudeAdapter = path.join(
+  root,
+  "companions/claude-code/plugin/skills/project-architect/SKILL.md"
+);
+const claudeAdapterSource = sources.get(claudeAdapter) ?? "";
+if (!/^---\r?\n[\s\S]*?^name:\s*project-architect\s*$[\s\S]*?^description:\s*.+$[\s\S]*?^---$/m.test(claudeAdapterSource)) {
+  fail("companions/claude-code/plugin/skills/project-architect/SKILL.md: missing valid native skill frontmatter");
+}
+if (!claudeAdapterSource.includes("../../../../../.agents/skills/project-architect/SKILL.md")) {
+  fail("companions/claude-code/plugin/skills/project-architect/SKILL.md: does not route to the canonical Project Architect skill");
+}
+
 const specFiles = markdownFiles.filter((file) =>
   /^specs\/(?:approved|draft|ready|active|done|cancelled)\/SPEC-/.test(relative(file))
 );
@@ -191,9 +215,17 @@ const currentSources = [
   "knowledge/harnesses/verification-harnesses.md",
   "templates/project-architect-recipes.md",
   "templates/specifications/implementation-spec.md",
+  "knowledge/companion-integration-contract.md",
   "companions/codex/README.md",
   "companions/claude-code/README.md",
-  "companions/github-copilot/README.md"
+  "companions/github-copilot/README.md",
+  "companions/claude-code/plugin/.claude-plugin/plugin.json",
+  "companions/claude-code/plugin/skills/project-architect/SKILL.md",
+  ".github/prompts/devcharter.prompt.md",
+  "references/official-codex-capabilities.md",
+  "references/official-claude-code-capabilities.md",
+  "references/official-github-copilot-capabilities.md",
+  "tests/scenarios/companion-integration-walkthrough-results.md"
 ];
 const obsoleteInstructions = [
   /pnpm\s+exec\s+devcharter/i,
@@ -355,13 +387,155 @@ try {
   }
 }
 
+const capabilityRecords = {
+  codex: "references/official-codex-capabilities.md",
+  "claude-code": "references/official-claude-code-capabilities.md",
+  "github-copilot": "references/official-github-copilot-capabilities.md"
+};
+const integrationContract = sources.get(
+  path.join(root, "knowledge/companion-integration-contract.md")
+) ?? "";
 for (const companion of ["codex", "claude-code", "github-copilot"]) {
   const name = `companions/${companion}/README.md`;
   const source = sources.get(path.join(root, name)) ?? "";
   if (!source.includes("../../.agents/skills/project-architect/SKILL.md")) {
     fail(`${name}: does not route to the Project Architect skill`);
   }
-  if (!source.includes("../../README.md")) fail(`${name}: does not route to the root entrypoint`);
+  if (!source.includes("../../knowledge/companion-integration-contract.md")) {
+    fail(`${name}: does not route to the shared integration contract`);
+  }
+  if (!source.includes(`../../${capabilityRecords[companion]}`)) {
+    fail(`${name}: does not route to its dated capability record`);
+  }
+  const capabilitySource = sources.get(path.join(root, capabilityRecords[companion])) ?? "";
+  if (!capabilitySource.includes("2026-09-19") || !capabilitySource.includes("## Official sources")) {
+    fail(`${capabilityRecords[companion]}: missing dated official capability evidence`);
+  }
+  const normalized = source.toLowerCase().replace(/\s+/g, " ");
+  for (const required of [
+    "mode:",
+    "scope:",
+    "devcharter location:",
+    "target location:",
+    "initial context:",
+    "proposal approval",
+    "specification approval",
+    "read-only",
+    "strong reasoning"
+  ]) {
+    if (!normalized.includes(required)) fail(`${name}: missing integration contract text: ${required}`);
+  }
+  if (!integrationContract.includes(`| ${companion === "claude-code" ? "Claude Code" : companion === "github-copilot" ? "GitHub Copilot" : "Codex"} |`)) {
+    fail(`knowledge/companion-integration-contract.md: missing ${companion} conformance row`);
+  }
+}
+
+const companionFixturePath = path.join(root, "tests/fixtures/companion-integration-scenarios.json");
+let companionScenarioCount = 0;
+try {
+  const fixture = JSON.parse(await readFile(companionFixturePath, "utf8"));
+  const validateScenarioEvidence = (scenario, kind, fieldName) => {
+    const assertions = scenario[fieldName];
+    if (!Array.isArray(assertions) || assertions.length === 0) {
+      fail(`tests/fixtures/companion-integration-scenarios.json: ${kind} ${scenario.id} lacks ${fieldName} assertions`);
+      return;
+    }
+    for (const assertion of assertions) {
+      if (typeof assertion.path !== "string" || typeof assertion.contains !== "string") {
+        fail(`tests/fixtures/companion-integration-scenarios.json: ${scenario.id} has invalid evidence assertion`);
+        continue;
+      }
+      const source = sources.get(path.join(root, assertion.path));
+      if (source === undefined) {
+        fail(`tests/fixtures/companion-integration-scenarios.json: ${scenario.id} evidence path is missing: ${assertion.path}`);
+      } else if (!source.includes(assertion.contains)) {
+        fail(`tests/fixtures/companion-integration-scenarios.json: ${scenario.id} evidence text is missing from ${assertion.path}: ${assertion.contains}`);
+      }
+    }
+  };
+  if (!Array.isArray(fixture.companions) || fixture.companions.length !== 3) {
+    fail("tests/fixtures/companion-integration-scenarios.json: expected three companions");
+  } else {
+    const companionIds = new Set();
+    for (const companion of fixture.companions) {
+      companionIds.add(companion.id);
+      for (const key of ["entrypoint", "capabilityRecord"]) {
+        if (typeof companion[key] !== "string" || !(await exists(path.join(root, companion[key])))) {
+          fail(`tests/fixtures/companion-integration-scenarios.json: ${companion.id} has invalid ${key}`);
+        }
+      }
+      if (!Array.isArray(companion.nativeAssets) || companion.nativeAssets.length === 0) {
+        fail(`tests/fixtures/companion-integration-scenarios.json: ${companion.id} lacks native assets`);
+      } else {
+        for (const asset of companion.nativeAssets) {
+          if (!(await exists(path.join(root, asset)))) {
+            fail(`tests/fixtures/companion-integration-scenarios.json: missing native asset ${asset}`);
+          }
+        }
+      }
+    }
+    for (const required of ["codex", "claude-code", "github-copilot"]) {
+      if (!companionIds.has(required)) {
+        fail(`tests/fixtures/companion-integration-scenarios.json: missing companion ${required}`);
+      }
+    }
+  }
+  const expectedNegativeIds = new Set([
+    "missing-input",
+    "inaccessible-source",
+    "unwritable-target",
+    "unavailable-tool",
+    "sensitive-action",
+    "source-write"
+  ]);
+  if (!Array.isArray(fixture.negativeScenarios)) throw new Error("negativeScenarios must be an array");
+  if (fixture.negativeScenarios.length !== expectedNegativeIds.size) {
+    fail("tests/fixtures/companion-integration-scenarios.json: expected exactly six negative scenarios");
+  }
+  if (!Array.isArray(fixture.representativeJourneys) || fixture.representativeJourneys.length !== 3) {
+    fail("tests/fixtures/companion-integration-scenarios.json: expected three representative journeys");
+  } else {
+    const journeyCompanions = new Set();
+    for (const journey of fixture.representativeJourneys) {
+      journeyCompanions.add(journey.companion);
+      for (const key of ["id", "startingState", "expected", "prohibited"]) {
+        if (typeof journey[key] !== "string" || journey[key].trim() === "") {
+          fail(`tests/fixtures/companion-integration-scenarios.json: representative journey lacks ${key}`);
+        }
+      }
+      validateScenarioEvidence(journey, "representative journey", "evidence");
+      validateScenarioEvidence(journey, "representative journey", "resultEvidence");
+    }
+    for (const required of ["codex", "claude-code", "github-copilot"]) {
+      if (!journeyCompanions.has(required)) {
+        fail(`tests/fixtures/companion-integration-scenarios.json: missing ${required} journey`);
+      }
+    }
+  }
+  companionScenarioCount = fixture.negativeScenarios.length;
+  const seenNegativeIds = new Set();
+  for (const scenario of fixture.negativeScenarios) {
+    if (!expectedNegativeIds.has(scenario.id) || seenNegativeIds.has(scenario.id)) {
+      fail(`tests/fixtures/companion-integration-scenarios.json: unexpected or duplicate negative scenario ${scenario.id}`);
+    }
+    seenNegativeIds.add(scenario.id);
+    expectedNegativeIds.delete(scenario.id);
+    if (typeof scenario.startingState !== "string" || typeof scenario.expected !== "string") {
+      fail(`tests/fixtures/companion-integration-scenarios.json: ${scenario.id} is incomplete`);
+    }
+    validateScenarioEvidence(scenario, "negative scenario", "evidence");
+    validateScenarioEvidence(scenario, "negative scenario", "resultEvidence");
+  }
+  for (const id of expectedNegativeIds) {
+    fail(`tests/fixtures/companion-integration-scenarios.json: missing negative scenario ${id}`);
+  }
+  for (const token of fixture.requiredContract ?? []) {
+    if (!integrationContract.toLowerCase().includes(String(token).toLowerCase())) {
+      fail(`knowledge/companion-integration-contract.md: missing fixture contract token ${token}`);
+    }
+  }
+} catch (error) {
+  fail(`tests/fixtures/companion-integration-scenarios.json: invalid fixture: ${error.message}`);
 }
 
 const fixturePath = path.join(root, "tests/fixtures/separate-locations.json");
@@ -420,13 +594,21 @@ if (separateLocationFixture) {
         fail(`separate-location walkthrough: root entrypoint is missing ${label}`);
       }
     }
-    const companionPath = path.join(stagedSource, "companions/codex/README.md");
-    const companionSource = await readFile(companionPath, "utf8");
-    const route = "../../.agents/skills/project-architect/SKILL.md";
-    if (!companionSource.includes(route)) {
-      fail("separate-location walkthrough: Codex entrypoint does not name the shared skill");
-    } else if (!(await exists(path.resolve(path.dirname(companionPath), route)))) {
-      fail("separate-location walkthrough: Codex skill route does not resolve in staged source");
+    const stagedRoutes = [
+      ["Codex", "companions/codex/README.md", "../../.agents/skills/project-architect/SKILL.md"],
+      ["Claude Code", "companions/claude-code/README.md", "../../.agents/skills/project-architect/SKILL.md"],
+      ["GitHub Copilot", "companions/github-copilot/README.md", "../../.agents/skills/project-architect/SKILL.md"],
+      ["Claude adapter", "companions/claude-code/plugin/skills/project-architect/SKILL.md", "../../../../../.agents/skills/project-architect/SKILL.md"],
+      ["Copilot prompt", ".github/prompts/devcharter.prompt.md", "../../.agents/skills/project-architect/SKILL.md"]
+    ];
+    for (const [label, asset, route] of stagedRoutes) {
+      const assetPath = path.join(stagedSource, asset);
+      const assetSource = await readFile(assetPath, "utf8");
+      if (!assetSource.includes(route)) {
+        fail(`separate-location walkthrough: ${label} does not name the shared skill`);
+      } else if (!(await exists(path.resolve(path.dirname(assetPath), route)))) {
+        fail(`separate-location walkthrough: ${label} skill route does not resolve in staged source`);
+      }
     }
     const after = await snapshot(stagedTarget);
     if (before !== after) fail("separate-location walkthrough: target changed during routing");
@@ -458,6 +640,6 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   process.stdout.write(
-    `Static asset verification passed on ${process.version}: ${markdownFiles.length} Markdown files, ${specs.length} specifications, ${skillFiles.length} skills, ${methodologyScenarioCount} methodology scenarios, separate-location and hostile-audit walkthroughs.\n`
+    `Static asset verification passed on ${process.version}: ${markdownFiles.length} Markdown files, ${specs.length} specifications, ${skillFiles.length} canonical skills, ${methodologyScenarioCount} methodology scenarios, ${companionScenarioCount} companion failure scenarios with evidence assertions, separate-location and hostile-audit walkthroughs.\n`
   );
 }

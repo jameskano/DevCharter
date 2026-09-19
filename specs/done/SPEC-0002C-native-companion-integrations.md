@@ -6,8 +6,8 @@
 |---|---|
 | ID | SPEC-0002C |
 | Parent | SPEC-0002 |
-| Status | ready |
-| Approval | User requested final ready implementation specifications on 2026-09-18 |
+| Status | done |
+| Approval | User explicitly activated implementation and approved the documented host-qualification exception on 2026-09-19 |
 | Dependencies | SPEC-0002A, SPEC-0002B |
 | Enables | SPEC-0002D |
 
@@ -174,13 +174,32 @@ references, routing, native placement, and semantic consistency.
     do not assert deterministic equality of model output.
 15. Native assets contain no stale CLI, runtime, package-installation, or lifecycle-JSON guidance.
 
+## Accepted qualification constraint
+
+On 2026-09-19, the user confirmed that no Claude Pro or Max entitlement is available and explicitly
+authorized completing SPEC-0002C with the strongest non-destructive evidence available, including a
+requirements adjustment when authenticated Claude Code execution is impossible. The protected
+execution environment also denies sending nonpublic local DevCharter and target contents to
+Copilot without a more narrowly enumerated data-egress authorization. These are qualification
+environment limits, not reasons to simulate provider output or weaken the native integration
+contract. The substitute below therefore proves native discovery, adapter validity, canonical
+semantics, and observed shared-workflow behavior while preserving an explicit record that no Claude
+model journey and no repository-aware Copilot model journey occurred.
+
 ## Verification
 
 - static checks for required files, metadata, links, references, and native path conventions;
 - a semantic conformance matrix covering inputs, stages, approvals, safety, outputs, and failures;
-- fresh-context walkthroughs for all three supported companions;
-- at least one documented representative journey in a real supported host for each companion,
-  using manual evidence where stable automation is unavailable;
+- fresh-context route walkthroughs for all three supported companions, using real-host model
+  execution when the required account and data-sharing capability are available;
+- at least one documented representative model journey in a real supported host for every
+  authenticated companion allowed to receive the required local context;
+- when hosted inference is unavailable because of account/plan limits or an enforced data-egress
+  policy, a documented qualification substitute consisting of real current-host discovery and
+  version evidence, native validation when the host provides it, static canonical-route and
+  conformance checks, the same scenario behavior exercised through the canonical methodology in an
+  available supported host, and the exact unavailability reason; this qualifies the integration
+  route without claiming model-output evidence for the unavailable host;
 - negative tests for a missing input, inaccessible DevCharter source, unwritable target, unavailable
   tool, attempted sensitive action, and attempted write to DevCharter itself;
 - review that shared behavior has one source and companion adapters add no contradictory policy.
@@ -194,6 +213,83 @@ in dated references that can be refreshed without redefining the product lifecyc
 ## Completion gate
 
 Do not mark SPEC-0002C `done` until every first-class companion has a discoverable native route,
-passes the shared conformance matrix and representative journey, cites current official capability
-evidence, and has no unresolved contradiction with the canonical methodology. Real-host gaps must
-be reported as limitations rather than hidden by static tests.
+passes the shared conformance matrix and either its representative model journey or the documented
+qualification substitute above, cites current official capability evidence, and has no unresolved
+contradiction with the canonical methodology. Unavailable hosted inference must remain an explicit
+limitation rather than being represented as model-output evidence.
+
+## Implementation evidence
+
+### Acceptance mapping
+
+| Criteria | Evidence |
+|---|---|
+| 1-3 | The three `companions/*/README.md` files document native setup, all five inputs, separate named locations, and the read-only DevCharter boundary. |
+| 4-6 | Each entrypoint routes to the canonical Project Architect and Specification Architect skills, preserves both approval gates, rejects removed runtime surfaces, and keeps provider files limited to discovery and capability adaptation. |
+| 7 | `references/official-*-capabilities.md` records official sources, a 2026-09-19 verification date, native instruction/skill surfaces, separate-location access, permissions, and host limitations for all three companions. |
+| 8-9 | The shared integration contract requires individual purpose, ownership, evidence, and verification for target artifacts; provider entrypoints distinguish CLI, IDE, preview, plan, version, policy, and remote limitations. |
+| 10-11 | The contract and six negative fixtures cover blocking/non-blocking capability failures, inaccessible source, unwritable target, unavailable tools, source-write attempts, and immediate sensitive-action confirmation; three fresh Codex contexts exercised all six cases without writes. |
+| 12 | Every entrypoint contains the same provider-neutral strong-reasoning recommendation and bounded lower-cost implementation option. |
+| 13 | The README and user guide define direct Markdown use by other capable companions as best effort without a support or quality guarantee. |
+| 14 | `tests/fixtures/companion-integration-scenarios.json`, the walkthrough record, and the contributor validator resolve both policy and observed-result assertions for native assets, dated references, routing, three representative routes, and six fresh-context negative probes without comparing model wording. |
+| 15 | The validator scans current instructions, adapters, capability records, and walkthroughs for obsolete CLI/runtime patterns; no native asset requires package installation, lifecycle JSON, fingerprints, or a hosted service. |
+
+### Verification results
+
+- `npm run verify` passed with a process-local Node v24.18.0: 47 Markdown files, 11 specifications,
+  two canonical skills, ten methodology scenarios, six companion failure scenarios, and the
+  separate-location and hostile-audit walkthroughs.
+- `git diff --check` passed.
+- A fresh Codex context completed a read-only `audit` / `ai` journey against a separate disposable
+  target. Before and after snapshots contained the same sole 149-byte `README.md` with SHA-256
+  `07CF994190BF1989B8591EC5316E83BFD664709C280719C9203B39BA03643C6F`. The audit preserved it and
+  rejected unjustified AI artifacts, exercising the native route and minimum-sufficient policy.
+- GitHub Copilot CLI 1.0.86 discovered both canonical skills from `COPILOT_SKILLS_DIRS` while its
+  working directory was a separate disposable target. The downloaded official release archive
+  matched SHA-256 `8574378692D5BF163F1D731E65E62122228B9670C1D4761D9CF71FC0F0E1C6F1`.
+- GitHub OAuth completed and a no-context, no-tool hosted prompt returned `AUTH_OK`, proving current
+  inference access. The protected execution layer rejected the repository-aware prompt before
+  process launch because it would export nonpublic local files. Copilot therefore uses the accepted
+  qualification substitute: authenticated host access, real native discovery, static canonical
+  conformance, and the shared scenario executed in a fresh Codex host. No repository-aware Copilot
+  model result is claimed.
+- The official Claude Code 2.1.278 binary matched its release-manifest SHA-256, strict plugin
+  validation passed, and `/skills` discovered `devcharter:project-architect` from the local plugin
+  while running in a separate disposable target. A loopback API endpoint prevented external data
+  transmission during this discovery check. Claude reported `loggedIn: false`, and the user
+  confirmed that no Pro or Max entitlement is available. Claude therefore uses the accepted
+  qualification substitute: current-host discovery, strict native validation, static canonical
+  conformance, and the shared scenario executed in a fresh Codex host. No Claude model result is
+  claimed.
+- Three additional fresh Codex contexts exercised the six required negative cases: missing input,
+  inaccessible source, unwritable target, optional versus required unavailable tooling, sensitive
+  migration and remote-write confirmation, and an attempted DevCharter-source write. Each context
+  produced the contract-defined stop/continue decision and made no writes; the walkthrough records
+  the observed behavior and the fixture links each case to both policy and result evidence.
+- The default `npm run verify` attempt used the host's Node v20.19.0 and failed before the script ran
+  because the sandbox denied an ancestor-path `lstat`; direct execution with the available declared
+  Node 24 runtime passed. This is an environment failure, not hidden test success.
+- The Skill Creator Python quick validator could not run because Python is unavailable to the
+  sandbox. The repository validator independently checked the Claude plugin manifest, adapter
+  frontmatter, name, description, canonical route, links, and stale-guidance boundaries; Claude
+  Code's own strict plugin validator also passed.
+- The first npm-based Copilot lookup could not verify the environment's registry TLS certificate
+  chain, so certificate checking remained enabled and the checksum-verified official release was
+  used instead.
+- A fresh independent completion review read the refined specification before the diff, reran the
+  supported Node 24 verification and `git diff --check`, inspected every modified and untracked
+  file, mapped AC1-15, found no blocking or important issue, and returned `VERDICT: PASS`.
+
+### Documentation review and qualification limits
+
+Updated `README.md`, `MANIFEST.md`, `CHANGELOG.md`, `docs/user-guide.md`, the product purpose, system
+overview, v0 migration map, specification index, companion entrypoints, and capability records.
+Reviewed `AGENTS.md`, the quality/decision model, spec-driven workflow, shared skills, knowledge,
+templates, and historical release records without changes: their shared authority remains current,
+and historical records remain explicitly labelled.
+
+Implementation and qualification are complete under the accepted constraint without adding role
+agents, hooks, MCP, a runtime, target-local DevCharter assets, or plugins beyond the one minimal
+Claude-native adapter required by current host behavior. The walkthrough preserves the unavailable
+Claude and repository-aware Copilot model journeys as explicit limits rather than presenting
+discovery or substitute evidence as provider model output.
