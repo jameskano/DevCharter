@@ -6,7 +6,9 @@
 |---|---|
 | ID | SPEC-0002B |
 | Parent | SPEC-0002 |
-| Status | ready |
+| Status | done |
+| Activation | User requested implementation on 2026-09-19 |
+| Completion review | Fresh-context independent review passed on 2026-09-19 |
 | Approval | User requested final ready implementation specifications on 2026-09-18 |
 | Dependencies | SPEC-0002A |
 | Enables | SPEC-0002C, SPEC-0002D |
@@ -306,3 +308,51 @@ coherent lifecycle, the knowledge and templates support all required scenarios, 
 evidence, current docs contain no contradictory workflow, and an independent reviewer confirms that
 the methodology is complete without becoming a universal project-management or product-generation
 system.
+
+## Completion evidence
+
+### Implementation and acceptance mapping
+
+| Criteria | Evidence |
+|---|---|
+| 1-2 | `.agents/skills/project-architect/SKILL.md` validates all five inputs and defines positive and negative behavior for every mode and scope; the validator asserts the stable vocabulary and input contract. |
+| 3-4 | The skill's discovery and question stages require inspection first and keep facts, inferences, assumptions, decisions, questions, risks, and sensitive confirmations distinct. |
+| 5-7 | The mode table and `new-full-custom-config`, `retrofit-tool-gap`, and `audit-hostile-target` fixtures cover complete scaffolding, preservation, and audit no-mutation boundaries. |
+| 8-10 | The proposal contract requires evidence and rejected components; the two approval gates route planning to Specification Architect and require separate specification approval. Single- and multi-spec fixtures cover both planning shapes. |
+| 11-12 | Blocking/non-blocking behavior, failure recovery, and immediate sensitive-action reconfirmation are explicit in the skill and the permission, danger, and recovery fixtures. |
+| 13-14 | `knowledge/ecosystem/component-selection.md`, `knowledge/technologies/common-stacks.md`, and `knowledge/harnesses/verification-harnesses.md` cover evidence, rejection, source freshness, command authority, and observable critical-journey harnesses. |
+| 15 | `templates/project-architect-recipes.md` and the refined implementation-spec template provide source-aware patterns without versions, fake commands, or placeholder secrets. |
+| 16 | `tests/fixtures/project-architect-scenarios.json` contains all required scenario families plus recovery; the scenario guide and recorded walkthrough results map them to the criteria, and the validator checks their structure and hostile-audit boundaries. |
+| 17 | The contributor validator scans current instructions, knowledge, templates, and docs for removed runtime/CLI instructions; the completed skill exposes no product command. |
+| 18 | Shared skills, foundation links, current product/architecture/user docs, the manifest, spec index, and migration map use the same lifecycle and authority boundaries. |
+
+### Verification results
+
+- `npm run verify` passed on Node v24.18.0: 41 Markdown files, 11 specifications, two skills, ten
+  methodology scenarios, and the separate-location and hostile-audit walkthroughs.
+- `git diff --check` passed.
+- Recorded manual walkthroughs cover a concrete Vite configuration, preservation-first formatter
+  proposal, hostile audit, one- and multi-spec lifecycles, permission/sensitive cases, unsupported
+  technology, and failure recovery. The validator independently snapshots the hostile target.
+- Initial verification attempts under the host's default Node v20.19.0 failed on Windows sandbox or
+  temporary-directory permissions; rerunning the required command with a process-local installed
+  Node v24.18.0 satisfied the declared Node 22+ runtime and passed. No product behavior was changed
+  to hide the environment failure.
+- Fresh-context independent completion review passed after two correction rounds; the final reviewer
+  found all criteria satisfied, current documentation consistent, and no later-spec scope or
+  overengineered subsystem.
+
+### Documentation review
+
+Updated `README.md`, `MANIFEST.md`, `CHANGELOG.md`, `docs/user-guide.md`, the product purpose, system
+overview, v0 migration map, and specification index to describe the implemented methodology and
+completed lifecycle.
+Reviewed `AGENTS.md`, the quality/decision model, spec-driven workflow, companion entrypoints, and
+official capability reference without changes: their authority and routing remain compatible, while
+provider-native capability work belongs to SPEC-0002C. Historical release records remain unchanged
+because they are explicitly labelled v0 evidence.
+
+No later-spec provider packaging, real-host qualification, release transition, product runtime,
+session state, role agents, or universal generation system was added. There are no known functional
+limitations within SPEC-0002B; representative real-host companion qualification remains the explicit
+scope of SPEC-0002C-D.

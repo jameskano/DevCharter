@@ -3,9 +3,9 @@
 ## Product status
 
 DevCharter is transitioning to the companion-driven architecture approved by SPEC-0002. The shared
-static foundation is present; the full methodology, native companion integrations, and end-to-end
-qualification are delivered by the ordered SPEC-0002B-D work. Do not treat historical v0 release
-records as current operating instructions.
+static foundation and Project Architect methodology are present. Native companion integrations and
+end-to-end release qualification remain ordered SPEC-0002C-D work. Do not treat historical v0
+release records as current operating instructions.
 
 ## What to provide
 
@@ -20,6 +20,11 @@ Begin every run with five inputs:
 Then open the selected [companion entrypoint](../companions/) and route to the
 [Project Architect skill](../.agents/skills/project-architect/SKILL.md). Other capable companions may
 follow the shared guidance on a best-effort basis, but are not represented as qualified integrations.
+
+The companion validates the five inputs, inspects applicable target evidence before asking material
+questions, and keeps DevCharter itself read-only. If the chosen mode or scope appears inconsistent
+with the target, it explains the evidence and asks whether you want to change the selection rather
+than silently substituting one.
 
 ## Choose a mode
 
@@ -42,9 +47,10 @@ For new and retrofit, the companion first inspects and asks only unresolved mate
 then presents a reviewable proposal, including create/update/skip/conflict decisions and rejected
 components. Explicit proposal approval authorizes one or more detailed Markdown specifications.
 
-The Specification Architect makes acceptance criteria, risks, scope, and verification reviewable.
-Only explicit approval of that detailed specification authorizes implementation. A discovered
-material expansion stops affected work until the specification is updated and reapproved.
+The Specification Architect creates one cohesive draft by default and splits it only when size,
+risk, independent subsystems, or dependency order makes that clearer. Only explicit approval of the
+detailed specification authorizes implementation. A discovered material expansion stops affected
+work until the specification is updated and reapproved.
 
 Approval never removes the need for immediate confirmation before destructive actions, secret
 access, external data sharing, remote writes, or hard-to-reverse operations.

@@ -22,7 +22,8 @@ SPEC-0002B may refine and organize them, but must not reintroduce a product runt
   acceptance.
 - Generate an artifact only when evidence or an accepted decision justifies it. Prefer preserving
   an adequate project-owned file over replacing it.
-- Give each proposed target one `create`, `update`, `skip`, or `conflict` decision and explain why.
+- Give each relevant component one `create`, `update`, `preserve`, `skip`, `replace`, `reject`, or
+  `conflict` decision and explain why.
 - Record considered and rejected ecosystem components so omission is reviewable.
 
 ## Approval and safety
@@ -46,3 +47,9 @@ SPEC-0002B may refine and organize them, but must not reintroduce a product runt
   prove a journey.
 - Report commands, results, failures, timeouts, skips, limitations, and documentation review
   accurately.
+
+## Detailed guidance
+
+- [Ecosystem component selection](ecosystem/component-selection.md)
+- [Common stack and command authority](technologies/common-stacks.md)
+- [Verification harnesses](harnesses/verification-harnesses.md)

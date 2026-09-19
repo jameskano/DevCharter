@@ -6,6 +6,9 @@ description: Create, refine, or review an authoritative specification for non-tr
 # Specification Architect
 
 Define one implementation-ready behavior contract without turning routine maintenance into process.
+When Project Architect routes an approved proposal here, treat that proposal as planning authority
+but not write authority for implementation. Confirm that proposal approval is explicit and current;
+write only target-local Markdown `draft` specifications until a separate specification approval.
 
 ## Route the request
 
@@ -121,3 +124,7 @@ draft|ready|active -> cancelled
 Cancellation requires a reason. Blocking, review severity, and verification outcome are metadata, not statuses.
 
 Do not create sessions, conversation transcripts, backlog or sprint structures, role agents, automatic approval, adapters, connectors, networking, persistence, or extra public commands. Do not implement unrelated behavior while creating or refining a specification. Preserve repository-owned content and the boundaries of later specifications.
+
+For proposal-driven work, return control to Project Architect after the detailed specification is
+approved so implementation and completion follow the proposal's preservation, safety, and harness
+constraints. An approval that only authorizes planning never satisfies the implementation gate.

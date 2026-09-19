@@ -7,9 +7,9 @@ coding companion. It inspects a target repository, proposes only justified impro
 implementation behind explicit human approval. DevCharter has no product CLI, runtime package,
 hosted service, or target-project dependency.
 
-SPEC-0002A establishes this shared static foundation. The complete Project Architect methodology
-and the native Codex, Claude Code, and GitHub Copilot integrations are intentionally deferred to
-SPEC-0002B and SPEC-0002C.
+SPEC-0002A establishes the shared static foundation. SPEC-0002B provides the shared Project
+Architect methodology, decision knowledge, adaptable recipes, and scenario checks. Native Codex,
+Claude Code, and GitHub Copilot integrations remain SPEC-0002C work.
 
 ## Start a DevCharter run
 
@@ -57,9 +57,9 @@ remote writes, and hard-to-reverse operations always require immediate confirmat
 - `AGENTS.md` — repository-wide authority and contributor rules.
 - `.agents/skills/` — shared Project Architect and Specification Architect procedures.
 - `companions/` — companion entrypoints; native integrations are completed by SPEC-0002C.
-- `knowledge/` — shared principles extracted from the historical v0 implementation.
-- `templates/` — optional guidance used only when evidence justifies the artifact.
-- `tests/fixtures/` and `tests/scenarios/` — development-only static scenario evidence.
+- `knowledge/` — shared principles plus component, technology, command, and harness guidance.
+- `templates/` — optional, source-aware recipes used only when evidence justifies an artifact.
+- `tests/fixtures/` and `tests/scenarios/` — development-only methodology scenario evidence.
 - `docs/` — current product, architecture, engineering, and historical release documentation.
 - `specs/` — current authority and retained historical specifications.
 - `references/` — dated external-capability evidence.

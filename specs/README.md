@@ -40,7 +40,7 @@ Keep one implementation specification active unless independent workstreams are 
   authority.
 - `done/SPEC-0002A-repository-transformation-and-shared-foundation.md` — completed transformation
   from the v0 runtime to the shared static foundation.
-- `ready/SPEC-0002B-project-architect-methodology-and-knowledge.md` — shared conversational
+- `done/SPEC-0002B-project-architect-methodology-and-knowledge.md` — completed shared conversational
   methodology, knowledge, templates, and harness guidance.
 - `ready/SPEC-0002C-native-companion-integrations.md` — first-class Codex, Claude Code, and GitHub
   Copilot integrations.
@@ -50,8 +50,9 @@ Keep one implementation specification active unless independent workstreams are 
   historical v0 authority and implementation evidence.
 
 SPEC-0002A through SPEC-0002D are ordered implementation specifications. SPEC-0002A is done;
-SPEC-0002B-D remain ready, and no implementation specification is active. Activate and implement
-only the earliest incomplete dependency unless an independent workstream is explicitly approved.
+SPEC-0002A-B are done; SPEC-0002C-D remain ready, and no implementation specification is active.
+Activate only the earliest incomplete dependency unless an independent workstream is explicitly
+approved.
 
 ## Authority and supersession
 

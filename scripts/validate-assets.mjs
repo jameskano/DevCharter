@@ -186,6 +186,10 @@ const currentSources = [
   ".agents/skills/project-architect/SKILL.md",
   ".agents/skills/specification-architect/SKILL.md",
   "knowledge/shared-foundation.md",
+  "knowledge/ecosystem/component-selection.md",
+  "knowledge/technologies/common-stacks.md",
+  "knowledge/harnesses/verification-harnesses.md",
+  "templates/project-architect-recipes.md",
   "templates/specifications/implementation-spec.md",
   "companions/codex/README.md",
   "companions/claude-code/README.md",
@@ -222,6 +226,132 @@ for (const [file, source] of currentDocumentation) {
     if (pattern.test(source)) {
       fail(`${relative(file)}: contains obsolete operative runtime instruction ${pattern}`);
     }
+  }
+}
+
+const projectArchitectSource = sources.get(
+  path.join(root, ".agents/skills/project-architect/SKILL.md")
+) ?? "";
+for (const required of [
+  "mode: exactly `new`, `retrofit`, or `audit`",
+  "scope: exactly `full`, `governance`, `engineering`, or `ai`",
+  "DevCharter location",
+  "target location",
+  "initial context",
+  "Proposal approval authorizes only",
+  "Only explicit approval of the applicable detailed specification",
+  "Reconfirm the sensitive action immediately before execution"
+]) {
+  if (!projectArchitectSource.includes(required)) {
+    fail(`.agents/skills/project-architect/SKILL.md: missing methodology contract: ${required}`);
+  }
+}
+for (const mode of ["new", "retrofit", "audit"]) {
+  if (!projectArchitectSource.includes(`\`${mode}\``)) {
+    fail(`.agents/skills/project-architect/SKILL.md: missing mode ${mode}`);
+  }
+}
+for (const scope of ["full", "governance", "engineering", "ai"]) {
+  if (!projectArchitectSource.includes(`\`${scope}\``)) {
+    fail(`.agents/skills/project-architect/SKILL.md: missing scope ${scope}`);
+  }
+}
+
+const methodologyFixturePath = path.join(
+  root,
+  "tests/fixtures/project-architect-scenarios.json"
+);
+let methodologyScenarioCount = 0;
+try {
+  const fixture = JSON.parse(await readFile(methodologyFixturePath, "utf8"));
+  if (
+    typeof fixture.devcharterLocation !== "string" ||
+    typeof fixture.targetLocation !== "string" ||
+    fixture.devcharterLocation === fixture.targetLocation
+  ) {
+    fail("tests/fixtures/project-architect-scenarios.json: source and target locations must differ");
+  }
+  const scenarios = fixture.scenarios;
+  if (!Array.isArray(scenarios)) throw new Error("scenarios must be an array");
+  methodologyScenarioCount = scenarios.length;
+  const requiredScenarioIds = [
+    "new-full-custom-config",
+    "retrofit-tool-gap",
+    "audit-hostile-target",
+    "single-spec-lifecycle",
+    "multi-spec-lifecycle",
+    "missing-permission",
+    "dangerous-action",
+    "unsupported-technology",
+    "overengineering-rejection",
+    "recovery-and-stale-state"
+  ];
+  const scenarioIds = new Set();
+  for (const scenario of scenarios) {
+    if (typeof scenario.id !== "string" || scenario.id.trim() === "") {
+      fail("tests/fixtures/project-architect-scenarios.json: scenario missing id");
+      continue;
+    }
+    if (scenarioIds.has(scenario.id)) {
+      fail(`tests/fixtures/project-architect-scenarios.json: duplicate scenario ${scenario.id}`);
+    }
+    scenarioIds.add(scenario.id);
+    if (!["new", "retrofit", "audit"].includes(scenario.mode)) {
+      fail(`tests/fixtures/project-architect-scenarios.json: ${scenario.id} has invalid mode`);
+    }
+    if (!["full", "governance", "engineering", "ai"].includes(scenario.scope)) {
+      fail(`tests/fixtures/project-architect-scenarios.json: ${scenario.id} has invalid scope`);
+    }
+    if (typeof scenario.initialContext !== "string" || scenario.initialContext.trim() === "") {
+      fail(`tests/fixtures/project-architect-scenarios.json: ${scenario.id} lacks initial context`);
+    }
+    for (const list of ["startingEvidence", "expected", "prohibited"]) {
+      if (!Array.isArray(scenario[list]) || scenario[list].length === 0) {
+        fail(`tests/fixtures/project-architect-scenarios.json: ${scenario.id} lacks ${list}`);
+      }
+    }
+  }
+  for (const id of requiredScenarioIds) {
+    if (!scenarioIds.has(id)) {
+      fail(`tests/fixtures/project-architect-scenarios.json: missing required scenario ${id}`);
+    }
+  }
+  const audit = scenarios.find(({ id }) => id === "audit-hostile-target");
+  const auditProhibited = audit?.prohibited?.join(" ") ?? "";
+  for (const boundary of ["Script execution", "Dependency installation", "mutation", "state"]) {
+    if (!auditProhibited.includes(boundary)) {
+      fail(`tests/fixtures/project-architect-scenarios.json: audit omits ${boundary} boundary`);
+    }
+  }
+} catch (error) {
+  fail(`tests/fixtures/project-architect-scenarios.json: invalid fixture: ${error.message}`);
+}
+
+{
+  const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "devcharter-hostile-audit-"));
+  const hostileTarget = path.join(temporaryRoot, "target");
+  try {
+    await mkdir(hostileTarget);
+    await writeFile(
+      path.join(hostileTarget, "package.json"),
+      `${JSON.stringify({ scripts: { postinstall: "untrusted-side-effect" } }, null, 2)}\n`,
+      "utf8"
+    );
+    await writeFile(path.join(hostileTarget, ".env"), "TOKEN=fixture-value\n", "utf8");
+    await writeFile(path.join(hostileTarget, "generated.bin"), Buffer.from([0, 1, 2, 3]));
+    const before = await snapshot(hostileTarget);
+    const names = await readdir(hostileTarget);
+    const manifest = JSON.parse(await readFile(path.join(hostileTarget, "package.json"), "utf8"));
+    if (!names.includes(".env") || typeof manifest.scripts?.postinstall !== "string") {
+      fail("hostile audit walkthrough: fixture evidence was not observable");
+    }
+    const after = await snapshot(hostileTarget);
+    if (before !== after) fail("hostile audit walkthrough: target changed during read-only review");
+    if (await exists(path.join(hostileTarget, "side-effect.txt"))) {
+      fail("hostile audit walkthrough: untrusted script executed");
+    }
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true });
   }
 }
 
@@ -328,6 +458,6 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   process.stdout.write(
-    `Static asset verification passed on ${process.version}: ${markdownFiles.length} Markdown files, ${specs.length} specifications, ${skillFiles.length} skills, separate-location walkthrough.\n`
+    `Static asset verification passed on ${process.version}: ${markdownFiles.length} Markdown files, ${specs.length} specifications, ${skillFiles.length} skills, ${methodologyScenarioCount} methodology scenarios, separate-location and hostile-audit walkthroughs.\n`
   );
 }

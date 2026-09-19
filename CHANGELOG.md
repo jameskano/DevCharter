@@ -11,6 +11,9 @@
 - Replaced package, build, and release qualification workflows with a dependency-free contributor
   validator for DevCharter-owned static assets.
 - Updated current product, architecture, user, manifest, and repository instructions to SPEC-0002.
+- Completed the shared Project Architect workflow, component and common-stack selection knowledge,
+  harness guidance, adaptable recipes, recovery behavior, and methodology scenario evidence for
+  SPEC-0002B.
 
 ### Removed
 
@@ -27,6 +30,5 @@
 
 ### Deferred
 
-- Complete Project Architect methodology and knowledge organization to SPEC-0002B.
 - Qualified native Codex, Claude Code, and GitHub Copilot integrations to SPEC-0002C.
 - Full lifecycle qualification, documentation completion, and release transition to SPEC-0002D.

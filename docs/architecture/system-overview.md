@@ -58,8 +58,9 @@ target write, installation, mutating command, or state creation.
 ## Repository structure
 
 The [manifest](../../MANIFEST.md) maps current authority. The static foundation deliberately contains
-only consumed paths. Detailed shared methodology belongs to SPEC-0002B, provider-native assets to
-SPEC-0002C, and complete journey/release qualification to SPEC-0002D.
+only consumed paths. SPEC-0002B supplies the detailed shared methodology, component and stack
+selection knowledge, harness guidance, adaptable recipes, and methodology scenarios. Provider-native
+assets belong to SPEC-0002C and complete journey/release qualification to SPEC-0002D.
 
 ## Historical architecture
 

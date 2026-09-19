@@ -58,8 +58,8 @@ specification may explain a decision but cannot restore superseded runtime behav
 
 ## Current implementation sequence
 
-SPEC-0002A through SPEC-0002D are ordered. SPEC-0002A is done. SPEC-0002B, SPEC-0002C, and
-SPEC-0002D remain ready, no implementation specification is active, and later work must not be
+SPEC-0002A through SPEC-0002D are ordered. SPEC-0002A and SPEC-0002B are done; SPEC-0002C and
+SPEC-0002D remain ready, and no implementation specification is active. Later work must not be
 implemented before explicit activation.
 
 The stable public vocabulary is:
