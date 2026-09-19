@@ -1,0 +1,8 @@
+{
+  "mode": "retrofit",
+  "scope": "full",
+  "devcharterLocation": "/opt/devcharter",
+  "targetLocation": "/work/example-product",
+  "initialContext": "Preserve the established stack and propose only evidence-backed foundations.",
+  "expectedNextInstruction": ".agents/skills/project-architect/SKILL.md"
+}

@@ -1,6 +1,8 @@
 # Official Codex capability notes
 
-This file records the Codex assumptions used by the DevCharter v0 design. Official OpenAI documentation takes precedence if behavior changes.
+This historical capability note records assumptions that informed the v0 design. It is retained as
+input to SPEC-0002C, which must reverify current official documentation before claiming a native
+Codex integration. Official OpenAI documentation takes precedence.
 
 ## AGENTS.md
 
@@ -51,6 +53,8 @@ Official guidance:
 
 - https://learn.chatgpt.com/guides/best-practices
 
-## Adapter boundary
+## Integration boundary
 
-Canonical DevCharter analysis remains vendor-neutral. The Codex adapter emits only supported native assets and references shared project docs and specs rather than duplicating their content.
+Canonical DevCharter methodology remains vendor-neutral. A future Codex-native integration may use
+only verified native mechanisms and must reference shared instructions rather than duplicating their
+authority.

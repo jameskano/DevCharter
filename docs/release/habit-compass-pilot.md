@@ -1,5 +1,8 @@
 # Habit Compass pilot
 
+> Historical v0 evidence only. The CLI and package workflow described here were removed by
+> SPEC-0002A and are not current operating instructions.
+
 ## Authorization boundary
 
 The initial SPEC-0001E approval authorized only a read-only audit and retrofit proposal. The later

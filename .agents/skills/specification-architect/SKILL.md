@@ -76,6 +76,9 @@ Create one cohesive `draft` by default. Include only applicable sections from:
 - implementation constraints when needed;
 - completion evidence when implementation exists.
 
+The optional [implementation specification template](../../../templates/specifications/implementation-spec.md)
+is guidance, not a requirement to emit empty sections.
+
 Split requirements, design, tasks, acceptance, or test plans only when size, risk, independent ownership, or execution sequencing makes the split materially clearer. Do not create empty sections for possible future concerns.
 
 Write every important acceptance criterion as an observable starting state, action, and result. Cover loading, empty, error, permission, destructive, recovery, and accessibility states only when relevant. Map each criterion to practical unit/domain, component/integration, journey-level E2E, static, or manual verification.

@@ -1,5 +1,8 @@
 # DevCharter v0 qualification
 
+> Historical evidence only. This record describes the removed SPEC-0001 runtime and is not a
+> current installation or usage guide. Current authority begins at [README.md](../../README.md).
+
 ## Current status
 
 SPEC-0001E is done following explicit human approval on 2026-09-12. The implementation, built-CLI
