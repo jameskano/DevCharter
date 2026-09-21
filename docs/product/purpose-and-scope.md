@@ -2,111 +2,78 @@
 
 ## Problem
 
-AI coding tools work best when a repository contains reliable project context, clear behavior specifications, relevant instructions, and deterministic ways to verify changes.
-
-Repositories often begin without these foundations or accumulate disconnected prompts, agent roles, skills, documentation, and commands. More files can make the system less reliable when their responsibilities overlap or their references drift.
+AI coding companions work best when a repository has reliable project context, clear behavior
+specifications, relevant instructions, and practical verification. Repositories often lack those
+foundations or accumulate overlapping prompts, agents, skills, documentation, and commands.
 
 ## Purpose
 
-DevCharter provides a structured way to create or improve a repository's AI-assisted development ecosystem.
+DevCharter guides an AI coding companion to discover, propose, create, or improve the minimum useful
+AI-assisted development ecosystem for a software repository. The companion reads DevCharter from a
+local folder or GitHub repository while working on a separately identified target.
 
-It discovers what already exists, asks only for material decisions it cannot infer, proposes the minimum useful improvements, applies approved changes safely, and verifies the result.
+DevCharter is static: instructions, knowledge, skills, specifications, optional templates, scenarios,
+and development-only checks. It has no user-facing CLI, runtime package, hosted service, session
+store, or target-project dependency.
 
 ## Product principles
 
 1. Inspect before asking or creating.
 2. Prefer the minimum sufficient ecosystem.
-3. Preserve useful existing conventions.
+3. Preserve useful existing conventions and unrelated work.
 4. Keep one source of truth per concern.
-5. Use native AI-tool mechanisms where available.
-6. Propose before writing.
-7. Make audit read-only.
-8. Treat specifications, code, tests, and current documentation as connected.
-9. Validate user and developer journeys, not only isolated files.
-10. Make repeated runs safe and unsurprising.
+5. Use native companion mechanisms where justified.
+6. Propose before detailed planning; approve the detailed specification before implementation.
+7. Keep audit read-only.
+8. Treat specifications, implementation, tests, and current documentation as connected.
+9. Validate critical journeys, not only isolated files.
+10. Report uncertainty, limitations, failures, and partial progress accurately.
 
 ## Modes
 
-### New
-
-For a new or lightly initialized project. DevCharter gathers intended outcome, chosen technologies, important constraints, and selected AI tools before proposing a small foundation.
-
-### Retrofit
-
-For an existing repository. DevCharter inventories code, documentation, specifications, commands, tests, CI, AI configuration, and relevant conventions; then proposes targeted improvements.
-
-### Audit
-
-For an existing setup. DevCharter performs a read-only review and reports missing, obsolete, overlapping, broken, conflicting, or unjustified elements.
+- `new` — for an empty or lightly initialized target.
+- `retrofit` — for an established target whose useful content must be preserved.
+- `audit` — a read-only assessment with no proposal or target mutation.
 
 ## Scopes
 
-### Full
+- `full` — governance, engineering foundations, and AI ecosystem.
+- `governance` — project truth, decisions, documentation, specifications, and authority.
+- `engineering` — structure, developer commands, tests, CI, and relevant operational foundations.
+- `ai` — instructions, supported skills, and justified companion configuration.
 
-Governance, engineering foundations, and AI ecosystem.
-
-### Governance
-
-Project truth, current-state documentation, specifications, accepted decisions, assumptions, spec precedence, and documentation synchronization.
-
-### Engineering
-
-Repository structure, runtime and package management, developer commands, formatting, linting, typing, tests, CI, safety checks, and operational foundations required for reliable development.
-
-### AI
-
-`AGENTS.md`, supported skills, tool-specific configuration, and other AI components only where evidence justifies them.
-
-Architecture, correctness, maintainability, reliability, security, privacy, accessibility, user experience, performance, cost, and operations are considerations within applicable scopes, not more public scopes.
+Architecture, correctness, maintainability, reliability, security, privacy, accessibility,
+performance, cost, and operations are considerations within applicable scopes, not more scopes.
 
 ## AI classification
 
-Discovery must distinguish:
-
-- developer-AI instructions and workflows;
-- runtime or product AI features;
-- AI-related dependencies that may be unused;
-- future AI ideas described only in specifications;
-- third-party or installed skills and tooling.
-
-Finding the word “AI” or an AI package is not enough to conclude that the product implements runtime AI.
+Discovery distinguishes developer-AI instructions, runtime/product AI behavior, unused AI-related
+dependencies, future ideas, and third-party tooling. A name or dependency alone does not establish
+runtime AI behavior.
 
 ## Primary user
 
-A solo developer or small team using Codex or another AI coding tool who wants a dependable setup without manually designing an instruction and governance system.
+A solo developer or small team using Codex or another AI coding companion who wants dependable
+repository foundations without designing an instruction and governance system from scratch.
 
 ## Possible outputs
 
-Depending on need, a run may create or improve:
-
-```text
-AGENTS.md
-docs/
-specs/
-.agents/skills/
-.codex/
-project configuration
-verification commands
-tests or CI
-```
-
-Not every project receives every component. Existing adequate files may be preserved with no new output.
+Depending on evidence and approval, work may create or improve repository instructions, current
+documentation, specifications, relevant skills, native companion configuration, project
+configuration, verification commands, tests, or CI. Existing adequate files may be preserved with
+no new output.
 
 ## Non-goals
 
-DevCharter v0 is not:
+DevCharter is not a hosted service, agent runtime, project manager, session or memory database,
+provider router, policy server, worktree manager, marketplace, pull-request writer, autonomous
+product owner, or continuous repository monitor.
 
-- a hosted service;
-- an agent execution or orchestration runtime;
-- a task board, issue tracker, or project manager;
-- a session, memory, or vector database;
-- a provider-routing or policy-enforcement service;
-- a worktree, terminal, or sandbox manager;
-- a prompt or skill marketplace;
-- an automatic pull-request or protected-branch writer;
-- an autonomous product owner;
-- a continuous semantic repository monitor.
+## Current implementation status
 
-## Success
-
-The resulting repository is easier for humans and AI to understand, safer to change, simpler to verify, less dependent on conversation history, and free from unnecessary AI scaffolding.
+SPEC-0002A provides the static repository foundation and removes the historical v0 runtime.
+SPEC-0002B provides the shared Project Architect methodology and knowledge. SPEC-0002C provides
+qualified native Codex, Claude Code, and GitHub Copilot routes plus dated capability evidence;
+SPEC-0002D completes documentation and release qualification with recorded supported-host evidence,
+an approved Claude entitlement limitation, and scenario evidence for live new/retrofit journeys
+deferred to later user testing.

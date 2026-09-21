@@ -2,40 +2,45 @@
 
 ## Unreleased
 
-### Added
-
-- Composable decision and previous-proposal inputs for `new` and `retrofit`.
-- Direct lifecycle-envelope support for `render` and `apply` while preserving bare artifact input.
-- Deterministic repository-integrity and managed-output checks in `validate`.
-- Production-only builds, local tarball inspection and fresh-install qualification for all three
-  packages.
-- Twelve release fixture conditions, seven built-CLI journeys, stable audit no-write evidence, and
-  an exact retry no-op test.
-- A four-job GitHub Actions matrix for Ubuntu/Node 22, Ubuntu/Node 24, Windows/Node 24, and
-  macOS/Node 24.
-- Compatible per-entry provenance recognition for canonical and installer-style version-1 skill
-  locks without claiming unverified installer hashes as content-integrity evidence.
-
 ### Changed
 
-- Raised the supported Node.js baseline from 20 to 22.
-- Activated SPEC-0001E with its approved qualification, lifecycle, CI, documentation, and external
-  pilot decisions.
-- Excluded tests, test support, build information, repository prompts, specifications, and other
-  development-only material from production package output.
-- Made package qualification failures for unavailable commands, non-zero exits, and timeouts
-  explicit and testable, and restricted installed skill-asset checks from reading the source checkout.
-- Normalized text checkout to LF across platforms and allowed only the raw and canonical spellings
-  of the bounded temporary installation during Node permission-model package checks.
-- Classified TypeScript incremental-build state as generated material and qualified every applicable
-  release journey against the fresh-installed CLI.
-- Completed the Habit Compass pilot as the explicitly approved unchanged preservation outcome after
-  rejecting all six unsafe, external, false-positive, or unjustified updates.
-- Completed SPEC-0001E after all 18 acceptance criteria, four supported CI jobs, installed-tarball
-  qualification, and the independent completion review passed.
+- Replaced the superseded TypeScript runtime and CLI architecture with a static instruction-,
+  knowledge-, skill-, specification-, template-, and scenario-driven foundation.
+- Made an AI coding companion the interface and separated the DevCharter source location from the
+  target repository location.
+- Replaced package, build, and release qualification workflows with a dependency-free contributor
+  validator for DevCharter-owned static assets.
+- Updated current product, architecture, user, manifest, and repository instructions to SPEC-0002.
+- Completed the shared Project Architect workflow, component and common-stack selection knowledge,
+  harness guidance, adaptable recipes, recovery behavior, and methodology scenario evidence for
+  SPEC-0002B.
+- Added native Codex, Claude Code, and GitHub Copilot routes, a shared conformance contract, dated
+  official capability records, and companion integration scenario checks for SPEC-0002C.
+- Added SPEC-0002D release fixtures and walkthroughs for full and focused new/retrofit journeys,
+  hostile audit, one- and multi-spec approvals, capability failures, sensitive confirmations, and
+  source/target isolation.
+- Added a machine-checked 90-criterion qualification inventory, current contributor guidance,
+  expanded user dialogue, qualification architecture, supported-host evidence, and explicit
+  limitations.
 
-### Deferred
+### Removed
 
-- Registry publication, namespace reservation, publishing automation, and the legal license choice
-  remain external release-administration decisions separate from the completed technical
-  qualification.
+- The `@devcharter/core`, `@devcharter/adapter-codex`, and `@devcharter/cli` runtime packages.
+- The user-facing executable, JSON lifecycle, deterministic renderer/application path, managed
+  writer/receipt/retry model, package tarball flow, and target-local installation instructions.
+- Runtime unit, integration, package, and release tests and their TypeScript workspace configuration.
+
+### Preserved
+
+- Shared discovery, authority, minimum-sufficiency, preservation, approval, safety, and verification
+  principles in current instructions and knowledge.
+- SPEC-0001 and SPEC-0001A-E plus v0 release evidence as explicitly historical records.
+
+### Deferred user validation
+
+- Live disposable new/full, new/ai, retrofit/full, and retrofit/ai target execution is deferred to
+  post-specification user testing by the explicit 2026-09-21 decision. Qualification validates
+  their scenario contracts without claiming those targets were implemented.
+- Claude Code installation and OAuth were attempted, but the user-approved missing subscription
+  entitlement prevents an authenticated Claude journey; static adapter and host-discovery checks
+  are retained without claiming model-execution equivalence.

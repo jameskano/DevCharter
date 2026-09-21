@@ -49,6 +49,15 @@ There is no `check` command and no persisted interview-session system. Blocking 
 
 New and retrofit produce a reviewable proposal before approved writes.
 
+## Using DevCharter against a target
+
+Collect the five required inputs from `README.md`: mode, scope, DevCharter location, target location,
+and initial context. Read the selected entrypoint under `companions/`, then use the Project Architect
+skill. The DevCharter source stays separate from and read-only during target work.
+
+Proposal approval authorizes detailed Markdown specification work, not implementation. Route that
+work to the Specification Architect skill and require separate specification approval before writes.
+
 ## Minimum-sufficient ecosystem
 
 Generate an artifact only when repository evidence or an accepted user decision justifies it.
@@ -113,9 +122,12 @@ with no product CLI, runtime packages, JSON lifecycle, deterministic renderer, o
 DevCharter installation. Companion-native assets translate the accepted canonical methodology
 without duplicating its authority.
 
-The existing TypeScript v0 implementation remains historical starting state until SPEC-0002A is
-explicitly activated. Remove or restructure it only under that active specification and its
-migration safeguards.
+The TypeScript v0 implementation was removed by SPEC-0002A after its reusable knowledge was mapped
+to current instructions, knowledge, scenarios, or historical evidence. Do not recreate a product
+runtime, CLI, package API, JSON lifecycle, renderer, writer, or target-local installation path.
+
+The root Node script is a contributor-only static asset check. It is not a product runtime and must
+not be installed in or run against a target repository.
 
 ## Safe writes
 
@@ -140,7 +152,7 @@ Verification may include targeted tests, full local checks, integration tests, j
 
 Before recommending `done`:
 
-1. run applicable formatting, linting, type checking, tests, build, and DevCharter validation;
+1. run `npm run verify`, `git diff --check`, and any additional checks required by the active spec;
 2. record actual results and skipped checks;
 3. map every acceptance criterion to evidence;
 4. confirm no later-spec scope was added unnecessarily;

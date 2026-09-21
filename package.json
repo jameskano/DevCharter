@@ -1,31 +1,14 @@
 {
-  "name": "devcharter",
-  "version": "0.1.0",
+  "name": "devcharter-static-assets",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.18.3",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
-    "build": "node scripts/build-production.mjs",
-    "typecheck": "tsc -b --pretty false",
-    "lint": "eslint .",
-    "format:check": "prettier --check .",
-    "format": "prettier . --write",
-    "test": "pnpm build && vitest run",
-    "test:release": "pnpm build && vitest run --project release",
-    "test:audit-no-write": "vitest run --project release -t \"hostile audit\"",
-    "package:qualify": "node scripts/qualify-packages.mjs",
-    "devcharter": "node packages/cli/dist/cli.js"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.18.0",
-    "@types/node": "^22.10.7",
-    "eslint": "^9.18.0",
-    "prettier": "^3.4.2",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.20.0",
-    "vitest": "^2.1.8"
+    "verify": "node scripts/validate-assets.mjs",
+    "test": "node scripts/validate-assets.mjs",
+    "format:check": "node scripts/validate-assets.mjs"
   }
 }

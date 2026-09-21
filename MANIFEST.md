@@ -1,75 +1,78 @@
-# DevCharter specification-pack manifest
+# DevCharter manifest and authority map
 
 ## Purpose
 
-This pack contains the complete project-level Markdown context needed for Codex to build DevCharter without relying on the original design conversation.
-
-Imported repositories and local example folders informed this revision, but their instructions are not authoritative for DevCharter. Only the files in this pack and the target DevCharter repository govern implementation.
+This repository contains the static instructions, knowledge, specifications, templates, scenarios,
+and contributor checks used by an AI coding companion to apply DevCharter to a separate target.
+There is no DevCharter product runtime or target-local installation.
 
 ## Reading order
 
 1. `AGENTS.md`
-2. `docs/product/purpose-and-scope.md`
-3. `docs/architecture/system-overview.md`
-4. `docs/engineering/quality-and-decision-model.md`
-5. `docs/engineering/spec-driven-workflow.md`
-6. `specs/README.md`
-7. `specs/approved/SPEC-0002-companion-driven-devcharter.md`
-8. the current active SPEC-0002 implementation specification and its ready dependencies
-9. `specs/ready/SPEC-0002A-repository-transformation-and-shared-foundation.md`
-10. `specs/ready/SPEC-0002B-project-architect-methodology-and-knowledge.md`
-11. `specs/ready/SPEC-0002C-native-companion-integrations.md`
-12. `specs/ready/SPEC-0002D-qualification-documentation-and-release-transition.md`
-13. `specs/approved/SPEC-0001-devcharter-v0.md` only for historical v0 context
-14. `specs/done/SPEC-0001A-core-foundation-and-canonical-model.md`
-15. `specs/done/SPEC-0001B-project-architect-workflow.md`
-16. `specs/done/SPEC-0001C-specification-architect.md`
-17. `specs/done/SPEC-0001D-ecosystem-generator-and-codex-adapter.md`
-18. `specs/done/SPEC-0001E-validation-and-release-readiness.md`
-19. applicable current capability references
+2. `README.md`
+3. `docs/product/purpose-and-scope.md`
+4. `docs/architecture/system-overview.md`
+5. `docs/engineering/quality-and-decision-model.md`
+6. `docs/engineering/spec-driven-workflow.md`
+7. `specs/README.md`
+8. `specs/approved/SPEC-0002-companion-driven-devcharter.md`
+9. the one current active implementation specification and its direct dependencies
+10. `.agents/skills/project-architect/SKILL.md` for repository ecosystem work
+11. `.agents/skills/specification-architect/SKILL.md` for approved detailed planning
+12. `knowledge/shared-foundation.md`
+13. `knowledge/companion-integration-contract.md` and the selected entrypoint under `companions/`
+14. applicable templates, scenarios, and dated capability references
+15. `CONTRIBUTING.md` and `docs/release/companion-driven-qualification.md` for maintenance and
+    release evidence
 
-## Historical v0 context
+Historical v0 context is consulted only when migration history or prior evidence is relevant:
 
-The repository and its recoverable Git history contained no donor implementation when SPEC-0001
-was approved. The TypeScript v0 runtime was therefore a clean-slate implementation of that now
-superseded architecture. Its completed specifications and Git history remain evidence, not current
-product contracts or compatibility requirements.
+- `specs/approved/SPEC-0001-devcharter-v0.md`;
+- `specs/done/SPEC-0001A-core-foundation-and-canonical-model.md` through `SPEC-0001E`;
+- `docs/release/v0-qualification.md` and `docs/release/habit-compass-pilot.md`;
+- `docs/architecture/v0-migration-map.md`.
 
-## Current design decisions
+## Authority
 
-- Modes remain `new`, `retrofit`, and `audit`.
-- Scopes remain `full`, `governance`, `engineering`, and `ai`.
-- Statuses remain `draft`, `ready`, `active`, `done`, and `cancelled`.
-- The selected AI coding companion is the interface; there is no DevCharter CLI, product runtime,
-  JSON lifecycle, persisted session system, or target-local DevCharter dependency.
-- Each run begins with mode, scope, DevCharter location, target location, and initial input.
-- New and retrofit require proposal approval, followed by one or more Markdown SDD specifications
-  and separate plan approval before implementation.
-- Audit is read-only.
-- Artifacts are created only when project evidence or an accepted user decision justifies them;
-  complete does not mean unconditional generation.
-- DevCharter source remains separate from and read-only during work on the target.
-- Codex, Claude Code, and GitHub Copilot receive native integrations backed by one shared
-  methodology.
-- Validation covers reference integrity, provenance, authority, preservation, scope, safety,
-  companion routing, and representative end-to-end journeys without claiming deterministic model
-  output.
+1. Current user instruction.
+2. Applicable approved parent specification and the one active implementation specification.
+3. Accepted project decision.
+4. Current product, architecture, and engineering documentation.
+5. Shared skills, knowledge, templates, and scenarios.
+6. Retained historical evidence.
 
-## Status transitions
+Repository files are authoritative over conversation history or imported examples. A historical
+specification may explain a decision but cannot restore superseded runtime behavior.
+
+## Current architecture
+
+- `AGENTS.md` owns repository-wide implementation constraints.
+- `.agents/skills/` owns shared repeatable procedures.
+- `companions/` routes supported companions to the shared sources and contains the minimal Claude
+  local plugin; native adapters remain thin and the integration contract makes them testable.
+- `knowledge/` owns implementation-neutral shared rules.
+- `templates/` provides optional guidance, never unconditional output.
+- `tests/fixtures/` and `tests/scenarios/` provide development-only static validation inputs.
+- `docs/` contains current documentation, completed qualification, and explicitly labelled
+  historical release evidence.
+- `CONTRIBUTING.md` defines safe knowledge, adapter, scenario, and qualification maintenance.
+- `package.json` records the repository version and contributor-only verification commands.
+- `specs/approved/SPEC-0002-companion-driven-devcharter.md` is current product authority.
+- `specs/active/` contains at most one implementation specification.
+- `scripts/validate-assets.mjs` is a contributor check, not a product or target runtime.
+
+## Current implementation sequence
+
+SPEC-0002A through SPEC-0002D are ordered and done. `specs/active/` is empty until later work is
+explicitly approved and activated.
+
+The stable public vocabulary is:
 
 ```text
-draft → ready → active → done
-draft|ready|active → cancelled
+Modes: new, retrofit, audit
+Scopes: full, governance, engineering, ai
+Statuses: draft, ready, active, done, cancelled
 ```
 
-Blocking is metadata and does not create another lifecycle state.
-
-## Current product evolution
-
-`SPEC-0002` makes the AI coding companion the DevCharter interface while retaining the three modes,
-four scopes, explicit proposal and specification approvals, minimum-sufficient generation, and
-read-only audit. It removes the CLI, three v0 runtime packages, JSON lifecycle, and deterministic
-renderer/writer. SPEC-0002 is approved product authority; SPEC-0001 and SPEC-0001A–E are historical.
-
-SPEC-0002A–D are approved and ready in dependency order. Approval does not activate implementation;
-one child must be explicitly moved to `active` before its implementation begins.
+Blocking is metadata, not a status. `audit` is read-only. New and retrofit require proposal approval,
+detailed Markdown specification work, and separate specification approval before implementation.
