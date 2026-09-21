@@ -34,7 +34,8 @@ lifecycle, deterministic renderer or writer, hosted service, or target-local ins
 - Templates are optional guidance and cannot justify output by themselves.
 - The companion integration contract and native entrypoints translate routing without duplicating
   shared authority; provider capability records contain refreshable host facts.
-- Scenario fixtures and the validator are contributor-only assets; they never enter a target.
+- Scenario fixtures, the acceptance matrix, and the validator are contributor-only qualification
+  assets; they never enter a target.
 
 ## Target isolation
 
@@ -62,7 +63,25 @@ The [manifest](../../MANIFEST.md) maps current authority. The static foundation 
 only consumed paths. SPEC-0002B supplies the detailed shared methodology, component and stack
 selection knowledge, harness guidance, adaptable recipes, and methodology scenarios. SPEC-0002C
 adds thin Codex, Claude Code, and GitHub Copilot discovery surfaces over those shared sources;
-complete journey and release qualification remains SPEC-0002D.
+SPEC-0002D completes scenario, supported-host, documentation, migration, and release qualification.
+
+## Qualification architecture
+
+Qualification has four deliberately separate evidence classes:
+
+- static checks validate DevCharter-owned structure, references, metadata, terminology, and native
+  routes;
+- scenario walkthroughs validate decisions, approval order, preservation, scope, and observable
+  effects without requiring deterministic model prose;
+- real-host records capture provider and host version or date, the five inputs, approvals, outputs,
+  actual commands, limitations, and manual observations;
+- a fresh-context reviewer checks the completed repository and evidence without relying on the
+  implementation conversation.
+
+The root Node script is only the first two classes. It stages bounded temporary source and target
+directories to prove routing and hostile-audit snapshot equality, then removes them. It is not an
+installer, renderer, or writer. Live new/retrofit target execution is deferred to later user
+testing; supported-host evidence is recorded separately rather than inferred from the script.
 
 ## Historical architecture
 

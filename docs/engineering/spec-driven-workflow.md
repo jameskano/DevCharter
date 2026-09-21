@@ -86,3 +86,8 @@ Keep one authoritative definition per spec ID. When a spec replaces another, rec
 ## Completion
 
 A spec is `done` only when implementation, required tests, current documentation review, acceptance evidence, limitations, and deferred work are recorded.
+
+For release qualification, map every parent and child criterion to an explicit evidence identifier.
+Static validation, scripted scenarios, real-host observations, and independent review are distinct
+evidence classes; one must not be relabeled as another. A missing required host or unresolved review
+finding remains a release blocker even when static checks pass.

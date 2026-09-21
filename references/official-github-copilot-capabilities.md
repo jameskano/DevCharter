@@ -25,9 +25,10 @@ host and change over time; recheck the support matrix before claiming a capabili
 
 ## Deliberate limitations
 
-- The first-class reusable workflow is implemented for Copilot CLI. Qualification still requires a
-  recorded authenticated host journey. The IDE prompt is an additional preview route, not a
-  guarantee for Xcode, Eclipse, GitHub Mobile, code review, or every agent host.
+- The first-class reusable workflow is implemented for Copilot CLI. An authenticated CLI audit
+  journey was recorded on 2026-09-20 in the release qualification evidence. The IDE prompt is an
+  additional preview route, not a guarantee for Xcode, Eclipse, GitHub Mobile, code review, or every
+  agent host.
 - Copilot access, agent mode, filesystem edits, terminal commands, models, and customization
   features depend on plan, policy, IDE/CLI version, workspace trust, permissions, and preview
   availability.

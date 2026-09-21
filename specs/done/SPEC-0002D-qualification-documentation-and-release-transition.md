@@ -6,8 +6,11 @@
 |---|---|
 | ID | SPEC-0002D |
 | Parent | SPEC-0002 |
-| Status | ready |
+| Status | done |
+| Activation | User requested implementation on 2026-09-19 |
 | Approval | User requested final ready implementation specifications on 2026-09-18 |
+| Refinement | User explicitly approved deferring the four live new/retrofit target journeys until after specification completion on 2026-09-21 |
+| Completion | Fresh-context independent review passed and the user-authorized completion transition was applied on 2026-09-21 |
 | Dependencies | SPEC-0002A, SPEC-0002B, SPEC-0002C |
 | Enables | Companion-driven DevCharter release |
 
@@ -33,31 +36,41 @@ The TypeScript CLI/runtime packages, JSON lifecycle, deterministic renderer/writ
 DevCharter dependency, and their installation instructions are absent from the released product.
 Historical specifications remain clearly labeled as evidence and are not presented as current use.
 
-## Required end-to-end journeys
+## Required qualification scenarios and deferred user journeys
+
+The four new/retrofit scenarios below must validate DevCharter-owned instructions, decisions,
+approval boundaries, expected target effects, preservation rules, and verification design. Their
+live target execution is deferred to post-specification user testing by the explicit 2026-09-21
+decision and is not a completion gate for this specification. The hostile audit and representative
+supported-host attempts remain required qualification evidence.
 
 ### New project, full scope
 
-Start from an empty or lightly initialized target and a substantive product brief. The proposal and
-detailed plan must cover a complete ready-to-code foundation: chosen framework structure, relevant
-configuration, current documentation, AI instructions, appropriate engineering tools, and critical
-harnesses. Include at least one explicit non-default request, such as opening the browser when the
-development server starts, and verify it in the resulting configuration or observable behavior.
+Model an empty or lightly initialized target and a substantive product brief. The scenario's
+proposal and detailed-plan expectations must cover a complete ready-to-code foundation: chosen
+framework structure, relevant configuration, current documentation, AI instructions, appropriate
+engineering tools, and critical harnesses. Include at least one explicit non-default request, such
+as opening the browser when the development server starts, and define how the resulting
+configuration or observable behavior would be verified during later user execution.
 
 ### New project, focused scope
 
-Exercise a narrower scope, especially `ai`, to prove that scope selection constrains output and
-does not silently create an entire application or unrelated engineering stack.
+Exercise a narrower scope, especially `ai`, through fixture assertions that prove scope selection
+constrains proposed and authorized effects and does not silently authorize an entire application or
+unrelated engineering stack.
 
 ### Existing project retrofit
 
-Use a representative established repository. Preserve its framework, source structure, useful
-configuration, and user-owned content. Propose and apply at least one justified AI-ecosystem
-improvement and one important engineering tool or harness only after explicit approval.
+Model a representative established repository. Require preservation of its framework, source
+structure, useful configuration, and user-owned content. Propose at least one justified
+AI-ecosystem improvement and one important engineering tool or harness, and prove through the
+scenario that neither may be applied before explicit approval.
 
 ### Focused retrofit
 
-Exercise `retrofit` with `ai` scope and verify that important observations outside scope may be
-reported but are not written without an explained dependency and approval.
+Exercise `retrofit` with `ai` scope and verify through expected/prohibited effects that important
+observations outside scope may be reported but are not authorized for writing without an explained
+dependency and approval.
 
 ### Audit
 
@@ -141,7 +154,7 @@ SPEC-0001/0001A–E should be interpreted.
 
 Map every parent and child acceptance criterion to static, scenario, real-host, or manual evidence.
 
-### D2. Implement fixtures and journey checks
+### D2. Implement fixtures and scenario checks
 
 Create representative new, retrofit, audit, plan-lifecycle, failure, and sensitive-operation
 fixtures without embedding one technology as a universal answer.
@@ -167,10 +180,11 @@ skips, and prepare release evidence and migration notes.
    README without discovering the old CLI workflow.
 2. The user guide covers new, retrofit, and audit from the five inputs through their correct final
    stage.
-3. The full new-project journey creates a complete ready-to-code foundation and proves an explicit
-   non-default configuration.
-4. Focused-scope journeys do not create unrelated ecosystem components.
-5. Retrofit preserves useful existing content and applies only approved, justified additions.
+3. The full new-project scenario specifies a complete ready-to-code foundation and a practical
+   verification design for an explicit non-default configuration.
+4. Focused-scope scenarios constrain authorized effects and reject unrelated ecosystem components.
+5. Retrofit scenarios preserve useful existing content and authorize only approved, justified
+   additions.
 6. Audit causes zero target and external mutations.
 7. One-file and multi-file Markdown SDD journeys enforce separate proposal and implementation-plan
    approvals.
@@ -191,7 +205,7 @@ skips, and prepare release evidence and migration notes.
 16. No empty placeholder knowledge profile, template, integration, harness, or documentation file
     is counted as complete.
 17. Every acceptance criterion across SPEC-0002 and SPEC-0002A–D maps to actual evidence, an
-    approved limitation, or a release-blocking gap.
+    approved limitation or deferral, or a release-blocking gap.
 18. Applicable formatting, static validation, tests, and scenario checks pass, with actual results
     and skips recorded.
 
@@ -214,8 +228,10 @@ dialogue while preserving the decisions and approvals needed to verify the lifec
 ## Completion gate
 
 Do not mark SPEC-0002D `done` or describe the transformation as released until all parent and child
-criteria have traceable evidence, all supported-companion journeys have been attempted in real
-hosts, audit no-write behavior is demonstrated, obsolete operational surfaces and documentation are
-absent, the independent review has no unresolved blocker, and the user-facing migration path is
-clear. Report any unavailable external host or skipped check honestly; a release-blocking gap cannot
-be converted into a documentation note without explicit approval.
+criteria have traceable evidence or an explicit approved limitation/deferral, all
+supported-companion host routes have been attempted, audit no-write behavior is demonstrated,
+obsolete operational surfaces and documentation are absent, the independent review has no
+unresolved blocker, and the user-facing migration path is clear. The live new/full, new/ai,
+retrofit/full, and retrofit/ai target executions are explicitly deferred to later user testing and
+do not block completion. Report unavailable external hosts and skipped checks honestly; no other
+release-blocking gap may be converted into a documentation note without explicit approval.

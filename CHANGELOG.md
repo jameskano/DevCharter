@@ -16,6 +16,12 @@
   SPEC-0002B.
 - Added native Codex, Claude Code, and GitHub Copilot routes, a shared conformance contract, dated
   official capability records, and companion integration scenario checks for SPEC-0002C.
+- Added SPEC-0002D release fixtures and walkthroughs for full and focused new/retrofit journeys,
+  hostile audit, one- and multi-spec approvals, capability failures, sensitive confirmations, and
+  source/target isolation.
+- Added a machine-checked 90-criterion qualification inventory, current contributor guidance,
+  expanded user dialogue, qualification architecture, supported-host evidence, and explicit
+  limitations.
 
 ### Removed
 
@@ -30,6 +36,11 @@
   principles in current instructions and knowledge.
 - SPEC-0001 and SPEC-0001A-E plus v0 release evidence as explicitly historical records.
 
-### Deferred
+### Deferred user validation
 
-- Full lifecycle qualification, documentation completion, and release transition to SPEC-0002D.
+- Live disposable new/full, new/ai, retrofit/full, and retrofit/ai target execution is deferred to
+  post-specification user testing by the explicit 2026-09-21 decision. Qualification validates
+  their scenario contracts without claiming those targets were implemented.
+- Claude Code installation and OAuth were attempted, but the user-approved missing subscription
+  entitlement prevents an authenticated Claude journey; static adapter and host-discovery checks
+  are retained without claiming model-execution equivalence.

@@ -22,6 +22,8 @@ There is no DevCharter product runtime or target-local installation.
 12. `knowledge/shared-foundation.md`
 13. `knowledge/companion-integration-contract.md` and the selected entrypoint under `companions/`
 14. applicable templates, scenarios, and dated capability references
+15. `CONTRIBUTING.md` and `docs/release/companion-driven-qualification.md` for maintenance and
+    release evidence
 
 Historical v0 context is consulted only when migration history or prior evidence is relevant:
 
@@ -51,16 +53,17 @@ specification may explain a decision but cannot restore superseded runtime behav
 - `knowledge/` owns implementation-neutral shared rules.
 - `templates/` provides optional guidance, never unconditional output.
 - `tests/fixtures/` and `tests/scenarios/` provide development-only static validation inputs.
-- `docs/` contains current documentation plus explicitly labelled historical release evidence.
+- `docs/` contains current documentation, completed qualification, and explicitly labelled
+  historical release evidence.
+- `CONTRIBUTING.md` defines safe knowledge, adapter, scenario, and qualification maintenance.
 - `specs/approved/SPEC-0002-companion-driven-devcharter.md` is current product authority.
 - `specs/active/` contains at most one implementation specification.
 - `scripts/validate-assets.mjs` is a contributor check, not a product or target runtime.
 
 ## Current implementation sequence
 
-SPEC-0002A through SPEC-0002D are ordered. SPEC-0002A through SPEC-0002C are done, SPEC-0002D
-remains ready, and no implementation specification is active. Later work must not be implemented
-before explicit activation.
+SPEC-0002A through SPEC-0002D are ordered and done. `specs/active/` is empty until later work is
+explicitly approved and activated.
 
 The stable public vocabulary is:
 

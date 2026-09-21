@@ -225,7 +225,10 @@ const currentSources = [
   "references/official-codex-capabilities.md",
   "references/official-claude-code-capabilities.md",
   "references/official-github-copilot-capabilities.md",
-  "tests/scenarios/companion-integration-walkthrough-results.md"
+  "tests/scenarios/companion-integration-walkthrough-results.md",
+  "tests/scenarios/release-qualification-results.md",
+  "docs/release/companion-driven-qualification.md",
+  "CONTRIBUTING.md"
 ];
 const obsoleteInstructions = [
   /pnpm\s+exec\s+devcharter/i,
@@ -359,31 +362,205 @@ try {
   fail(`tests/fixtures/project-architect-scenarios.json: invalid fixture: ${error.message}`);
 }
 
+const releaseFixturePath = path.join(root, "tests/fixtures/release-qualification-scenarios.json");
+const requiredReleaseScenarioIds = [
+  "new-full-browser-open",
+  "new-ai-focused",
+  "retrofit-full-approved-tools",
+  "retrofit-ai-focused",
+  "audit-hostile-no-write",
+  "single-spec-two-gates",
+  "multi-spec-deviation-return",
+  "capability-failures",
+  "sensitive-confirmations",
+  "source-target-isolation"
+];
+let releaseScenarioCount = 0;
+try {
+  const fixture = JSON.parse(await readFile(releaseFixturePath, "utf8"));
+  if (
+    typeof fixture.devcharterLocation !== "string" ||
+    typeof fixture.targetLocation !== "string" ||
+    fixture.devcharterLocation === fixture.targetLocation
+  ) {
+    fail("tests/fixtures/release-qualification-scenarios.json: source and target must differ");
+  }
+  const scenarios = fixture.scenarios;
+  if (!Array.isArray(scenarios)) throw new Error("scenarios must be an array");
+  releaseScenarioCount = scenarios.length;
+  const ids = new Set();
+  for (const scenario of scenarios) {
+    if (typeof scenario.id !== "string" || scenario.id.trim() === "") {
+      fail("tests/fixtures/release-qualification-scenarios.json: scenario missing id");
+      continue;
+    }
+    if (ids.has(scenario.id)) {
+      fail(`tests/fixtures/release-qualification-scenarios.json: duplicate ${scenario.id}`);
+    }
+    ids.add(scenario.id);
+    if (!["new", "retrofit", "audit"].includes(scenario.mode)) {
+      fail(`tests/fixtures/release-qualification-scenarios.json: ${scenario.id} has invalid mode`);
+    }
+    if (!["full", "governance", "engineering", "ai"].includes(scenario.scope)) {
+      fail(`tests/fixtures/release-qualification-scenarios.json: ${scenario.id} has invalid scope`);
+    }
+    if (typeof scenario.initialContext !== "string" || scenario.initialContext.trim() === "") {
+      fail(`tests/fixtures/release-qualification-scenarios.json: ${scenario.id} lacks initial context`);
+    }
+    for (const list of [
+      "startingState",
+      "approvalSequence",
+      "expectedEffects",
+      "preservedPaths",
+      "prohibitedEffects"
+    ]) {
+      if (!Array.isArray(scenario[list])) {
+        fail(`tests/fixtures/release-qualification-scenarios.json: ${scenario.id} lacks ${list}`);
+      }
+    }
+  }
+  for (const id of requiredReleaseScenarioIds) {
+    if (!ids.has(id)) {
+      fail(`tests/fixtures/release-qualification-scenarios.json: missing required scenario ${id}`);
+    }
+  }
+  const audit = scenarios.find(({ id }) => id === "audit-hostile-no-write");
+  const auditBoundaries = audit?.prohibitedEffects?.join(" ") ?? "";
+  for (const boundary of [
+    "Target file write",
+    "Lockfile write",
+    "Cache write",
+    "Git metadata write",
+    "Report file",
+    "External mutation",
+    "Target script execution"
+  ]) {
+    if (!auditBoundaries.includes(boundary)) {
+      fail(`tests/fixtures/release-qualification-scenarios.json: audit omits ${boundary}`);
+    }
+  }
+  const sensitive = scenarios.find(({ id }) => id === "sensitive-confirmations");
+  const sensitiveBoundaries = sensitive?.prohibitedEffects?.join(" ") ?? "";
+  for (const boundary of ["Secret access", "External data sharing", "Remote write", "Destructive action", "Hard-to-reverse action"]) {
+    if (!sensitiveBoundaries.includes(boundary)) {
+      fail(`tests/fixtures/release-qualification-scenarios.json: sensitive scenario omits ${boundary}`);
+    }
+  }
+} catch (error) {
+  fail(`tests/fixtures/release-qualification-scenarios.json: invalid fixture: ${error.message}`);
+}
+
+const releaseResultsPath = path.join(root, "tests/scenarios/release-qualification-results.md");
+const releaseResults = sources.get(releaseResultsPath) ?? "";
+for (const id of requiredReleaseScenarioIds) {
+  const escapedId = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const section = releaseResults.match(
+    new RegExp("^## `" + escapedId + "`\\r?\\n([\\s\\S]*?)(?=^## `|^## Evaluation notes)", "m")
+  )?.[1] ?? "";
+  if (section === "") {
+    fail(`tests/scenarios/release-qualification-results.md: missing evidence section ${id}`);
+    continue;
+  }
+  for (const label of [
+    "Evidence type:",
+    "Questions:",
+    "Proposal and approval:",
+    "SDD and implementation gate:",
+    "Changed and preserved paths:",
+    "Procedure and actual result:",
+    "Limitations:"
+  ]) {
+    if (!section.includes(label)) {
+      fail(`tests/scenarios/release-qualification-results.md: ${id} lacks ${label}`);
+    }
+  }
+}
+
 {
   const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "devcharter-hostile-audit-"));
+  const stagedSource = path.join(temporaryRoot, "devcharter-source");
   const hostileTarget = path.join(temporaryRoot, "target");
+  const boundedExternalState = path.join(temporaryRoot, "external-state");
   try {
+    await mkdir(stagedSource);
     await mkdir(hostileTarget);
+    await mkdir(boundedExternalState);
+    await mkdir(path.join(hostileTarget, ".git"));
+    await mkdir(path.join(hostileTarget, ".cache"));
+    await writeFile(path.join(stagedSource, "source-sentinel.txt"), "read-only source\n", "utf8");
     await writeFile(
       path.join(hostileTarget, "package.json"),
-      `${JSON.stringify({ scripts: { postinstall: "untrusted-side-effect" } }, null, 2)}\n`,
+      `${JSON.stringify({ scripts: { postinstall: "node -e \"require('node:fs').writeFileSync('side-effect.txt','ran')\"" } }, null, 2)}\n`,
       "utf8"
     );
+    await writeFile(path.join(hostileTarget, "package-lock.json"), "{}\n", "utf8");
+    await writeFile(path.join(hostileTarget, ".cache", "sentinel.txt"), "unchanged cache\n", "utf8");
+    await writeFile(path.join(hostileTarget, ".git", "HEAD"), "ref: refs/heads/main\n", "utf8");
+    await writeFile(path.join(hostileTarget, ".git", "index"), "fixture index\n", "utf8");
     await writeFile(path.join(hostileTarget, ".env"), "TOKEN=fixture-value\n", "utf8");
     await writeFile(path.join(hostileTarget, "generated.bin"), Buffer.from([0, 1, 2, 3]));
-    const before = await snapshot(hostileTarget);
+    await writeFile(
+      path.join(boundedExternalState, "sentinel.txt"),
+      "unchanged external state\n",
+      "utf8"
+    );
+    const sourceBefore = await snapshot(stagedSource);
+    const targetBefore = await snapshot(hostileTarget);
+    const externalBefore = await snapshot(boundedExternalState);
     const names = await readdir(hostileTarget);
     const manifest = JSON.parse(await readFile(path.join(hostileTarget, "package.json"), "utf8"));
     if (!names.includes(".env") || typeof manifest.scripts?.postinstall !== "string") {
       fail("hostile audit walkthrough: fixture evidence was not observable");
     }
-    const after = await snapshot(hostileTarget);
-    if (before !== after) fail("hostile audit walkthrough: target changed during read-only review");
+    const sourceAfter = await snapshot(stagedSource);
+    const targetAfter = await snapshot(hostileTarget);
+    const externalAfter = await snapshot(boundedExternalState);
+    if (sourceBefore !== sourceAfter) fail("hostile audit walkthrough: source changed during review");
+    if (targetBefore !== targetAfter) fail("hostile audit walkthrough: target changed during read-only review");
+    if (externalBefore !== externalAfter) fail("hostile audit walkthrough: external state changed");
     if (await exists(path.join(hostileTarget, "side-effect.txt"))) {
       fail("hostile audit walkthrough: untrusted script executed");
     }
   } finally {
     await rm(temporaryRoot, { recursive: true, force: true });
+  }
+}
+
+const qualificationRecord = sources.get(
+  path.join(root, "docs/release/companion-driven-qualification.md")
+) ?? "";
+const qualificationRows = new Map();
+for (const match of qualificationRecord.matchAll(
+  /^\| (SPEC-0002[A-D]?-AC-\d{2}) \| (pass|pending|blocked) \| ([^|\r\n]+)\|$/gm
+)) {
+  if (qualificationRows.has(match[1])) {
+    fail(`docs/release/companion-driven-qualification.md: duplicate criterion ${match[1]}`);
+  }
+  qualificationRows.set(match[1], { state: match[2], evidence: match[3].trim() });
+}
+for (const [id, count] of [
+  ["SPEC-0002", 27],
+  ["SPEC-0002A", 12],
+  ["SPEC-0002B", 18],
+  ["SPEC-0002C", 15],
+  ["SPEC-0002D", 18]
+]) {
+  for (let number = 1; number <= count; number += 1) {
+    const criterion = `${id}-AC-${String(number).padStart(2, "0")}`;
+    const row = qualificationRows.get(criterion);
+    if (!row) {
+      fail(`docs/release/companion-driven-qualification.md: missing criterion ${criterion}`);
+    } else if (row.evidence.length < 20) {
+      fail(`docs/release/companion-driven-qualification.md: criterion ${criterion} lacks evidence`);
+    }
+  }
+}
+if (qualificationRows.size !== 90) {
+  fail(`docs/release/companion-driven-qualification.md: expected 90 unique criterion rows, found ${qualificationRows.size}`);
+}
+for (const companion of ["Codex", "Claude Code", "GitHub Copilot"]) {
+  if (!qualificationRecord.includes(`### ${companion}`)) {
+    fail(`docs/release/companion-driven-qualification.md: missing ${companion} host evidence`);
   }
 }
 
@@ -640,6 +817,6 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   process.stdout.write(
-    `Static asset verification passed on ${process.version}: ${markdownFiles.length} Markdown files, ${specs.length} specifications, ${skillFiles.length} canonical skills, ${methodologyScenarioCount} methodology scenarios, ${companionScenarioCount} companion failure scenarios with evidence assertions, separate-location and hostile-audit walkthroughs.\n`
+    `Static asset verification passed on ${process.version}: ${markdownFiles.length} Markdown files, ${specs.length} specifications, ${skillFiles.length} canonical skills, ${methodologyScenarioCount} methodology scenarios, ${companionScenarioCount} companion failure scenarios, ${releaseScenarioCount} release scenarios with evidence assertions, separate-location and hostile-audit walkthroughs.\n`
   );
 }

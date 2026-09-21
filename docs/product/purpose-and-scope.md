@@ -74,4 +74,6 @@ product owner, or continuous repository monitor.
 SPEC-0002A provides the static repository foundation and removes the historical v0 runtime.
 SPEC-0002B provides the shared Project Architect methodology and knowledge. SPEC-0002C provides
 qualified native Codex, Claude Code, and GitHub Copilot routes plus dated capability evidence;
-SPEC-0002D will qualify the full lifecycle and release transition.
+SPEC-0002D completes documentation and release qualification with recorded supported-host evidence,
+an approved Claude entitlement limitation, and scenario evidence for live new/retrofit journeys
+deferred to later user testing.

@@ -10,6 +10,7 @@
 | Status | ready |
 | Draft authorized | User, 2026-09-18 |
 | Approval | User explicitly approved the final ready specification direction on 2026-09-18 |
+| Qualification refinement | User explicitly approved scenario evidence with live new/retrofit target execution deferred to post-specification testing on 2026-09-21 |
 | Relationship | Supersedes SPEC-0001 as product authority; SPEC-0001 and SPEC-0001A–E remain historical implementation evidence |
 | Preserved contracts | Modes, scopes, statuses, audit read-only behavior, proposal-before-write, explicit approval, path safety, preservation, validation, and minimum-sufficient generation |
 
@@ -583,9 +584,10 @@ The approved implementation specifications are ordered as follows:
    companions.
 3. **SPEC-0002C — Three native companion integrations** — package and adapt the shared methodology for Codex,
    Claude Code, and GitHub Copilot, including native output selection and reasoning-model guidance.
-4. **SPEC-0002D — Qualification and documentation** — validate instruction assets and representative real-host
-   journeys, update the user experience, remove obsolete v0 surfaces, and record limitations without
-   claiming deterministic model output.
+4. **SPEC-0002D — Qualification and documentation** — validate instruction assets, representative supported-host
+   routes, and new/retrofit scenario contracts; update the user experience; remove obsolete v0
+   surfaces; and record limitations without claiming deterministic model output. Live new/retrofit
+   target execution is deferred to later user testing.
 
 This dependency order is not permission to activate parallel implementation. Each child remains
 `ready` until explicitly activated, and a later child cannot silently implement an incomplete
@@ -610,17 +612,18 @@ dependency.
 8. DevCharter runs from a location independent of the target and does not add itself to the target's
    project dependencies merely to operate.
 9. A DevCharter source checkout remains unchanged during a target lifecycle.
-10. A `new/full` journey can produce a complete runnable foundation for a representative framework,
-    including its justified generated structure, requested configuration, AI ecosystem, and
-    verification harnesses.
-11. A user-requested supported configuration detail is represented in the proposal, detailed
-    specification, implemented configuration, and verification evidence.
-12. A large framework-generated structure is allowed when justified by the selected stack and is
-    implemented only after the detailed specification is approved.
-13. New-project output contains no substantive product feature unrelated to establishing or proving
-    the approved foundation.
-14. A retrofit journey preserves useful existing structure and adds an important formatter, linter,
-    type checker, test runner, or verification command only when evidence and approval justify it.
+10. A `new/full` scenario demonstrates that the workflow can specify a complete runnable foundation
+    for a representative framework, including justified generated structure, requested
+    configuration, AI ecosystem, and verification harnesses.
+11. A user-requested supported configuration detail is traced through the proposal, detailed
+    specification, expected implementation effect, and practical verification design.
+12. A large framework-generated structure is authorized only when justified by the selected stack
+    and only after the detailed specification is approved.
+13. New-project expected effects reject substantive product features unrelated to establishing or
+    proving the approved foundation.
+14. A retrofit scenario requires preservation of useful existing structure and authorizes an
+    important formatter, linter, type checker, test runner, or verification command only when
+    evidence and approval justify it.
 15. Audit performs zero target writes, dependency installation, framework generation, mutating
     target commands, and target-local state creation; only demonstrably read-only inspection is
     permitted.
@@ -637,8 +640,9 @@ dependency.
     instruction precedence is validated.
 22. Other capable companions may use the generic guidance on a best-effort basis without being
     represented as officially tailored or qualified integrations.
-23. Specified verification commands execute after implementation with actual results, timeouts,
-    failures, and skips reported accurately.
+23. The workflow requires specified verification commands to execute after implementation with
+    actual results, timeouts, failures, and skips reported accurately; qualification scenarios must
+    verify that contract without fabricating an implementation run.
 24. The companion records partial implementation accurately and does not discard unrelated or
     external changes to force success.
 25. A remote companion with a writable checkout can run the normal lifecycle without a hosted
@@ -654,22 +658,23 @@ dependency.
 | Area | Required evidence |
 |---|---|
 | Shared workflow | Static checks and scenario tests for required inputs, questions, proposal approval, SDD approval, implementation, and verification |
-| Target independence | Separate DevCharter and target locations on Windows, macOS, and Linux |
+| Target independence | Platform-neutral separate-location and containment checks, plus documented limitations of the actual qualification host |
 | SDD lifecycle | Draft, review, approval, material-deviation, completion, and blocked-state scenarios |
-| New journey | Empty/light target to runnable verified foundation, including requested non-default configuration |
-| Retrofit journey | Established target preservation plus one justified approved engineering-tool improvement |
+| New journey | Scenario from empty/light target through an approved runnable-foundation plan, including a requested non-default configuration and verification design; live execution deferred to user testing |
+| Retrofit journey | Scenario proving established-target preservation and approval boundaries for one justified engineering-tool improvement; live execution deferred to user testing |
 | Audit journey | Hostile target review proving no target writes or target command side effects |
 | Companion assets | Native path, metadata, instruction, reference, and routing validation for Codex, Claude Code, and GitHub Copilot |
 | Representative host use | At least one documented real-host journey per supported companion without claiming deterministic output parity |
 | Approval UX | Explicit proposal approval, explicit SDD approval, rejection, revision, and ambiguous-response scenarios |
 | Capability failure | Blocking and non-blocking permission, tool, network, and environment cases |
-| Harness quality | Build/run/verify commands and at least one critical journey exercised end to end |
+| Harness quality | Contributor verification commands, hostile audit exercised end to end, and scenario assertions for target build/run/verify obligations |
 | Documentation | Source links, installation journey, user dialogue, migration, limitations, and reviewed diffs |
 | Independent review | Fresh-context completion review against this specification and representative journey evidence |
 
-Automated checks validate DevCharter-owned instructions and assets. Representative real-host
-journeys demonstrate usability, but DevCharter does not guarantee equivalent or high-quality output
-from every model, account, permission configuration, or future provider version.
+Automated checks validate DevCharter-owned instructions and assets. Representative supported-host
+attempts demonstrate routing and bounded behavior. Live new/retrofit target execution is deferred
+to later user testing; DevCharter does not guarantee equivalent or high-quality output from every
+model, account, permission configuration, or future provider version.
 
 ## Affected documentation
 

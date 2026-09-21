@@ -39,7 +39,7 @@ under a classified package inherits that package's disposition.
 | `docs/engineering/quality-and-decision-model.md`, `docs/engineering/spec-driven-workflow.md` | Retain | Already implementation-independent current guidance; reviewed without substantive change. |
 | `docs/release/v0-qualification.md`, `docs/release/habit-compass-pilot.md` | Retain as historical evidence | Historical banners prevent these records from being read as current instructions. |
 | `specs/approved/SPEC-0001-devcharter-v0.md`, `specs/done/SPEC-0001A` through `SPEC-0001E` | Retain as historical evidence | Exact prior contracts and completion evidence. They do not govern current behavior. |
-| `specs/approved/SPEC-0002-companion-driven-devcharter.md`, `specs/done/SPEC-0002A*` through `SPEC-0002C*`, `specs/ready/SPEC-0002D*`, status README files | Retain/update routing | Current product authority and ordered implementation work. |
+| `specs/approved/SPEC-0002-companion-driven-devcharter.md`, `specs/done/SPEC-0002A*` through `SPEC-0002D*`, status README files | Retain/update routing | Current product authority and completed ordered implementation work. |
 | `references/official-*-capabilities.md` | Retain/update | Dated Codex, Claude Code, and GitHub Copilot capability evidence; it is not product authority. |
 | `.github/workflows/ci.yml`, `.gitattributes`, `.gitignore`, `package.json` | Simplify and retain | Cross-platform contributor-only static verification and repository hygiene. There are no dependencies, package exports, or product binaries. |
 

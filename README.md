@@ -7,14 +7,15 @@ coding companion. It inspects a target repository, proposes only justified impro
 implementation behind explicit human approval. DevCharter has no product CLI, runtime package,
 hosted service, or target-project dependency.
 
-SPEC-0002A establishes the shared static foundation. SPEC-0002B provides the shared Project
-Architect methodology, decision knowledge, adaptable recipes, and scenario checks. SPEC-0002C
-provides qualified native Codex, Claude Code, and GitHub Copilot routes on top of that methodology.
+SPEC-0002A–D complete the static foundation, shared methodology, native routes, documentation, and
+release qualification. The [qualification record](docs/release/companion-driven-qualification.md)
+contains no pending or blocked gate. Live new/retrofit target execution is explicitly deferred to
+later user testing and is not represented as completed qualification work.
 
 ## Start a DevCharter run
 
-Open DevCharter from a local folder or GitHub repository, then tell your AI coding companion these
-five inputs:
+Clone DevCharter locally, or give the companion a GitHub URL it can actually read. Open the selected
+[companion entrypoint](#native-setup), then provide these five inputs in one message:
 
 1. **Mode:** `new`, `retrofit`, or `audit`.
 2. **Scope:** `full`, `governance`, `engineering`, or `ai`.
@@ -35,6 +36,11 @@ Initial context: Preserve the existing stack and improve only foundations justif
 The DevCharter and target locations may be anywhere the companion can read. Do not copy DevCharter
 into the target or add it to the target's dependencies.
 
+The companion first inspects, asks only material questions, and returns a reviewable proposal. For
+`new` and `retrofit`, approve that proposal only if you want detailed Markdown specifications. Then
+review and separately approve the applicable specification before implementation. For `audit`, the
+final result is a findings report in conversation and no target or external mutation.
+
 ## Native setup
 
 | Companion | Native route | Separate-location setup |
@@ -49,6 +55,10 @@ replaces proposal approval, specification approval, or immediate confirmation fo
 actions. Use a strong reasoning model for discovery, proposal synthesis, architecture, and detailed
 planning. A faster or cheaper model can implement a precise low-risk approved plan when verification
 is strong; this advice is provider-neutral.
+
+Host availability, versions, policies, permissions, network access, and model quality can limit a
+run. A companion must report a limitation or blocker accurately; DevCharter does not promise
+deterministic output parity among providers or reliable results from every model.
 
 ## Next instruction source
 
@@ -83,6 +93,7 @@ remote writes, and hard-to-reverse operations always require immediate confirmat
 
 The [manifest](MANIFEST.md) defines reading order and authority. The
 [user guide](docs/user-guide.md) describes the current interaction model.
+The [contributor guide](CONTRIBUTING.md) explains safe maintenance and qualification.
 
 ## Contributor verification
 
