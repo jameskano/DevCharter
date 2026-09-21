@@ -56,6 +56,7 @@ specification may explain a decision but cannot restore superseded runtime behav
 - `docs/` contains current documentation, completed qualification, and explicitly labelled
   historical release evidence.
 - `CONTRIBUTING.md` defines safe knowledge, adapter, scenario, and qualification maintenance.
+- `package.json` records the repository version and contributor-only verification commands.
 - `specs/approved/SPEC-0002-companion-driven-devcharter.md` is current product authority.
 - `specs/active/` contains at most one implementation specification.
 - `scripts/validate-assets.mjs` is a contributor check, not a product or target runtime.

@@ -63,6 +63,18 @@ const sources = new Map(
   await Promise.all(textFiles.map(async (file) => [file, await readFile(file, "utf8")]))
 );
 
+const packageManifestPath = path.join(root, "package.json");
+const packageManifest = JSON.parse(await readFile(packageManifestPath, "utf8"));
+const repositoryVersion = packageManifest.version;
+if (typeof repositoryVersion !== "string" || !/^\d+\.\d+\.\d+$/.test(repositoryVersion)) {
+  fail("package.json: version must be a semantic version");
+} else {
+  const readme = sources.get(path.join(root, "README.md"));
+  if (!readme?.includes(`Current repository version: **${repositoryVersion}**.`)) {
+    fail("README.md: current repository version must match package.json");
+  }
+}
+
 for (const [file, source] of sources) {
   if (source.length > 0 && !source.endsWith("\n")) fail(`${relative(file)}: missing final newline`);
   source.split(/\r?\n/).forEach((line, index) => {
@@ -794,7 +806,6 @@ if (separateLocationFixture) {
   }
 }
 
-const packageManifest = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
 for (const forbidden of ["bin", "dependencies", "devDependencies", "exports", "workspaces"]) {
   if (forbidden in packageManifest) fail(`package.json: contributor manifest must not define ${forbidden}`);
 }

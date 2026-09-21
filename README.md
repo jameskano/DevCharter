@@ -2,6 +2,8 @@
 
 **Build the smallest AI-assisted development system a repository actually needs.**
 
+Current repository version: **0.2.0**.
+
 DevCharter is an instruction-, knowledge-, skill-, and specification-driven tool used by an AI
 coding companion. It inspects a target repository, proposes only justified improvements, and keeps
 implementation behind explicit human approval. DevCharter has no product CLI, runtime package,
