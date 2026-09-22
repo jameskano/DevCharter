@@ -56,7 +56,10 @@ Material assumptions state:
 - whether the decision is reversible;
 - whether confirmation is required.
 
-Sensitive or irreversible behavior is never silently assumed.
+A proposal-changing assumption is retained only when it is low risk and reversible and the user
+explicitly accepts it or a stated default. Prefer a direct decision whenever the answer could
+materially improve the proposal. Sensitive, externally visible, irreversible, or public-contract
+behavior is never assumed.
 
 ## Shared responsibility
 
@@ -67,6 +70,11 @@ Codex inspects accessible relevant Git state, specs, docs, implementation, tests
 ## Approval
 
 Approval is lightweight. A proposal or spec becomes approved only through explicit human confirmation. AI may recommend approval but cannot grant it.
+
+A native Plan-mode approval is proposal approval only. It authorizes target-local Markdown
+specification drafting, never implementation. Only explicit approval of the applicable Markdown
+implementation specification moves it to `ready` and authorizes bounded implementation; host
+permissions and controls do not merge these gates.
 
 If the repository changes materially after approval, refresh the affected proposal before applying it.
 

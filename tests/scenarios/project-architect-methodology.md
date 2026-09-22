@@ -24,9 +24,22 @@ The fixture supplies distinct DevCharter and target locations shared by every ca
   components are rejected when they have no maintained value.
 - `recovery-and-stale-state` covers context loss, unverifiable approval, dependency/network failure,
   partial application, and evidence-based resumption without invented rollback.
+- `native-plan-proposal-only` and `read-only-plan-spec-transition` cover the native plan's proposal
+  role, the warning before approval, rejection of an implementation-start control, and the
+  specification-authoring-only transition.
+- `iterative-material-questions` and `assumption-deferral-boundaries` cover multiple question rounds,
+  repository-answerable and immaterial-question rejection, explicit deferral, accepted reversible
+  assumptions, and sensitive-decision boundaries.
+- `same-chat-implementation-handoff` and `later-chat-implementation-handoff` cover activation from
+  a current approved Markdown specification with and without the originating conversation.
+- `ordinary-conversation-fallback` covers a host without suitable native Plan mode while preserving
+  the same proposal and approval contract.
 
 Recorded manual outcomes for the required walkthroughs and lifecycle cases are in
 [Project Architect walkthrough results](project-architect-walkthrough-results.md).
+SPEC-0002E's focused scenario outcomes are recorded separately in [Plan-mode proposal refinement
+results](plan-mode-proposal-refinement-results.md) so the earlier SPEC-0002B evidence remains
+historically accurate.
 
 Together with static skill/reference checks, these cases cover all SPEC-0002B acceptance criteria:
 five inputs and mode/scope boundaries (1-2), discovery and decision categories (3-4), new and

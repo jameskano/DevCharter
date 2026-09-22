@@ -22,6 +22,11 @@
 - Added a machine-checked 90-criterion qualification inventory, current contributor guidance,
   expanded user dialogue, qualification architecture, supported-host evidence, and explicit
   limitations.
+- Refined optional native Plan-mode use so the native plan is the DevCharter proposal, complete
+  material questions may span multiple rounds, proposal approval permits Markdown specification
+  authoring only, and approved specifications support same- or later-conversation implementation.
+- Refreshed dated Codex, Claude Code, and GitHub Copilot planning-capability records and added
+  focused scenario and static regression evidence for both approval gates and fallback behavior.
 
 ### Removed
 

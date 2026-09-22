@@ -24,6 +24,13 @@ target. The skill routes approved detailed Markdown planning to the [Specificati
 skill](../../.agents/skills/specification-architect/SKILL.md). Proposal approval and specification
 approval remain separate gates.
 
+For `new` or `retrofit`, start Copilot CLI with `--plan`, use `/plan`, or press `Shift+Tab` to select
+plan mode. Do not use `--plan --mode autopilot`, plan-then-autopilot, or “Accept plan and build on
+autopilot”: those controls deliberately proceed into implementation and would bypass DevCharter's
+Markdown-specification gate. Treat the Copilot plan as the DevCharter proposal. After explicit
+proposal approval, exit plan mode only to run Specification Architect and author the approved draft
+specification or specifications, then stop for separate review.
+
 ## Copilot IDE preview route
 
 In VS Code, Visual Studio, or JetBrains with prompt files enabled, open a workspace that can read
@@ -31,6 +38,12 @@ both locations and invoke the repository prompt `/devcharter` from
 `.github/prompts/devcharter.prompt.md`. The prompt routes to the canonical [Project Architect
 skill](../../.agents/skills/project-architect/SKILL.md). Prompt files are a public-preview feature
 and are not supported by every Copilot host.
+
+Where the IDE exposes the Plan agent, select it for discovery and proposal work. Do not select
+“Start Implementation” at the proposal gate. After explicit proposal approval, switch to an
+editing-capable agent only with an instruction to create the target-local Markdown specifications
+through Specification Architect and perform no product implementation. Ordinary conversation is
+the fallback when the current Copilot host lacks a suitable Plan mode.
 
 ## Copilot-specific boundaries
 
@@ -48,6 +61,8 @@ and are not supported by every Copilot host.
 - Propose repository instructions, path-specific instructions, skills, prompts, agents, hooks,
   plugins, MCP, or other native target artifacts only when each has a justified purpose, ownership,
   evidence, and verification.
+- After explicit specification approval, implementation may continue in the same conversation or a
+  later one that re-verifies the spec's status, approval metadata, relationships, and current state.
 
 Use a strong reasoning model for repository discovery, proposal synthesis, architecture, and
 detailed planning. Implementation may use the same model or a faster/cheaper option only when the

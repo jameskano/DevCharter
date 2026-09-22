@@ -33,6 +33,14 @@ the proposal approval gate. After proposal approval, route detailed Markdown pla
 [Specification Architect skill](../../.agents/skills/specification-architect/SKILL.md). Separate
 explicit specification approval is required before implementation.
 
+For `new` or `retrofit`, use native Plan mode (`/plan` or `Shift+Tab`) when it is available in the
+current Codex host. Otherwise, use `/permissions` to select a read-only profile for inspection and
+proposal work, or continue in ordinary conversation while explicitly prohibiting writes. In all
+cases, the plan is the DevCharter proposal. Before approval, state that acceptance authorizes only
+target-local Markdown draft specifications. Do not use any host action that begins coding at this
+gate; switch to a writable profile only after proposal approval and only for specification
+authoring, then stop again for separate specification review.
+
 ## Codex-specific boundaries
 
 - Read applicable target `AGENTS.md` files and current project evidence. Do not apply DevCharter's
@@ -46,6 +54,8 @@ explicit specification approval is required before implementation.
   and other hard-to-reverse effects immediately before execution even when Codex permits them.
 - Propose `.codex/` configuration or any other native target artifact only when its purpose,
   ownership, repository evidence, and verification justify it.
+- After explicit specification approval, implementation may continue in the same chat or a later
+  chat that re-verifies the spec's status, approval metadata, relationships, and current worktree.
 
 Use a strong reasoning model for repository discovery, proposal synthesis, architecture, and
 detailed planning. Implementation may use the same model or a faster/cheaper option only when the

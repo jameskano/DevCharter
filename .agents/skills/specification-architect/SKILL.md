@@ -9,6 +9,9 @@ Define one implementation-ready behavior contract without turning routine mainte
 When Project Architect routes an approved proposal here, treat that proposal as planning authority
 but not write authority for implementation. Confirm that proposal approval is explicit and current;
 write only target-local Markdown `draft` specifications until a separate specification approval.
+If a native Plan mode produced the approved proposal, its lifecycle role is still proposal only,
+regardless of a host label such as “implementation plan” or an approval control that normally starts
+coding.
 
 ## Route the request
 
@@ -64,7 +67,9 @@ Require explicit confirmation for security, privacy, identity, permissions, paym
 
 Before assigning an ID, confirm that no authoritative specification already covers the requested behavior. If one exists, route to `refine` or `review`.
 
-Create one cohesive `draft` by default. Include only applicable sections from:
+Create one cohesive `draft` by default. Split only when material size, risk, independently
+reviewable subsystems, or dependency sequencing makes multiple specs clearer; record explicit
+relationships and implementation order. Include only applicable sections from:
 
 - metadata and explicit relationships;
 - problem and desired outcome;
@@ -82,7 +87,8 @@ Create one cohesive `draft` by default. Include only applicable sections from:
 The optional [implementation specification template](../../../templates/specifications/implementation-spec.md)
 is guidance, not a requirement to emit empty sections.
 
-Split requirements, design, tasks, acceptance, or test plans only when size, risk, independent ownership, or execution sequencing makes the split materially clearer. Do not create empty sections for possible future concerns.
+Do not split requirements, design, tasks, acceptance, or test plans for presentation convenience.
+Do not create empty sections for possible future concerns.
 
 Write every important acceptance criterion as an observable starting state, action, and result. Cover loading, empty, error, permission, destructive, recovery, and accessibility states only when relevant. Map each criterion to practical unit/domain, component/integration, journey-level E2E, static, or manual verification.
 
@@ -105,6 +111,12 @@ Read the authoritative specification before the diff or implementation.
 For readiness, verify that authority is unambiguous; the problem, outcome, scope, non-goals, and required behavior are clear; material questions are resolved; sensitive decisions are explicitly confirmed; assumptions are safe and evidence-backed; criteria are observable; and every important criterion maps to verification. Only explicit human approval permits `draft -> ready`. The agent may recommend approval but cannot grant it.
 
 For an implementation gate, prevent non-trivial implementation when the authoritative specification is missing, conflicted, or still `draft`. Help create or refine it instead of merely refusing. Implementation begins with `ready -> active`; do not invent another status.
+
+This gate is reconstructable from repository files in a later conversation. Verify the applicable
+instructions, proposal context recorded in the specification, current repository state,
+relationships, explicit approval metadata, and `ready` status before activation. If any evidence is
+missing, unverifiable, stale, or conflicting, refresh the affected analysis and obtain renewed
+review or approval rather than relying on remembered conversation state.
 
 For completion, map every requirement and criterion to implementation and actual verification evidence, identify scope or specification drift, run the narrowest sufficient checks and then broader checks warranted by blast radius, and review affected current product, architecture, engineering, security, operational, and AI documentation. Record updated documents and each reviewed-but-unchanged document with a concise reason.
 

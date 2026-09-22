@@ -31,6 +31,14 @@ and the proposal approval gate. After proposal approval, route detailed Markdown
 [Specification Architect skill](../../.agents/skills/specification-architect/SKILL.md). Separate
 explicit specification approval is required before implementation.
 
+For `new` or `retrofit`, start Claude Code in Plan mode with `--permission-mode plan`, enter it with
+`/plan`, or cycle to it with `Shift+Tab`. Use the mode for read-only inspection, all material
+clarifying questions, proposal iteration, and review. Claude Code normally treats approval of its
+plan as permission to edit; within DevCharter that plan is only the proposal. Before approval, state
+that acceptance authorizes Markdown specification drafting only. After explicit proposal approval,
+leave Plan mode solely to run Specification Architect and write the authorized target-local draft
+specification or specifications, then stop again for their separate review.
+
 ## Claude Code-specific boundaries
 
 - `--add-dir` grants read and edit capability. Treat the named DevCharter checkout as read-only and
@@ -49,6 +57,9 @@ explicit specification approval is required before implementation.
   them.
 - Propose `CLAUDE.md`, rules, skills, agents, hooks, plugins, MCP, or other native target artifacts
   only when each artifact has a justified purpose, ownership, evidence, and verification.
+- After explicit specification approval, implementation may continue in the same session or a
+  later session that re-verifies the spec's status, approval metadata, relationships, and current
+  target state.
 
 Use a strong reasoning model for repository discovery, proposal synthesis, architecture, and
 detailed planning. Implementation may use the same model or a faster/cheaper option only when the

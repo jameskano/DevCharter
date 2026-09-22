@@ -41,6 +41,13 @@ request
 → done
 ```
 
+For DevCharter `new` and `retrofit` journeys, optional native Plan mode sits before specification
+authoring: inspection and all unresolved material questions produce the DevCharter proposal.
+Proposal approval authorizes one or more Markdown draft specifications only. The Markdown
+specification is the definitive durable implementation plan, and its separate explicit approval is
+the implementation gate. The approved file can govern implementation in the same conversation or a
+later one after current status, approval metadata, relationships, and repository state are checked.
+
 ## Specification content
 
 Include only applicable sections:

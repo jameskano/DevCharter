@@ -342,6 +342,15 @@ DevCharter does not define JSON transport, runtime state, fingerprints, receipts
 persistence. The companion may use its ordinary conversation and tool state while inspecting,
 asking questions, and preparing the abstract proposal.
 
+For `new` and `retrofit`, a suitable host-native Plan mode is an optional surface for that same
+inspection, questioning, proposal refinement, and review. Its output is the DevCharter proposal,
+even when the host calls it an implementation plan; ordinary conversation follows the identical
+contract when the capability is unavailable. `audit` remains a findings-only journey. Before
+presenting the proposal, the companion asks every unresolved question that could materially change
+behavior, architecture, scope, output, ownership, safety, verification, or user expectations,
+unless the user explicitly defers it or accepts a stated low-risk reversible assumption. It does
+not ask for repository-answerable facts or immaterial preferences.
+
 After proposal approval, the companion creates one or more Markdown draft specifications in the
 target repository. One file is preferred when the implementation remains cohesive. Multiple files
 are appropriate when size, risk, separable subsystems, or dependency sequencing makes them
@@ -354,6 +363,13 @@ assumptions, scope, non-goals, affected structure, dependencies, implementation 
 harnesses, acceptance criteria, verification, risks, and recovery. Draft creation is authorized by
 proposal approval; project implementation is not. Explicit user approval moves the applicable
 specification to `ready`, after which implementation may begin.
+
+A host approval control that normally starts coding cannot represent DevCharter proposal approval.
+When Plan mode is read-only, the companion may switch to an editing-capable surface after explicit
+proposal approval solely to write the authorized Markdown drafts, then stops again for their
+review. An approved specification can govern implementation in the same conversation or a later
+one; a later companion must verify its approval metadata, status, relationships, current repository
+state, and applicable instructions without requiring the original transcript.
 
 If conversation context is lost before the draft specifications exist, the companion reinspects the
 available DevCharter and target sources and reconfirms material decisions. If approval evidence is
@@ -564,6 +580,8 @@ or target dependency.
 - Retaining v0 packages or CLI surfaces solely for backward compatibility.
 - Beginning implementation before the detailed SDD specification is explicitly approved.
 - Treating a generic proposal as the definitive implementation plan.
+- Treating a host-native plan or its implementation-start approval control as the definitive
+  Markdown implementation specification or as permission to code.
 - A fixed small-file budget that rejects a justified framework structure.
 - Generating every possible instruction, agent, skill, prompt, hook, CI workflow, or tool.
 - Implementing full product features as an incidental part of initial ecosystem setup.
@@ -588,10 +606,14 @@ The approved implementation specifications are ordered as follows:
    routes, and new/retrofit scenario contracts; update the user experience; remove obsolete v0
    surfaces; and record limitations without claiming deterministic model output. Live new/retrofit
    target execution is deferred to later user testing.
+5. **SPEC-0002E — Plan-mode proposal refinement and durable handoff** — map optional native Plan
+   mode to the proposal stage, require complete material questioning with constrained assumptions,
+   preserve separate Markdown-specification approval, and support same- or later-conversation
+   implementation from repository authority.
 
-This dependency order is not permission to activate parallel implementation. Each child remains
-`ready` until explicitly activated, and a later child cannot silently implement an incomplete
-dependency.
+This dependency order is not permission to activate parallel implementation. Each approved,
+not-yet-started child remains `ready` until explicitly activated, and a later child cannot silently
+implement an incomplete dependency.
 
 ## Acceptance criteria
 

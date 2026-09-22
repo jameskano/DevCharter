@@ -15,9 +15,9 @@ Selected AI coding companion
                          |
                          v
 Separate target repository
-  |-- discovery and questions
-  |-- reviewable proposal
-  |-- approved Markdown specification(s)
+  |-- read-only discovery and complete material questions
+  |-- reviewable proposal (native Plan mode or ordinary conversation)
+  |-- separately approved Markdown implementation specification(s)
   `-- approved implementation and verification
 ```
 
@@ -53,6 +53,13 @@ inputs -> inspect -> resolve material questions -> proposal -> human approval
        -> draft detailed specification(s) -> human approval -> implement -> verify
 ```
 
+Native Plan mode is an optional host surface for the first line, not a DevCharter lifecycle state.
+Its plan is the proposal. A host action that starts coding cannot bypass target-local Markdown
+specification authoring and separate approval. When Plan mode is unavailable, ordinary conversation
+uses the same contract. The approved Markdown specification is the durable handoff for same- or
+later-conversation implementation; later work reconstructs authority from repository state rather
+than a stored transcript.
+
 Proposal approval authorizes specification drafting only. A material implementation deviation
 updates the specification and requires renewed approval. `audit` ends with findings and performs no
 target write, installation, mutating command, or state creation.
@@ -63,7 +70,9 @@ The [manifest](../../MANIFEST.md) maps current authority. The static foundation 
 only consumed paths. SPEC-0002B supplies the detailed shared methodology, component and stack
 selection knowledge, harness guidance, adaptable recipes, and methodology scenarios. SPEC-0002C
 adds thin Codex, Claude Code, and GitHub Copilot discovery surfaces over those shared sources;
-SPEC-0002D completes scenario, supported-host, documentation, migration, and release qualification.
+SPEC-0002D completes scenario, supported-host, documentation, migration, and release qualification;
+SPEC-0002E completes optional native Plan-mode proposal refinement and durable specification
+handoff without adding runtime state.
 
 ## Qualification architecture
 

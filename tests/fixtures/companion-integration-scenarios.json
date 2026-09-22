@@ -30,6 +30,8 @@
     "initial context",
     "proposal approval",
     "specification approval",
+    "native Plan mode",
+    "ordinary conversation",
     "read-only",
     "strong reasoning"
   ],
@@ -38,12 +40,14 @@
       "id": "codex-local-route",
       "companion": "codex",
       "startingState": "DevCharter is the primary local folder and the separate target is attached.",
-      "expected": "Codex discovers the canonical skill, verifies five inputs, and stops at the proposal gate.",
+      "expected": "Codex discovers the canonical skill, verifies five inputs, uses native Plan mode or a read-only fallback for the proposal, and stops at the proposal gate.",
       "prohibited": "Writing to DevCharter or treating proposal approval as implementation approval.",
       "evidence": [
         { "path": "companions/codex/README.md", "contains": "all five inputs before analysis" },
         { "path": "companions/codex/README.md", "contains": "specification approval is required before implementation" },
-        { "path": "companions/codex/README.md", "contains": "do not write to DevCharter" }
+        { "path": "companions/codex/README.md", "contains": "do not write to DevCharter" },
+        { "path": "companions/codex/README.md", "contains": "native Plan mode (`/plan` or `Shift+Tab`)" },
+        { "path": "companions/codex/README.md", "contains": "acceptance authorizes only" }
       ],
       "resultEvidence": [
         { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "07CF994190BF1989B8591EC5316E83BFD664709C280719C9203B39BA03643C6F" }
@@ -53,12 +57,14 @@
       "id": "claude-added-directory-route",
       "companion": "claude-code",
       "startingState": "Claude Code starts in the target with DevCharter passed through --add-dir and its local plugin through --plugin-dir.",
-      "expected": "The native devcharter skill routes to the canonical methodology and keeps locations distinct.",
-      "prohibited": "Assuming Codex paths are natively discovered or copying DevCharter into the target.",
+      "expected": "The native devcharter skill routes to the canonical methodology, keeps locations distinct, and uses Claude Plan mode only for the proposal.",
+      "prohibited": "Assuming Codex paths are natively discovered, copying DevCharter into the target, or allowing native plan approval to start implementation.",
       "evidence": [
         { "path": "companions/claude-code/plugin/skills/project-architect/SKILL.md", "contains": "canonical" },
         { "path": "companions/claude-code/plugin/skills/project-architect/SKILL.md", "contains": "target is a different explicit location" },
-        { "path": "companions/claude-code/README.md", "contains": "--add-dir` alone does not discover" }
+        { "path": "companions/claude-code/README.md", "contains": "--add-dir` alone does not discover" },
+        { "path": "companions/claude-code/README.md", "contains": "--permission-mode plan" },
+        { "path": "companions/claude-code/README.md", "contains": "Markdown specification drafting only" }
       ],
       "resultEvidence": [
         { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "devcharter:project-architect" }
@@ -68,12 +74,14 @@
       "id": "copilot-cli-skill-route",
       "companion": "github-copilot",
       "startingState": "Copilot CLI starts in the target with the canonical skill directory configured.",
-      "expected": "The project-architect skill verifies five inputs and uses the shared approval gates.",
-      "prohibited": "Applying DevCharter contributor instructions to the target or assuming IDE-only prompts.",
+      "expected": "The project-architect skill verifies five inputs, uses CLI or IDE Plan mode when suitable, and preserves the shared approval gates.",
+      "prohibited": "Applying DevCharter contributor instructions to the target, assuming IDE-only prompts, or using an implementation-start control at proposal approval.",
       "evidence": [
         { "path": "companions/github-copilot/README.md", "contains": "provide or ask for all five inputs" },
         { "path": "companions/github-copilot/README.md", "contains": "approval remain separate gates" },
-        { "path": "companions/github-copilot/README.md", "contains": "Do not add the DevCharter root" }
+        { "path": "companions/github-copilot/README.md", "contains": "Do not add the DevCharter root" },
+        { "path": "companions/github-copilot/README.md", "contains": "Do not use `--plan --mode autopilot`" },
+        { "path": "companions/github-copilot/README.md", "contains": "Do not select" }
       ],
       "resultEvidence": [
         { "path": "tests/scenarios/companion-integration-walkthrough-results.md", "contains": "GitHub Copilot CLI 1.0.86" }

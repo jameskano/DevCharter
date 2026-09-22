@@ -23,7 +23,8 @@ store, or target-project dependency.
 3. Preserve useful existing conventions and unrelated work.
 4. Keep one source of truth per concern.
 5. Use native companion mechanisms where justified.
-6. Propose before detailed planning; approve the detailed specification before implementation.
+6. Use native Plan mode optionally to refine the proposal; proposal approval authorizes Markdown
+   specification drafting only, and separate specification approval authorizes implementation.
 7. Keep audit read-only.
 8. Treat specifications, implementation, tests, and current documentation as connected.
 9. Validate critical journeys, not only isolated files.
@@ -34,6 +35,11 @@ store, or target-project dependency.
 - `new` — for an empty or lightly initialized target.
 - `retrofit` — for an established target whose useful content must be preserved.
 - `audit` — a read-only assessment with no proposal or target mutation.
+
+For `new` and `retrofit`, a supported native Plan mode can improve read-only inspection,
+clarification, iteration, and proposal review. It is not a DevCharter mode, and ordinary interactive
+conversation follows the same contract when it is unavailable. The native plan is the DevCharter
+proposal; the later target-local Markdown specification is the definitive implementation plan.
 
 ## Scopes
 
@@ -76,4 +82,6 @@ SPEC-0002B provides the shared Project Architect methodology and knowledge. SPEC
 qualified native Codex, Claude Code, and GitHub Copilot routes plus dated capability evidence;
 SPEC-0002D completes documentation and release qualification with recorded supported-host evidence,
 an approved Claude entitlement limitation, and scenario evidence for live new/retrofit journeys
-deferred to later user testing.
+deferred to later user testing. SPEC-0002E completes optional native Plan-mode proposal refinement,
+complete material questioning, both approval gates, and durable same- or later-conversation
+specification handoff.

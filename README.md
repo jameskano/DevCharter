@@ -9,10 +9,11 @@ coding companion. It inspects a target repository, proposes only justified impro
 implementation behind explicit human approval. DevCharter has no product CLI, runtime package,
 hosted service, or target-project dependency.
 
-SPEC-0002A–D complete the static foundation, shared methodology, native routes, documentation, and
-release qualification. The [qualification record](docs/release/companion-driven-qualification.md)
-contains no pending or blocked gate. Live new/retrofit target execution is explicitly deferred to
-later user testing and is not represented as completed qualification work.
+SPEC-0002A–E complete the static foundation, shared methodology, native routes, documentation,
+release qualification, and Plan-mode proposal refinement. The [qualification
+record](docs/release/companion-driven-qualification.md) contains no pending or blocked gate. Live
+new/retrofit target execution is explicitly deferred to later user testing and is not represented
+as completed qualification work.
 
 ## Start a DevCharter run
 
@@ -38,10 +39,18 @@ Initial context: Preserve the existing stack and improve only foundations justif
 The DevCharter and target locations may be anywhere the companion can read. Do not copy DevCharter
 into the target or add it to the target's dependencies.
 
-The companion first inspects, asks only material questions, and returns a reviewable proposal. For
-`new` and `retrofit`, approve that proposal only if you want detailed Markdown specifications. Then
-review and separately approve the applicable specification before implementation. For `audit`, the
-final result is a findings report in conversation and no target or external mutation.
+For `new` and `retrofit`, use a suitable native Plan mode when the selected host offers one and you
+want a more thoroughly refined proposal. It supports read-only inspection, clarification,
+iteration, and review before implementation. Otherwise, ordinary interactive conversation follows
+the same workflow with no loss of lifecycle safety and no additional DevCharter mode.
+
+The companion inspects first, asks every unresolved question that could materially change the
+proposal over as many rounds as needed, and omits repository-answerable or immaterial questions.
+The resulting native plan or conversational output is the DevCharter proposal, not the definitive
+implementation specification. Approve it only to authorize target-local Markdown draft
+specifications. Review and separately approve the applicable specification before implementation.
+For `audit`, the final result is a findings report in conversation and no proposal, target write, or
+external mutation.
 
 ## Native setup
 
@@ -80,6 +89,12 @@ deterministic output parity among providers or reliable results from every model
 `audit` is read-only. For `new` and `retrofit`, proposal approval permits detailed specification
 work; it does not permit implementation. Destructive actions, secret access, external data sharing,
 remote writes, and hard-to-reverse operations always require immediate confirmation.
+
+An approved Markdown specification is durable planning state. Implementation may continue in the
+same conversation, or a later conversation can re-read the repository instructions, specification
+status, relationships, approval metadata, and current worktree before moving one `ready` spec to
+`active`. No transcript or DevCharter session store is required. Stale, conflicting, missing, or
+unverifiable approval evidence returns the affected work to review.
 
 ## Repository map
 

@@ -6,11 +6,11 @@
 |---|---|
 | ID | SPEC-0002E |
 | Parent | SPEC-0002 |
-| Status | ready |
+| Status | done |
 | Proposal approval | User approved the plan-mode proposal-refinement proposal on 2026-09-21 |
 | Specification approval | User explicitly requested this implementation specification in `ready` on 2026-09-22 |
 | Dependencies | SPEC-0002B, SPEC-0002C, SPEC-0002D |
-| Implementation state | Not started; move this specification to `active` before implementation |
+| Implementation state | Completed and independently verified on 2026-09-22 |
 
 ## Problem and desired outcome
 
@@ -477,6 +477,86 @@ SPEC-0002E may move from `active` to `done` only when:
 
 ## Completion evidence
 
-Implementation has not started. Record changed and preserved paths, acceptance mapping, commands,
-actual results, failures, skips, limitations, documentation review, deferred work, and independent
-review here before recommending `done`.
+### Changed and preserved paths
+
+- Canonical lifecycle and methodology changed in `AGENTS.md`, the parent SPEC-0002,
+  `knowledge/shared-foundation.md`, `knowledge/companion-integration-contract.md`, and both canonical
+  skills under `.agents/skills/`.
+- Current user and contributor documentation changed in `README.md`, `docs/user-guide.md`,
+  `docs/product/purpose-and-scope.md`, `docs/architecture/system-overview.md`,
+  `docs/engineering/quality-and-decision-model.md`, and
+  `docs/engineering/spec-driven-workflow.md`.
+- All three companion entrypoints and capability records changed. The records cite official sources
+  rechecked on 2026-09-22; Codex documents `/plan` and `Shift+Tab`, Claude Code documents
+  `--permission-mode plan`, `/plan`, and `Shift+Tab`, and GitHub Copilot documents its CLI and IDE
+  plan controls plus implementation-start behavior.
+- Scenario coverage changed in both fixture files, `tests/scenarios/project-architect-methodology.md`,
+  the new `tests/scenarios/plan-mode-proposal-refinement-results.md`, and
+  `scripts/validate-assets.mjs`. The validator now checks semantic evidence signals from each
+  focused fixture against only that scenario's observed-result body, rejects approval-gate collapse
+  claims across current guidance and authoritative specifications, and self-tests representative
+  unsafe and safe phrasings.
+- `MANIFEST.md`, `specs/README.md`, and `CHANGELOG.md` changed for current status and traceability.
+- The Claude plugin adapter and GitHub Copilot prompt remain unchanged because they already route to
+  canonical authority. Completed SPEC-0002B-D files, their walkthrough evidence,
+  `docs/release/companion-driven-qualification.md`, templates, and release fixtures were reviewed
+  and preserved as historical or already adequate evidence.
+
+### Acceptance mapping
+
+| Criteria | Implementation and evidence |
+|---|---|
+| 1-2 | README, user guide, shared contract, Project Architect, and all entrypoints recommend native Plan mode when suitable and preserve ordinary-conversation fallback. The `native-plan-proposal-only` and `ordinary-conversation-fallback` results confirm both routes. |
+| 3-5 | Project Architect now asks every unresolved material question over as many rounds as needed, inspects known facts, omits immaterial questions, and limits assumptions to explicitly accepted low-risk reversible choices. The iterative-question and assumption-deferral fixture/result pairs cover positive and prohibited outcomes. |
+| 6-8 | Canonical sources define the native plan as the DevCharter proposal, proposal approval as specification-authoring authority only, and implementation-start controls as prohibited at that gate. Native-plan and read-only-transition results cover the boundary. |
+| 9-10 | Specification Architect defaults to one cohesive spec and requires material justification for an ordered split. Refined single- and multi-spec results confirm separate specification approval and the `ready` to `active` transition. |
+| 11-12 | Canonical skills and same-chat, later-chat, and stale-state results cover bounded activation, repository-based authority reconstruction, and refreshed review when state or approval cannot be verified. |
+| 13 | Audit guidance is unchanged; the focused result reaffirms the existing hostile-audit evidence and no proposal, spec, target state, or external effect. |
+| 14 | The three dated capability records cite refreshed official sources, and entrypoint assertions check the documented host controls and DevCharter-specific limitations. |
+| 15 | Static assertions cover canonical terminology, both approval gates, semantic gate-collapse claims, provider evidence, required scenarios, and observed-result evidence signals owned by each focused fixture. |
+| 16 | Command results, documentation review, limitations, review history, and the reviewable diff are recorded below. The final fresh-context review passed with no blocking or important finding. |
+
+### Verification results
+
+- `npm.cmd run verify` with Node 24.18.0 first in `PATH`: passed. It reported 52 Markdown files,
+  12 specifications, two canonical skills, 17 methodology scenarios, six companion failure
+  scenarios, ten release scenarios, and the separate-location and hostile-audit walkthroughs.
+- Direct `node scripts/validate-assets.mjs` with Node 24.18.0: passed with the same coverage counts.
+- `git diff --check`: passed.
+- JSON parsing for both changed fixture files: passed as part of the validator.
+- Official-source review on 2026-09-22: passed for Codex, Claude Code, and GitHub Copilot; the exact
+  URLs are retained in their capability records.
+- Plain `npm.cmd run verify` and `pnpm.cmd verify` under the inherited default Node 20.19.0 failed
+  before executing the validator with `EPERM` while resolving or cleaning beneath
+  `C:\Users\iajer`. This repository requires Node 22 or newer. Re-running the requested npm command
+  with the installed supported Node 24.18.0 passed, so this is recorded as an environment/runtime
+  selection limitation rather than a product failure.
+
+### Review, limitations, and deferred work
+
+- A first fresh-context review read this specification before the diff and reported four findings:
+  missing completion evidence, the accurately recorded default-runtime failure, weak result-body
+  assertions, and incomplete Codex Plan-mode sourcing. All four were corrected before requesting
+  another review.
+- A second fresh-context review found that copied assertion summaries could self-certify even if an
+  observed result were replaced, and that the first gate-collapse patterns were too narrow. The
+  summaries were removed; fixtures now provide concise semantic evidence signals checked only
+  against observed-result bodies; gate scanning now covers current guidance and authoritative
+  specifications, recognizes equivalent authorization and implementation-start phrasing, and has
+  adversarial self-tests. A final fresh-context review remains required.
+- A third fresh-context review then found that broad safety qualifiers could mask an unsafe claim
+  and that natural comma- or semicolon-separated two-gate wording could be misclassified. The
+  detector now binds approval directly to implementation, recognizes equivalent “sufficient to
+  implement” and “may commence after” forms, and accepts only a leading or trailing qualifier that
+  directly blocks the matched implementation transition. The reported unsafe and safe phrasings
+  are permanent validator self-tests.
+- No live Claude or repository-aware GitHub Copilot model journey was rerun. SPEC-0002E requires a
+  dated official-source and instruction review, while SPEC-0002C-D retain the historical live-host
+  evidence; no old evidence was relabeled.
+- No runtime, session store, target-local DevCharter installation, new public mode or scope, or
+  later-spec behavior was added. There is no deferred implementation work within SPEC-0002E.
+- Final fresh-context completion review: PASS on 2026-09-22. A new reviewer read this specification
+  before the diff, confirmed all 16 acceptance criteria, verified all 43 observed-result evidence
+  signals, exercised five unsafe and three safe approval-gate probes, ran the supported-runtime npm
+  verification and direct validator, and ran `git diff --check`. It reported no blocking or
+  important finding and recommended the `active` to `done` transition.
