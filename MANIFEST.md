@@ -63,8 +63,8 @@ specification may explain a decision but cannot restore superseded runtime behav
 
 ## Current implementation sequence
 
-SPEC-0002A through SPEC-0002D are ordered and done. `specs/active/` is empty until later work is
-explicitly approved and activated.
+SPEC-0002A through SPEC-0002D are ordered and done. SPEC-0002E is ready for implementation and
+depends on them. `specs/active/` remains empty until SPEC-0002E is explicitly activated.
 
 The stable public vocabulary is:
 
