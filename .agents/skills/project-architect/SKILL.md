@@ -30,6 +30,13 @@ Read applicable target instructions and current documentation, then the shared
 - [verification harnesses](../../../knowledge/harnesses/verification-harnesses.md);
 - [adaptable recipes](../../../templates/project-architect-recipes.md).
 
+For `new` and `retrofit`, recommend a suitable native Plan mode when the host provides one and the
+user wants deeper proposal refinement. Use it for read-only inspection, clarification, iteration,
+and review. The native plan is the DevCharter proposal, not the definitive Markdown implementation
+specification. If native Plan mode is unavailable or unsuitable, use ordinary interactive
+conversation with the same stages and gates; do not invent another DevCharter mode. Never route
+`audit` into a proposal merely because Plan mode exists.
+
 ## Respect mode and scope
 
 | Mode | Required result | Negative boundary |
@@ -69,10 +76,18 @@ oversized, secret-like, unreadable, or unsafe material, record the limitation an
 
 ## Resolve only material questions
 
-Ask only when the answer changes architecture, output, ownership, safety, verification, or user
-expectations. Group related questions when useful. Label what is already a fact, what decision is
-needed, and the consequence of leaving it unresolved. A reversible low-risk assumption records its
-evidence, impact if wrong, and reversibility; uncertainty is not permission to invent configuration.
+After inspection, ask every unresolved question whose answer could materially change behavior,
+architecture, scope, output, ownership, safety, verification, or user expectations. Group related
+questions when useful and use as many rounds as needed; completeness takes precedence over an
+arbitrary question count. Label what is already a fact, what decision is needed, and the consequence
+of leaving it unresolved. Obtain repository-answerable facts by safe inspection and omit immaterial
+preference questions.
+
+Prefer a direct user decision to an avoidable assumption. A proposal-changing question may remain
+unresolved only when the user explicitly defers it, accepts a stated default, or authorizes a
+clearly recorded low-risk reversible assumption. Record its evidence, impact if wrong, and
+reversibility. Do not present the proposal while another unresolved question could materially
+change it without one of those user decisions.
 
 Require explicit confirmation for security, privacy, identity, permissions, payments, legal
 behavior, public contracts, destructive actions, secret access, data deletion or migration,
@@ -110,6 +125,12 @@ Ask for explicit approval of the complete current proposal. Ambiguous agreement,
 earlier revision, or permission to continue is not approval. Material proposal changes require
 renewed approval.
 
+When native Plan mode produced the proposal, say before approval that accepting it authorizes only
+Markdown specification drafting. Do not invoke a host control that immediately starts coding as
+the proposal-approval action. If Plan mode is read-only, switch to an editing-capable surface after
+explicit proposal approval solely to author the authorized specifications, then stop for their
+separate review.
+
 Proposal approval authorizes only one or more target-local Markdown `draft` specifications. Route
 that work to the [Specification Architect](../specification-architect/SKILL.md), using one cohesive
 spec by default and splitting only for material size, risk, independent subsystems, or dependency
@@ -120,6 +141,13 @@ Only explicit approval of the applicable detailed specification moves it to `rea
 implementation within its behavior, scope, risks, and acceptance criteria. Begin implementation by
 moving one ready specification to `active`. If implementation reveals a material expansion, update
 the specification and obtain renewed approval before the affected work continues.
+
+In the same conversation, implementation may begin immediately after that explicit specification
+approval. In a later conversation, first read the applicable instructions, current repository
+state, specification relationships, approval metadata, status, and the specification itself. One
+current `ready` specification may then move to `active` without the original transcript. Missing or
+unverifiable approval, stale state, a conflict, or a non-ready status requires refreshed analysis
+and renewed review or approval; never invent approval or a session-recovery store.
 
 ## Implement, verify, and complete
 

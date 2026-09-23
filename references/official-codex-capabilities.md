@@ -1,6 +1,6 @@
 # Official Codex capability record
 
-Verified against official OpenAI documentation and the locally available Codex CLI on 2026-09-19.
+Verified against official OpenAI documentation and the locally available Codex host on 2026-09-22.
 Provider behavior can change; recheck these sources before relying on a version- or host-specific
 capability.
 
@@ -18,6 +18,11 @@ capability.
 - Local commands and filesystem changes remain subject to the active permission profile, sandbox,
   approvals, managed policy, and workspace roots. Host permission does not replace DevCharter's
   proposal, specification, or sensitive-action confirmations.
+- Official best-practice guidance documents native Plan mode across the CLI, IDE extension, and
+  desktop app as a way to gather context, ask clarifying questions, and plan before implementation;
+  use `/plan` or `Shift+Tab` to enter it. DevCharter uses that mode only for the proposal stage.
+- `/permissions` can additionally select a read-only profile when the user wants inspection and
+  planning without changes.
 
 DevCharter therefore uses the existing root `AGENTS.md` and canonical `.agents/skills` without a
 Codex-only copy. The companion entrypoint explains how to expose both separately named locations.
@@ -31,6 +36,10 @@ Codex-only copy. The companion entrypoint explains how to expose both separately
 - Codex cloud currently centers work on one remote repository. Use a checked-out DevCharter source
   available to the environment or direct Markdown context; a remote read-only view cannot claim
   application capability.
+- The official Plan-mode guidance does not redefine DevCharter's approval lifecycle or establish
+  that accepting a plan is approval of a target-local implementation specification. If native Plan
+  mode is unavailable in the current host, use a read-only permission profile or ordinary
+  conversation and preserve the same DevCharter gates.
 - `.codex/config.toml`, subagents, hooks, plugins, and MCP configuration are not required. Generate
   them for a target only when current capability and target evidence independently justify them.
 - A large skill catalog can truncate discovery metadata. DevCharter exposes two focused skills and
@@ -48,3 +57,7 @@ Codex-only copy. The companion entrypoint explains how to expose both separately
   https://learn.chatgpt.com/docs/projects
 - Permission profiles and workspace roots:
   https://learn.chatgpt.com/docs/permissions
+- Read-only planning and `/permissions` behavior:
+  https://learn.chatgpt.com/docs/agent-approvals-security
+- Plan mode, `/plan`, and `Shift+Tab`:
+  https://learn.chatgpt.com/guides/best-practices

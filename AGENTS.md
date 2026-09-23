@@ -49,6 +49,11 @@ There is no `check` command and no persisted interview-session system. Blocking 
 
 New and retrofit produce a reviewable proposal before approved writes.
 
+When a supported host offers a suitable native Plan mode, recommend it as an optional read-only
+surface for new and retrofit discovery, material questions, proposal iteration, and review. Its
+output is the DevCharter proposal, not the definitive Markdown implementation specification.
+Ordinary interactive conversation follows the same lifecycle when Plan mode is unavailable.
+
 ## Using DevCharter against a target
 
 Collect the five required inputs from `README.md`: mode, scope, DevCharter location, target location,
@@ -57,6 +62,9 @@ skill. The DevCharter source stays separate from and read-only during target wor
 
 Proposal approval authorizes detailed Markdown specification work, not implementation. Route that
 work to the Specification Architect skill and require separate specification approval before writes.
+Do not invoke a host control that begins implementation at the proposal gate. If Plan mode is
+read-only, switch to an editing-capable surface after proposal approval only to author the approved
+Markdown draft specifications, then stop again for specification review.
 
 ## Minimum-sufficient ecosystem
 
@@ -93,7 +101,13 @@ Use this precedence:
 6. established repository convention;
 7. conservative reversible default.
 
-Record material assumptions. Require confirmation for security, privacy, identity, permissions, payments, legal behavior, destructive actions, public contracts, data deletion, migrations, secrets, or external data sharing.
+Record material assumptions. After inspection, ask every unresolved question whose answer could
+materially change behavior, architecture, scope, output, ownership, safety, verification, or user
+expectations, over as many rounds as needed. A proposal-changing assumption requires the user's
+explicit acceptance and must be low risk and reversible, with its evidence, impact if wrong, and
+reversibility recorded. Require confirmation for security, privacy, identity, permissions,
+payments, legal behavior, destructive actions, public contracts, data deletion, migrations,
+secrets, or external data sharing; never replace those decisions with assumptions.
 
 ## Scope discipline
 

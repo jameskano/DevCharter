@@ -1,6 +1,6 @@
 # Official Claude Code capability record
 
-Verified against official Anthropic documentation on 2026-09-19. Provider behavior can change;
+Verified against official Anthropic documentation on 2026-09-22. Provider behavior can change;
 recheck these sources before relying on a version- or host-specific capability.
 
 ## Native surfaces used
@@ -21,6 +21,9 @@ recheck these sources before relying on a version- or host-specific capability.
 - Claude Code can inspect and edit files and run commands subject to its permission mode, sandbox,
   organization policy, and the user's approvals. Host permission does not replace DevCharter's
   proposal, specification, or sensitive-action confirmations.
+- Claude Code supports Plan mode through `claude --permission-mode plan`, `/plan`, or the
+  `Shift+Tab` mode cycle. In that mode it reads files and explores, proposes a plan without edits,
+  and normally treats plan approval as the transition to editing.
 
 DevCharter therefore supplies a thin local plugin under `companions/claude-code/plugin`. Start
 Claude Code in the target, pass the DevCharter checkout through `--add-dir` for source access, and
@@ -41,6 +44,9 @@ lifecycle policy.
 - `--plugin-dir` is a session-local loading and development surface, not marketplace installation.
   DevCharter does not require an installed plugin, marketplace, target-local copy, hook, MCP server,
   or plugin-provided executable.
+- Claude's normal post-approval transition is narrower in DevCharter: native plan approval permits
+  only target-local Markdown specification authoring through Specification Architect. Product
+  implementation waits for separate approval of the applicable specification.
 
 ## Official sources
 
@@ -56,3 +62,8 @@ lifecycle policy.
   https://code.claude.com/docs/en/cli-reference
 - Permissions and sandbox behavior:
   https://code.claude.com/docs/en/permissions
+- Plan mode and its no-edit approval flow:
+  https://code.claude.com/docs/en/common-workflows#plan-before-editing
+- `/plan` and `--permission-mode plan`:
+  https://code.claude.com/docs/en/commands
+  https://code.claude.com/docs/en/cli-reference

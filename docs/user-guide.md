@@ -3,10 +3,11 @@
 ## Product status
 
 DevCharter uses the companion-driven architecture approved by SPEC-0002. The shared static
-foundation, Project Architect methodology, native companion routes, and SPEC-0002D release
-qualification are complete. The [current qualification record](release/companion-driven-qualification.md)
-documents host evidence, limitations, and the live new/retrofit journeys deferred to later user
-testing. Do not treat historical v0 release records as current operating instructions.
+foundation, Project Architect methodology, native companion routes, SPEC-0002D release
+qualification, and SPEC-0002E Plan-mode proposal refinement are complete. The [current
+qualification record](release/companion-driven-qualification.md) documents host evidence,
+limitations, and the live new/retrofit journeys deferred to later user testing. Do not treat
+historical v0 release records as current operating instructions.
 
 ## What to provide
 
@@ -26,6 +27,26 @@ The companion validates the five inputs, inspects applicable target evidence bef
 questions, and keeps DevCharter itself read-only. If the chosen mode or scope appears inconsistent
 with the target, it explains the evidence and asks whether you want to change the selection rather
 than silently substituting one.
+
+## Plan mode and ordinary-conversation fallback
+
+For `new` and `retrofit`, choose a suitable native Plan mode when the current host provides one and
+you want deeper proposal refinement. It gives the companion a read-only surface for inspecting the
+repository, asking clarifying questions, iterating with you, and presenting a reviewable plan before
+implementation. The result is the DevCharter proposal even if the host calls it an implementation
+plan. It is not yet the authoritative Markdown implementation specification.
+
+After inspection, the companion asks every unresolved question whose answer could materially change
+behavior, architecture, scope, output, ownership, safety, verification, or expectations. Questions
+may span multiple rounds. It inspects repository-answerable facts itself, omits immaterial
+preferences, and uses a low-risk reversible assumption only when you explicitly accept its stated
+evidence, impact if wrong, and reversibility. Sensitive, externally visible, irreversible, and
+public-contract choices cannot be assumptions.
+
+If native Plan mode is unavailable, disabled, or unsuitable, stay in ordinary interactive
+conversation. The same inspection, questions, proposal content, and two approval gates apply; this
+is not a degraded or separate DevCharter mode. `audit` never uses Plan mode to create a proposal and
+still ends with read-only findings only.
 
 ## Companion setup
 
@@ -85,14 +106,24 @@ support or output-quality claim and defines no fourth provider contract.
 
 ## Approval model
 
-For new and retrofit, the companion first inspects and asks only unresolved material questions. It
-then presents a reviewable proposal, including create/update/skip/conflict decisions and rejected
-components. Explicit proposal approval authorizes one or more detailed Markdown specifications.
+For new and retrofit, the companion first inspects and resolves all proposal-changing questions or
+records an explicit deferral or accepted assumption. It then presents a reviewable proposal,
+including create/update/skip/conflict decisions and rejected components. Explicit proposal approval
+authorizes only authoring one or more target-local draft Markdown specifications. Do not use a host
+action that immediately starts coding at this gate. If Plan mode is read-only, switch to an
+editing-capable surface solely to author the approved specifications, then stop for their review.
 
 The Specification Architect creates one cohesive draft by default and splits it only when size,
 risk, independent subsystems, or dependency order makes that clearer. Only explicit approval of the
 detailed specification authorizes implementation. A discovered material expansion stops affected
 work until the specification is updated and reapproved.
+
+After explicit specification approval, implementation can begin in the same conversation by moving
+one `ready` spec to `active`. In a later conversation, point the companion to the authoritative
+Markdown files. It must re-read applicable instructions, the proposal context and approval metadata
+recorded in the spec, relationships, status, and current repository state. A current `ready` spec
+can then be activated without the original transcript. Missing or unverifiable approval, a
+non-ready status, conflict, or material staleness requires refreshed review and approval.
 
 Approval never removes the need for immediate confirmation before destructive actions, secret
 access, external data sharing, remote writes, or hard-to-reverse operations.

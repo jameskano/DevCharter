@@ -18,8 +18,13 @@ SPEC-0002B may refine and organize them, but must not reintroduce a product runt
 
 - Separate confirmed facts, inferences, assumptions, accepted decisions, open questions, and
   rejected options.
-- Ask only about unresolved choices that materially affect behavior, architecture, risk, scope, or
-  acceptance.
+- After safe inspection, ask every unresolved question whose answer could materially change
+  behavior, architecture, scope, output, ownership, safety, verification, or user expectations.
+  Use as many rounds as needed; do not ask for repository-answerable facts or immaterial
+  preferences.
+- Prefer an explicit decision to an avoidable assumption. Retain a proposal-changing assumption
+  only after the user accepts it and only when it is low risk and reversible; record its evidence,
+  impact if wrong, and reversibility.
 - Generate an artifact only when evidence or an accepted decision justifies it. Prefer preserving
   an adequate project-owned file over replacing it.
 - Give each relevant component one `create`, `update`, `preserve`, `skip`, `replace`, `reject`, or
@@ -31,8 +36,12 @@ SPEC-0002B may refine and organize them, but must not reintroduce a product runt
 - `audit` is read-only: do not write, install dependencies, run mutating target commands, or create
   target-local state.
 - `new` and `retrofit` produce a reviewable proposal before detailed planning.
+- A suitable native Plan mode is an optional surface for discovery, questions, and proposal
+  refinement. Its output occupies the proposal stage; ordinary conversation is the equivalent
+  fallback and `audit` still ends with findings only.
 - Proposal approval authorizes Markdown specification drafting, not implementation.
-- Approved detailed specifications authorize only their stated scope and acceptance criteria.
+- Only explicit approval of the applicable Markdown implementation specification moves it to
+  `ready` and authorizes its stated scope and acceptance criteria.
 - Stop and renew approval when implementation discovers a material need outside the specification.
 - Immediately confirm destructive actions, secret access, external data sharing, remote writes, and
   hard-to-reverse operations.

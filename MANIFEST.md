@@ -63,8 +63,9 @@ specification may explain a decision but cannot restore superseded runtime behav
 
 ## Current implementation sequence
 
-SPEC-0002A through SPEC-0002D are ordered and done. `specs/active/` is empty until later work is
-explicitly approved and activated.
+SPEC-0002A through SPEC-0002E are ordered and done. SPEC-0002E refines optional native Plan-mode
+proposal work, material questioning, and durable specification handoff without changing the static
+architecture. No implementation specification is currently active.
 
 The stable public vocabulary is:
 

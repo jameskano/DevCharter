@@ -238,6 +238,7 @@ const currentSources = [
   "references/official-claude-code-capabilities.md",
   "references/official-github-copilot-capabilities.md",
   "tests/scenarios/companion-integration-walkthrough-results.md",
+  "tests/scenarios/plan-mode-proposal-refinement-results.md",
   "tests/scenarios/release-qualification-results.md",
   "docs/release/companion-driven-qualification.md",
   "CONTRIBUTING.md"
@@ -287,11 +288,110 @@ for (const required of [
   "initial context",
   "Proposal approval authorizes only",
   "Only explicit approval of the applicable detailed specification",
+  "The native plan is the DevCharter proposal",
+  "ask every unresolved question",
+  "use as many rounds as needed",
+  "same conversation",
+  "later conversation",
   "Reconfirm the sensitive action immediately before execution"
 ]) {
   if (!projectArchitectSource.includes(required)) {
     fail(`.agents/skills/project-architect/SKILL.md: missing methodology contract: ${required}`);
   }
+}
+
+const planLifecycleAssertions = {
+  "AGENTS.md": [
+    "output is the DevCharter proposal",
+    "authorizes detailed Markdown specification work, not implementation"
+  ],
+  "README.md": [
+    "native plan or conversational output is the DevCharter proposal",
+    "separately approve the applicable specification before implementation"
+  ],
+  "knowledge/shared-foundation.md": [
+    "output occupies the proposal stage",
+    "Only explicit approval of the applicable Markdown implementation specification"
+  ],
+  "knowledge/companion-integration-contract.md": [
+    "its reviewable output is the DevCharter proposal",
+    "immediately starts coding"
+  ],
+  ".agents/skills/specification-architect/SKILL.md": [
+    "lifecycle role is still proposal only",
+    "explicit approval metadata"
+  ]
+};
+for (const [name, required] of Object.entries(planLifecycleAssertions)) {
+  const source = sources.get(path.join(root, name)) ?? "";
+  for (const text of required) {
+    if (!source.includes(text)) fail(`${name}: missing plan/proposal lifecycle contract: ${text}`);
+  }
+}
+const gateCollapsePatterns = [
+  /\b(?:proposal|native plan|plan) (?:approval|acceptance)\b\s+(?:directly\s+|immediately\s+|automatically\s+)?(?:authori[sz]es?|allows?|permits?|triggers?|starts?|begins?|launches?|causes?|leads to)\s+(?:the\s+)?(?:immediate\s+|direct\s+|product\s+|code\s+)*(?:implementation|coding)\b/i,
+  /\b(?:proposal|native plan|plan) (?:approval|acceptance)\b\s+(?:is|becomes?)\s+(?:enough|sufficient)\s+to\s+(?:implement|start coding|begin implementation)\b/i,
+  /\b(?:product\s+|code\s+)?(?:implementation|coding)\b\s+(?:(?:may|can|will)\s+)?(?:occur(?:s|red)?|starts?|begins?|proceeds?|commences?|is authorized)\b(?:\s+\w+){0,3}\s+\b(?:after|from|upon)\b\s+(?:the\s+)?\b(?:proposal|native plan|plan) (?:approval|acceptance)\b/i,
+  /\b(?:starts?|begins?|launches?|commences?)\s+(?:product\s+|code\s+)?(?:implementation|coding)\b(?:\s+\w+){0,3}\s+\b(?:after|from|upon)\b\s+(?:the\s+)?\b(?:proposal|native plan|plan) (?:approval|acceptance)\b/i,
+  /\b(?:proposal|native plan|plan) (?:approval|acceptance)\b\s+(?:means|signals)\s+(?:that\s+)?(?:we\s+|the companion\s+)?(?:can\s+|may\s+|will\s+)?(?:implement|start coding|begin implementation)\b/i,
+  /\bnative plan\b.{0,40}\b(?:is|becomes?|serves as)\b.{0,40}\bdefinitive Markdown implementation specification\b/is
+];
+const claimSafetyPattern = /^\s*(?:only after\b.{0,60}\bspecification approval\b|,?\s*(?:but|while|and|when)\b.{0,120}\b(?:prevent|prohibit|reject|block)\w*\b.{0,60}\b(?:it|that|control|implementation|coding)\b)/is;
+const leadingClaimSafetyPattern = /\b(?:no authorization to|do not|does not|must not|cannot|can't|never)\s*$/i;
+
+function findGateCollapse(source) {
+  for (const block of source.split(/(?:\r?\n\s*\r?\n)|(?<=[.!?])\s+/)) {
+    for (const pattern of gateCollapsePatterns) {
+      const match = block.match(pattern);
+      if (match) {
+        const leading = block.slice(0, match.index ?? 0);
+        const trailing = block.slice((match.index ?? 0) + match[0].length);
+        if (!leadingClaimSafetyPattern.test(leading) && !claimSafetyPattern.test(trailing)) {
+          return block;
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+function assertNoGateCollapse(name, source) {
+  const claim = findGateCollapse(source);
+  if (claim) {
+    fail(`${name}: contains approval-gate collapse claim: ${claim.replace(/\s+/g, " ").slice(0, 180)}`);
+  }
+}
+
+for (const unsafe of [
+  "Proposal approval allows implementation.",
+  "Product implementation occurred immediately after proposal approval.",
+  "The host starts coding upon native plan approval.",
+  "Start implementation after plan approval.",
+  "Proposal approval allows implementation. It does not authorize deployment.",
+  "Proposal approval allows implementation, but does not authorize deployment.",
+  "Implementation may commence after proposal approval.",
+  "Plan approval is sufficient to implement the project.",
+  "The native plan is the definitive Markdown implementation specification."
+]) {
+  if (!findGateCollapse(unsafe)) fail(`validator self-test missed gate collapse: ${unsafe}`);
+}
+for (const safe of [
+  "Proposal approval authorizes specification drafting, not implementation.",
+  "Proposal approval allows specification drafting; implementation requires separate specification approval.",
+  "Proposal approval authorizes specification drafting, while implementation requires separate specification approval.",
+  "No authorization to begin implementation from proposal approval.",
+  "Implementation cannot begin until the applicable specification receives approval.",
+  "A host control normally starts implementation after plan approval, but DevCharter prevents it."
+]) {
+  if (findGateCollapse(safe)) fail(`validator self-test rejected safe lifecycle wording: ${safe}`);
+}
+
+for (const [file, source] of currentDocumentation) {
+  assertNoGateCollapse(relative(file), source);
+}
+for (const { file, source } of specs.filter(({ file }) =>
+  /specs\/(?:approved|active|ready)\//.test(relative(file)))) {
+  assertNoGateCollapse(relative(file), source);
 }
 for (const mode of ["new", "retrofit", "audit"]) {
   if (!projectArchitectSource.includes(`\`${mode}\``)) {
@@ -309,6 +409,7 @@ const methodologyFixturePath = path.join(
   "tests/fixtures/project-architect-scenarios.json"
 );
 let methodologyScenarioCount = 0;
+let methodologyScenarios = [];
 try {
   const fixture = JSON.parse(await readFile(methodologyFixturePath, "utf8"));
   if (
@@ -320,6 +421,7 @@ try {
   }
   const scenarios = fixture.scenarios;
   if (!Array.isArray(scenarios)) throw new Error("scenarios must be an array");
+  methodologyScenarios = scenarios;
   methodologyScenarioCount = scenarios.length;
   const requiredScenarioIds = [
     "new-full-custom-config",
@@ -331,7 +433,14 @@ try {
     "dangerous-action",
     "unsupported-technology",
     "overengineering-rejection",
-    "recovery-and-stale-state"
+    "recovery-and-stale-state",
+    "native-plan-proposal-only",
+    "iterative-material-questions",
+    "assumption-deferral-boundaries",
+    "read-only-plan-spec-transition",
+    "same-chat-implementation-handoff",
+    "later-chat-implementation-handoff",
+    "ordinary-conversation-fallback"
   ];
   const scenarioIds = new Set();
   for (const scenario of scenarios) {
@@ -357,6 +466,10 @@ try {
         fail(`tests/fixtures/project-architect-scenarios.json: ${scenario.id} lacks ${list}`);
       }
     }
+    if (scenario.resultEvidence !== undefined &&
+        (!Array.isArray(scenario.resultEvidence) || scenario.resultEvidence.length === 0)) {
+      fail(`tests/fixtures/project-architect-scenarios.json: ${scenario.id} has invalid resultEvidence`);
+    }
   }
   for (const id of requiredScenarioIds) {
     if (!scenarioIds.has(id)) {
@@ -370,8 +483,74 @@ try {
       fail(`tests/fixtures/project-architect-scenarios.json: audit omits ${boundary} boundary`);
     }
   }
+  for (const scenario of scenarios) {
+    assertNoGateCollapse(
+      `tests/fixtures/project-architect-scenarios.json:${scenario.id}:expected`,
+      (scenario.expected ?? []).join("\n\n")
+    );
+  }
 } catch (error) {
   fail(`tests/fixtures/project-architect-scenarios.json: invalid fixture: ${error.message}`);
+}
+
+const planResults = sources.get(
+  path.join(root, "tests/scenarios/plan-mode-proposal-refinement-results.md")
+) ?? "";
+const planEvidenceIds = [
+  "single-spec-lifecycle",
+  "multi-spec-lifecycle",
+  "native-plan-proposal-only",
+  "iterative-material-questions",
+  "assumption-deferral-boundaries",
+  "read-only-plan-spec-transition",
+  "same-chat-implementation-handoff",
+  "later-chat-implementation-handoff",
+  "recovery-and-stale-state",
+  "ordinary-conversation-fallback"
+];
+for (const id of planEvidenceIds) {
+  const heading = `## \`${id}\``;
+  const sectionStart = planResults.indexOf(heading);
+  if (sectionStart === -1) {
+    fail(`tests/scenarios/plan-mode-proposal-refinement-results.md: missing ${id} evidence`);
+    continue;
+  }
+  const nextHeading = planResults.indexOf("\n## ", sectionStart + heading.length);
+  const section = planResults.slice(
+    sectionStart,
+    nextHeading === -1 ? planResults.length : nextHeading
+  );
+  for (const marker of ["Starting state:", "Observed result:"]) {
+    if (!section.includes(marker)) {
+      fail(`tests/scenarios/plan-mode-proposal-refinement-results.md: ${id} lacks ${marker}`);
+    }
+  }
+  const scenario = methodologyScenarios.find((candidate) => candidate.id === id);
+  if (!scenario) continue;
+  if (!Array.isArray(scenario.resultEvidence) || scenario.resultEvidence.length === 0) {
+    fail(`tests/fixtures/project-architect-scenarios.json: ${id} lacks resultEvidence`);
+    continue;
+  }
+  const observedStart = section.indexOf("Observed result:") + "Observed result:".length;
+  const observedResult = section.slice(observedStart).replace(/`/g, "").replace(/\s+/g, " ");
+  for (const signal of scenario.resultEvidence) {
+    if (!observedResult.toLowerCase().includes(signal.toLowerCase())) {
+      fail(`tests/scenarios/plan-mode-proposal-refinement-results.md: ${id} observed result lacks semantic evidence: ${signal}`);
+    }
+  }
+  assertNoGateCollapse(
+    `tests/scenarios/plan-mode-proposal-refinement-results.md:${id}:observed-result`,
+    observedResult
+  );
+}
+for (const required of [
+  "Audit preservation",
+  "created no target or external state",
+  "2026-09-22"
+]) {
+  if (!planResults.includes(required)) {
+    fail(`tests/scenarios/plan-mode-proposal-refinement-results.md: missing ${required}`);
+  }
 }
 
 const releaseFixturePath = path.join(root, "tests/fixtures/release-qualification-scenarios.json");
@@ -597,7 +776,7 @@ for (const companion of ["codex", "claude-code", "github-copilot"]) {
     fail(`${name}: does not route to its dated capability record`);
   }
   const capabilitySource = sources.get(path.join(root, capabilityRecords[companion])) ?? "";
-  if (!capabilitySource.includes("2026-09-19") || !capabilitySource.includes("## Official sources")) {
+  if (!capabilitySource.includes("2026-09-22") || !capabilitySource.includes("## Official sources")) {
     fail(`${capabilityRecords[companion]}: missing dated official capability evidence`);
   }
   const normalized = source.toLowerCase().replace(/\s+/g, " ");
@@ -616,6 +795,51 @@ for (const companion of ["codex", "claude-code", "github-copilot"]) {
   }
   if (!integrationContract.includes(`| ${companion === "claude-code" ? "Claude Code" : companion === "github-copilot" ? "GitHub Copilot" : "Codex"} |`)) {
     fail(`knowledge/companion-integration-contract.md: missing ${companion} conformance row`);
+  }
+}
+
+for (const [name, required] of Object.entries({
+  "companions/codex/README.md": [
+    "native Plan mode (`/plan` or `Shift+Tab`)",
+    "only target-local Markdown draft specifications"
+  ],
+  "companions/claude-code/README.md": [
+    "--permission-mode plan",
+    "Markdown specification drafting only"
+  ],
+  "companions/github-copilot/README.md": [
+    "Do not use `--plan --mode autopilot`",
+    "Do not select",
+    "the fallback when the current Copilot host lacks"
+  ]
+})) {
+  const source = sources.get(path.join(root, name)) ?? "";
+  const normalizedSource = source.replace(/\s+/g, " ");
+  for (const text of required) {
+    if (!normalizedSource.includes(text)) fail(`${name}: missing qualified Plan-mode guidance: ${text}`);
+  }
+}
+
+for (const [name, required] of Object.entries({
+  "references/official-codex-capabilities.md": [
+    "https://learn.chatgpt.com/guides/best-practices",
+    "`/plan` or `Shift+Tab`",
+    "https://learn.chatgpt.com/docs/agent-approvals-security"
+  ],
+  "references/official-claude-code-capabilities.md": [
+    "https://code.claude.com/docs/en/common-workflows",
+    "https://code.claude.com/docs/en/commands",
+    "https://code.claude.com/docs/en/cli-reference"
+  ],
+  "references/official-github-copilot-capabilities.md": [
+    "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference",
+    "https://docs.github.com/en/copilot/how-tos/copilot-cli/cli-best-practices",
+    "https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide"
+  ]
+})) {
+  const source = sources.get(path.join(root, name)) ?? "";
+  for (const text of required) {
+    if (!source.includes(text)) fail(`${name}: missing Plan-mode capability evidence: ${text}`);
   }
 }
 

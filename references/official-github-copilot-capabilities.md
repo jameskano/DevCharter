@@ -1,6 +1,6 @@
 # Official GitHub Copilot capability record
 
-Verified against official GitHub documentation on 2026-09-19. Copilot surfaces differ materially by
+Verified against official GitHub documentation on 2026-09-22. Copilot surfaces differ materially by
 host and change over time; recheck the support matrix before claiming a capability is universal.
 
 ## Native surfaces used
@@ -22,6 +22,12 @@ host and change over time; recheck the support matrix before claiming a capabili
 - Repository-wide and path-specific instruction support varies across IDE chat, coding agent, code
   review, GitHub.com, and CLI. A target receives any such artifact only when its selected host and
   repository evidence justify it.
+- Copilot CLI supports plan mode through `--plan`, `/plan`, or the `Shift+Tab` mode cycle. It
+  analyzes the codebase, asks clarifying questions, creates a structured plan, and waits for
+  approval. The separate plan-then-autopilot option intentionally skips the human transition.
+- Supported IDE chat surfaces expose a Plan agent that uses read-only research, accepts iterative
+  clarification, and offers “Start Implementation” or Markdown-oriented handoff controls after
+  review.
 
 ## Deliberate limitations
 
@@ -36,6 +42,9 @@ host and change over time; recheck the support matrix before claiming a capabili
   read-only view can analyze but cannot claim target application capability.
 - Custom agents, hooks, plugins, MCP, and extra instruction files are not required for DevCharter.
   They remain target outputs that need individual evidence, ownership, and verification.
+- DevCharter must not use plan-then-autopilot, “Accept plan and build on autopilot,” or “Start
+  Implementation” at the proposal gate. Those controls would collapse proposal approval into
+  implementation; the host must instead author the separately reviewed Markdown specifications.
 
 ## Official sources
 
@@ -51,3 +60,8 @@ host and change over time; recheck the support matrix before claiming a capabili
   https://docs.github.com/en/copilot/how-tos/configure-custom-instructions-in-your-ide/add-repository-instructions-in-your-ide
 - CLI filesystem and command permission behavior:
   https://docs.github.com/en/copilot/concepts/agents/copilot-cli/about-copilot-cli
+- Copilot CLI plan mode and plan-then-autopilot:
+  https://docs.github.com/en/copilot/how-tos/copilot-cli/cli-best-practices
+  https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference
+- IDE Plan agent, iterative review, and implementation controls:
+  https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide

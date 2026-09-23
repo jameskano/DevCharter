@@ -34,18 +34,20 @@
       "mode": "retrofit",
       "scope": "governance",
       "initialContext": "Repair one cohesive documentation and specification authority gap.",
-      "startingEvidence": ["The approved proposal has one cohesive implementation boundary"],
-      "expected": ["Create one Markdown draft after proposal approval", "Require separate explicit specification approval", "Move ready to active before implementation"],
-      "prohibited": ["Planning approval treated as write approval", "Artificial spec splitting"]
+      "startingEvidence": ["A native plan has been explicitly approved as the proposal", "The approved proposal has one cohesive implementation boundary"],
+      "expected": ["Treat native plan approval as authorization for one Markdown draft only", "Require separate explicit specification approval", "Move ready to active before implementation"],
+      "prohibited": ["Native plan approval treated as implementation approval", "Artificial spec splitting"],
+      "resultEvidence": ["one Markdown draft", "drafting only", "separate explicit approval", "ready to active before implementation"]
     },
     {
       "id": "multi-spec-lifecycle",
       "mode": "new",
       "scope": "full",
       "initialContext": "Plan a foundation with independently risky data setup and application scaffolding.",
-      "startingEvidence": ["The subsystems have distinct risk and dependency sequencing"],
-      "expected": ["Justify multiple Markdown drafts", "Record dependencies and approval per specification", "Activate only the ready dependency"],
-      "prohibited": ["Parallel implementation without approval", "Duplicate shared authority"]
+      "startingEvidence": ["The DevCharter proposal is approved", "The subsystems have distinct risk and dependency sequencing"],
+      "expected": ["Justify multiple Markdown drafts from material risk and dependency sequence", "Record relationships, implementation order, and approval per specification", "Activate only the current ready dependency"],
+      "prohibited": ["Splitting for presentation convenience", "Parallel implementation without approval", "Duplicate shared authority"],
+      "resultEvidence": ["risk and sequencing justify the split", "related, ordered drafts", "each applicable Markdown specification requires explicit approval", "only the current ready dependency moves to active"]
     },
     {
       "id": "missing-permission",
@@ -88,9 +90,80 @@
       "mode": "retrofit",
       "scope": "full",
       "initialContext": "Resume approved foundation work after context loss, package-source failure, and partial application.",
-      "startingEvidence": ["The worktree contains valid partial changes", "Conversation context and approval evidence cannot be verified", "Dependency resolution failed"],
-      "expected": ["Reconstruct state from repository and Markdown specifications", "Require fresh review and approval", "Report the dependency failure and changed versus unattempted work", "Resume only after prerequisites and approval are restored"],
-      "prohibited": ["Invented approval", "Unsupported rollback claim", "Persisted session protocol", "Blind destructive retry"]
+      "startingEvidence": ["The worktree contains valid partial changes", "The Markdown specification conflicts with current repository state", "Conversation context and approval evidence cannot be verified", "Dependency resolution failed"],
+      "expected": ["Reconstruct state from repository instructions, relationships, status, approval metadata, current worktree, and Markdown specifications", "Require refreshed analysis and fresh review or approval", "Report the conflict, dependency failure, and changed versus unattempted work", "Resume only after prerequisites and approval are restored"],
+      "prohibited": ["Invented approval", "Implementation from a non-ready or stale specification", "Unsupported rollback claim", "Persisted session protocol", "Blind destructive retry"],
+      "resultEvidence": ["reports changed and unattempted work", "refreshes affected analysis", "requires fresh review or approval", "does not invent approval", "non-ready or stale spec"]
+    },
+    {
+      "id": "native-plan-proposal-only",
+      "mode": "new",
+      "scope": "full",
+      "initialContext": "Use a suitable native Plan mode to refine a repository foundation proposal before any implementation.",
+      "startingEvidence": ["The host exposes a read-only Plan mode", "The host's normal approval control would begin implementation"],
+      "expected": ["Treat the native plan as the DevCharter proposal", "Include the full proposal contract and expected spec breakdown", "State before approval that acceptance authorizes Markdown specification drafting only"],
+      "prohibited": ["Product implementation", "Scaffolding or dependency installation", "Using the host control that begins coding"],
+      "resultEvidence": ["native plan as the DevCharter proposal", "full proposal contract", "only Markdown specification drafting", "implementation-start control is rejected", "no scaffold"]
+    },
+    {
+      "id": "iterative-material-questions",
+      "mode": "retrofit",
+      "scope": "full",
+      "initialContext": "Refine the proposal completely while minimizing avoidable assumptions and user burden.",
+      "startingEvidence": ["Repository inspection answers the framework and package-manager questions", "Architecture and ownership choices remain unresolved", "A color preference cannot affect the proposal"],
+      "expected": ["Inspect repository-answerable facts instead of asking", "Ask architecture and ownership questions over multiple rounds as needed", "Omit the immaterial preference", "Wait to synthesize the proposal until proposal-changing questions are resolved or explicitly deferred"],
+      "prohibited": ["Fixed question-count limit", "Single-round shortcut", "Questioning known facts", "Immaterial questionnaire"],
+      "resultEvidence": ["known facts are inspected rather than asked", "cosmetic question is omitted", "as many rounds as needed", "synthesis waits", "No fixed question count"]
+    },
+    {
+      "id": "assumption-deferral-boundaries",
+      "mode": "retrofit",
+      "scope": "governance",
+      "initialContext": "Record only explicitly accepted low-risk reversible assumptions and keep sensitive decisions open.",
+      "startingEvidence": ["The user explicitly defers one low-risk naming choice", "The user accepts a reversible default", "A public API contract and data migration remain undecided"],
+      "expected": ["Record evidence, impact if wrong, and reversibility for the accepted assumption", "Record the explicit deferral", "Require direct confirmation for the public contract and migration"],
+      "prohibited": ["Silent proposal-changing assumption", "Sensitive assumption", "Irreversible default"],
+      "resultEvidence": ["deferral and accepted assumption remain distinct", "evidence, impact if wrong, and reversibility", "remain blocked for direct confirmation", "neither becomes an assumption or default"]
+    },
+    {
+      "id": "read-only-plan-spec-transition",
+      "mode": "new",
+      "scope": "engineering",
+      "initialContext": "After approving the proposal in a read-only Plan mode, author only the durable implementation specification.",
+      "startingEvidence": ["The native planning surface cannot edit", "The proposal is explicitly approved"],
+      "expected": ["Switch to an editing-capable surface only after proposal approval", "Create only the authorized target-local Markdown draft through Specification Architect", "Stop for separate specification review"],
+      "prohibited": ["Application scaffold", "Dependency installation", "Product-file edit", "Implementation before specification approval"],
+      "resultEvidence": ["switch to an editing-capable surface solely", "authorized target-local Markdown draft", "stops for specification review", "implementation remain prohibited"]
+    },
+    {
+      "id": "same-chat-implementation-handoff",
+      "mode": "retrofit",
+      "scope": "engineering",
+      "initialContext": "Continue implementation in the current conversation from an explicitly approved Markdown specification.",
+      "startingEvidence": ["The specification records proposal context and explicit approval", "Its status is ready and repository state is current"],
+      "expected": ["Move one ready specification to active", "Implement only its bounded behavior", "Follow its verification and completion contract"],
+      "prohibited": ["Activating multiple dependent specifications", "Scope expansion", "Reliance on proposal approval alone"],
+      "resultEvidence": ["one specification moves to active", "implementation is limited to its scope", "verification contract", "Proposal approval alone cannot trigger"]
+    },
+    {
+      "id": "later-chat-implementation-handoff",
+      "mode": "retrofit",
+      "scope": "engineering",
+      "initialContext": "Start implementation in a fresh conversation from the authoritative approved Markdown specification.",
+      "startingEvidence": ["The original transcript is unavailable", "Repository instructions, proposal context, relationships, approval metadata, status, and current state are readable and consistent"],
+      "expected": ["Reconstruct authority without the transcript", "Move one current ready specification to active", "Keep implementation within the recorded contract"],
+      "prohibited": ["Session store", "Transcript requirement", "Invented approval", "Ignoring current repository state"],
+      "resultEvidence": ["authority is reconstructed from repository files", "one ready specification may move to active", "no transcript or DevCharter session store is required"]
+    },
+    {
+      "id": "ordinary-conversation-fallback",
+      "mode": "new",
+      "scope": "ai",
+      "initialContext": "The selected host has no suitable native Plan mode, so refine the proposal through normal chat.",
+      "startingEvidence": ["Native Plan mode is unavailable", "The companion can safely inspect and converse"],
+      "expected": ["Use ordinary interactive conversation for inspection, iterative questions, proposal, and approval", "Preserve both approval gates", "Report no loss of lifecycle safety"],
+      "prohibited": ["Invented DevCharter mode", "Mandatory Plan mode", "Implementation from proposal approval"],
+      "resultEvidence": ["ordinary conversation performs the same inspection", "iterative material questions", "separate specification approval", "adds no mode", "no degraded-safety claim"]
     }
   ]
 }

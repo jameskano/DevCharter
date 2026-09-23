@@ -46,10 +46,13 @@ Keep one implementation specification active unless independent workstreams are 
   and GitHub Copilot integrations.
 - `done/SPEC-0002D-qualification-documentation-and-release-transition.md` — completed scenario and
   supported-host qualification, current documentation, and release transition.
+- `done/SPEC-0002E-plan-mode-proposal-refinement.md` — completed refinement for native Plan mode as
+  the proposal surface, complete material questioning, and durable same- or later-chat specification
+  handoff.
 - `approved/SPEC-0001-devcharter-v0.md` and `done/SPEC-0001A` through `SPEC-0001E` — superseded
   historical v0 authority and implementation evidence.
 
-SPEC-0002A through SPEC-0002D are ordered implementation specifications and are done. Activate
+SPEC-0002A through SPEC-0002E are ordered implementation specifications and are done. Activate any
 future work only after its specification is approved and dependencies are complete, unless an
 independent workstream is explicitly approved.
 
